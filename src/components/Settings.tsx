@@ -1,0 +1,581 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ChevronLeft, 
+  UserRound, 
+  History, 
+  ShieldCheck, 
+  UserPlus, 
+  Book, 
+  LogOut, 
+  ChevronRight,
+  Info,
+  Copy,
+  Check,
+  ShieldAlert,
+  CheckCircle2,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Clock
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useNotification } from '../context/NotificationContext';
+import IdentityVerification from './IdentityVerification';
+import { EffectType, effectNames } from './EffectsManager';
+import { supabase } from '../supabase';
+
+interface SettingsProps {
+  profile: any;
+  onLogout: () => void;
+  onBack: () => void;
+  onOpenAdmin: () => void;
+  onVerifySuccess: () => void;
+  showVerifyRedDot?: boolean;
+  currentEffect: EffectType;
+  onEffectChange: (effect: EffectType) => void;
+}
+
+type SettingsPage = 'profile' | 'history' | 'referral' | 'security' | 'guide' | 'contact' | 'report';
+
+export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVerifySuccess, showVerifyRedDot, currentEffect, onEffectChange }: SettingsProps) {
+  const { showNotification } = useNotification();
+  const [activePage, setActivePage] = useState<SettingsPage>('profile');
+  const [securityTab, setSecurityTab] = useState<'pw' | 'verify'>('pw');
+  const [copied, setCopied] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
+  const [reportText, setReportText] = useState('');
+  const [reporting, setReporting] = useState(false);
+
+  useEffect(() => {
+    if (activePage === 'history') {
+      fetchHistory();
+    }
+  }, [activePage]);
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*, withdrawals(*)')
+        .eq('user_id', profile.id)
+        .neq('type', 'TASK') // Exclude TASK transactions
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const ADMIN_ID = "22072009";
+
+  const handleCopy = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const pageTitles: Record<SettingsPage, string> = {
+    profile: 'Hồ Sơ',
+    history: 'Lịch Sử',
+    referral: 'Giới Thiệu',
+    security: 'Bảo Mật',
+    guide: 'Hướng Dẫn',
+    contact: 'Liên Hệ',
+    report: 'Báo Lỗi'
+  };
+
+  const getLevelInfo = (exp: number) => {
+    const level = Math.floor(Math.sqrt(exp / 10)) + 1;
+    let vip = 1;
+    if (level >= 5 && level < 15) vip = 2;
+    else if (level >= 15 && level < 30) vip = 3;
+    else if (level >= 30 && level < 50) vip = 4;
+    else if (level >= 50 && level < 80) vip = 5;
+    else if (level >= 80 && level < 120) vip = 6;
+    else if (level >= 120) vip = 7;
+    return { level, vip };
+  };
+
+  const levelInfo = profile ? getLevelInfo(profile.exp || 0) : { level: 1, vip: 1 };
+
+  const renderProfile = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="glass p-8 text-center relative overflow-hidden md:col-span-1">
+          <div className="w-20 h-20 bg-accent/10 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-accent/30">
+            <UserRound size={40} className="text-accent" />
+          </div>
+          <h3 className="text-xl font-black italic tracking-tighter">{profile?.username || '---'}</h3>
+          <div className="text-[8px] px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black uppercase mt-2 inline-block">
+            VIP {levelInfo.vip}
+          </div>
+          
+          {profile?.is_admin && (
+            <p className="text-[10px] text-accent font-black tracking-widest mt-2">ID: {ADMIN_ID}</p>
+          )}
+          
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+              <p className="text-[9px] text-gray-500 uppercase font-bold">Số dư</p>
+              <p className="text-accent font-black">{profile?.balance.toLocaleString() || 0}</p>
+            </div>
+            <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+              <p className="text-[9px] text-gray-500 uppercase font-bold">Nhiệm vụ</p>
+              <p className="text-accent font-black">{profile?.tasks_total || 0}</p>
+            </div>
+          </div>
+          
+          <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4">
+            <p className="text-[9px] text-gray-500 uppercase font-bold mb-2">Hiệu ứng nền</p>
+            <div className="flex flex-wrap gap-2">
+              {(['particles', 'snow', 'stars', 'neon', 'fireworks'] as EffectType[]).map(effect => (
+                <button
+                  key={effect}
+                  onClick={() => onEffectChange(effect)}
+                  className={`w-6 h-6 rounded-full transition-all ${currentEffect === effect ? 'bg-accent shadow-[0_0_10px_#add8e6]' : 'bg-white/10 hover:bg-white/20'}`}
+                  title={effectNames[effect]}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 h-fit">
+          <MenuButton 
+            icon={History} 
+            label="Lịch sử giao dịch" 
+            onClick={() => setActivePage('history')} 
+          />
+          <MenuButton 
+            icon={ShieldCheck} 
+            label="Bảo mật tài khoản" 
+            onClick={() => setActivePage('security')} 
+            showDot={showVerifyRedDot}
+          />
+          <MenuButton 
+            icon={UserPlus} 
+            label="Mời bạn bè" 
+            onClick={() => setActivePage('referral')} 
+          />
+          <MenuButton 
+            icon={Book} 
+            label="Hướng dẫn sử dụng" 
+            onClick={() => setActivePage('guide')} 
+          />
+          <MenuButton 
+            icon={Info} 
+            label="Liên hệ hỗ trợ" 
+            onClick={() => setActivePage('contact')} 
+          />
+          <MenuButton 
+            icon={ShieldAlert} 
+            label="Báo lỗi hệ thống" 
+            onClick={() => setActivePage('report')} 
+          />
+          {profile?.is_admin && (
+            <button 
+              onClick={onOpenAdmin}
+              className="glass p-5 flex justify-between items-center border-accent/20 hover:bg-accent/5 sm:col-span-2 group transition-all"
+            >
+              <div className="flex items-center gap-4 text-accent">
+                <ShieldAlert size={20} />
+                <span className="text-sm font-bold uppercase">Quản trị hệ thống (Admin)</span>
+              </div>
+              <ChevronRight size={14} className="text-accent" />
+            </button>
+          )}
+          <button 
+            onClick={onLogout}
+            className="glass p-5 flex justify-between items-center border-red-500/20 hover:bg-red-500/5 sm:col-span-2 group transition-all"
+          >
+            <div className="flex items-center gap-4 text-red-400">
+              <LogOut size={20} />
+              <span className="text-sm font-bold uppercase">Đăng xuất tài khoản</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderHistory = () => {
+    const filteredTransactions = transactions.filter(tx => {
+      if (historyFilter === 'ALL') return true;
+      if (historyFilter === 'IN') return tx.type === 'REFERRAL' || tx.type === 'REFUND';
+      if (historyFilter === 'OUT') return tx.type === 'WITHDRAW';
+      return true;
+    });
+
+    return (
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+          <button 
+            onClick={() => setHistoryFilter('ALL')}
+            className={`${historyFilter === 'ALL' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+          >
+            TẤT CẢ
+          </button>
+          <button 
+            onClick={() => setHistoryFilter('IN')}
+            className={`${historyFilter === 'IN' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+          >
+            HOA HỒNG
+          </button>
+          <button 
+            onClick={() => setHistoryFilter('OUT')}
+            className={`${historyFilter === 'OUT' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+          >
+            RÚT TIỀN
+          </button>
+        </div>
+
+        {loadingHistory ? (
+          <div className="glass py-16 text-center">
+            <div className="w-10 h-10 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Đang tải lịch sử...</p>
+          </div>
+        ) : filteredTransactions.length > 0 ? (
+          <div className="space-y-3">
+            {filteredTransactions.map((tx) => (
+              <div key={tx.id} className="glass p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    tx.type === 'WITHDRAW' ? 'bg-red-500/10 text-red-400' : 
+                    tx.type === 'REFUND' ? 'bg-blue-500/10 text-blue-400' :
+                    'bg-emerald-500/10 text-emerald-400'
+                  }`}>
+                    {tx.type === 'WITHDRAW' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-white">{tx.description}</h4>
+                    {tx.withdrawals && (
+                      <div className="mt-1 space-y-0.5">
+                        {tx.withdrawals.method === 'bank' && (
+                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                            {tx.withdrawals.details?.bank} - {tx.withdrawals.details?.stk}
+                          </p>
+                        )}
+                        {tx.withdrawals.method === 'e-wallet' && (
+                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                            {tx.withdrawals.details?.type} - {tx.withdrawals.details?.phone}
+                          </p>
+                        )}
+                        {tx.withdrawals.method === 'card' && (
+                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                            {tx.withdrawals.details?.type} - {tx.withdrawals.details?.cardEmail}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock size={10} className="text-gray-600" />
+                      <span className="text-[9px] text-gray-500 font-bold uppercase">
+                        {new Date(tx.created_at).toLocaleString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-black ${
+                    tx.type === 'WITHDRAW' ? 'text-red-400' : 
+                    tx.type === 'REFUND' ? 'text-blue-400' :
+                    'text-emerald-400'
+                  }`}>
+                    {tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toLocaleString()}
+                  </p>
+                  <div className="flex justify-end mt-1">
+                    <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                      tx.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                      tx.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
+                      'bg-red-500/10 text-red-400 border-red-500/20'
+                    }`}>
+                      {tx.status === 'COMPLETED' ? 'Thành công' : tx.status === 'PENDING' ? 'Đang chờ' : 'Đã hủy'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="glass py-16 text-center">
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Book size={32} className="text-gray-700" />
+            </div>
+            <p className="text-xs text-gray-600 uppercase font-black tracking-widest">Không có giao dịch nào</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderReferral = () => {
+    const referralCode = profile?.referral_code || '---';
+    const referralLink = `${window.location.origin}/?ref=${referralCode}`;
+
+    return (
+      <div className="space-y-6 max-w-2xl mx-auto">
+        <div className="glass p-8 text-center space-y-8">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-4">Mã Giới Thiệu Của Bạn</h3>
+            <div className="bg-black/40 border border-accent/30 p-5 rounded-2xl flex items-center justify-between">
+              <span className="text-2xl font-black ocean-glow tracking-[0.2em]">WMX-{referralCode}</span>
+              <button 
+                onClick={() => handleCopy(`WMX-${referralCode}`, 'code')}
+                className="text-[10px] bg-accent text-black px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
+              >
+                {copied === 'code' ? <Check size={12} /> : <Copy size={12} />}
+                {copied === 'code' ? 'Đã chép' : 'Sao chép'}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-4">Đường Dẫn Giới Thiệu</h3>
+            <div className="bg-black/40 border border-accent/30 p-5 rounded-2xl flex items-center justify-between gap-3">
+              <span className="text-[10px] text-gray-400 font-bold truncate">{referralLink}</span>
+              <button 
+                onClick={() => handleCopy(referralLink, 'link')}
+                className="shrink-0 text-[10px] bg-accent text-black px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
+              >
+                {copied === 'link' ? <Check size={12} /> : <Copy size={12} />}
+                {copied === 'link' ? 'Đã chép' : 'Sao chép'}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs text-accent font-black uppercase">Hoa hồng: 1,000 Xu / Người</p>
+            <p className="text-[10px] text-gray-500 italic">Điều kiện: Người được giới thiệu phải có số dư từ 1,500 Xu trở lên.</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="glass p-6 text-center">
+            <p className="text-[10px] text-gray-500 uppercase font-bold">Người đã mời</p>
+            <p className="text-2xl font-black text-accent">0</p>
+          </div>
+          <div className="glass p-6 text-center">
+            <p className="text-[10px] text-gray-500 uppercase font-bold">Hoa hồng nhận</p>
+            <p className="text-2xl font-black text-accent">0</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSecurity = () => (
+    <div className="max-w-xl mx-auto space-y-6">
+      <div className="flex gap-2 glass p-1">
+        <button 
+          onClick={() => setSecurityTab('pw')} 
+          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${securityTab === 'pw' ? 'bg-accent text-black' : 'text-gray-500'}`}
+        >
+          Đổi mật khẩu
+        </button>
+        <button 
+          onClick={() => setSecurityTab('verify')} 
+          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition relative ${securityTab === 'verify' ? 'bg-accent text-black' : 'text-gray-500'}`}
+        >
+          Xác minh Email
+          {showVerifyRedDot && (
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444] animate-pulse"></span>
+          )}
+        </button>
+      </div>
+
+      {securityTab === 'pw' ? (
+        <div className="glass p-8 space-y-6">
+          <div className="space-y-4">
+            <input type="password" placeholder="Mật khẩu hiện tại" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
+            <input type="password" placeholder="Mật khẩu mới" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
+            <button className="w-full btn-primary py-4 rounded-xl text-[11px] font-black tracking-widest uppercase mt-4">Cập nhật mật khẩu</button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {profile?.is_verified ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass p-8 text-center space-y-4"
+            >
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                <CheckCircle2 size={32} className="text-emerald-500" />
+              </div>
+              <h3 className="text-lg font-black uppercase tracking-widest text-emerald-500">Đã Xác Minh Uy Tín</h3>
+              <p className="text-xs text-gray-400">Tài khoản của bạn đã được xác minh để nâng cao uy tín và bảo mật tránh mất hoặc hack.</p>
+              <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Email liên kết</p>
+                <p className="text-sm font-bold text-white">{profile?.email}</p>
+              </div>
+            </motion.div>
+          ) : (
+            <IdentityVerification 
+              email={profile?.email || ''}
+              onSuccess={onVerifySuccess}
+              onCancel={() => setSecurityTab('pw')}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderContact = () => (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="glass p-8 space-y-6">
+        <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Thông tin liên hệ</h3>
+        <div className="space-y-4">
+          <a href="https://t.me/VanhTRUM" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <span className="text-accent font-black">TELE ADMIN</span>
+            <span className="text-xs text-gray-400">@VanhTRUM</span>
+          </a>
+          <a href="https://zalo.me/0337117930" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <span className="text-accent font-black">ZALO ADMIN</span>
+            <span className="text-xs text-gray-400">0337117930</span>
+          </a>
+          <a href="https://t.me/+Drg0EEs27Nw1ZTdl" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <span className="text-accent font-black">NHÓM TELE</span>
+            <span className="text-xs text-gray-400">Tham gia nhóm</span>
+          </a>
+          <a href="https://zalo.me/g/ogveojfwhm3n4ballgzy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+            <span className="text-accent font-black">NHÓM ZALO</span>
+            <span className="text-xs text-gray-400">Tham gia nhóm</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderGuide = () => (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="glass p-8 space-y-6 text-left">
+        <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Hướng dẫn sử dụng wmoneyX</h3>
+        
+        <div className="space-y-6">
+          <section>
+            <h4 className="text-xs font-black uppercase text-white mb-2">1. Cách kiếm tiền</h4>
+            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+              <li>Hoàn thành các nhiệm vụ hàng ngày trong mục <span className="text-accent">"Nhiệm Vụ"</span>.</li>
+              <li>Tham gia các trò chơi trong mục <span className="text-accent">"Thưởng Ngày"</span> (Bóc túi mù, Vòng quay may mắn).</li>
+              <li>Giới thiệu bạn bè tham gia để nhận hoa hồng <span className="text-accent">1,000 Xu</span> cho mỗi người.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h4 className="text-xs font-black uppercase text-white mb-2">2. Điều kiện nhận hoa hồng</h4>
+            <p className="text-[11px] text-gray-400">
+              Người được giới thiệu phải đạt số dư từ <span className="text-accent">1,500 Xu</span> trở lên thì người giới thiệu mới nhận được thưởng.
+            </p>
+          </section>
+
+          <section>
+            <h4 className="text-xs font-black uppercase text-white mb-2">3. Cấp độ và VIP</h4>
+            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+              <li>Tích lũy EXP từ các hoạt động để tăng cấp độ.</li>
+              <li>Cấp độ càng cao, quyền lợi VIP càng lớn, giúp tăng thu nhập từ nhiệm vụ.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h4 className="text-xs font-black uppercase text-white mb-2">4. Rút tiền</h4>
+            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+              <li>Bạn có thể rút tiền về Ngân hàng, Ví điện tử hoặc Thẻ cào.</li>
+              <li>Đảm bảo tài khoản đã được <span className="text-accent">xác minh email</span> để thực hiện rút tiền.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h4 className="text-xs font-black uppercase text-white mb-2">5. Hỗ trợ</h4>
+            <p className="text-[11px] text-gray-400">
+              Nếu gặp lỗi, hãy sử dụng mục "Báo lỗi hệ thống" hoặc liên hệ trực tiếp với Admin qua Telegram/Zalo trong phần "Liên hệ hỗ trợ".
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderReport = () => (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="glass p-8 space-y-6">
+        <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Báo cáo lỗi</h3>
+        <textarea 
+          value={reportText}
+          onChange={(e) => setReportText(e.target.value)}
+          placeholder="Mô tả lỗi bạn gặp phải..."
+          className="w-full h-40 bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50"
+        />
+        <button 
+          onClick={async () => {
+            if (!reportText.trim()) return;
+            setReporting(true);
+            await supabase.from('reports').insert([{ user_id: profile.id, content: reportText }]);
+            setReporting(false);
+            setReportText('');
+            showNotification({ title: 'Thành công', message: 'Đã gửi báo cáo', type: 'success' });
+          }}
+          disabled={reporting || !reportText.trim()}
+          className="w-full btn-primary py-4 rounded-xl text-[11px] font-black tracking-widest uppercase"
+        >
+          {reporting ? 'Đang gửi...' : 'Gửi báo cáo'}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen pb-24">
+      <header className="flex items-center gap-4 py-6 mb-8">
+        <button 
+          onClick={() => activePage === 'profile' ? onBack() : setActivePage('profile')} 
+          className="w-10 h-10 glass flex items-center justify-center text-accent shrink-0 hover:bg-accent hover:text-black transition-all"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <h2 className="text-xl font-black uppercase tracking-widest ocean-glow">{pageTitles[activePage]}</h2>
+      </header>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activePage}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activePage === 'profile' && renderProfile()}
+          {activePage === 'history' && renderHistory()}
+          {activePage === 'referral' && renderReferral()}
+          {activePage === 'security' && renderSecurity()}
+          {activePage === 'guide' && renderGuide()}
+          {activePage === 'contact' && renderContact()}
+          {activePage === 'report' && renderReport()}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MenuButton({ icon: Icon, label, onClick, showDot }: { icon: any, label: string, onClick: () => void, showDot?: boolean }) {
+  return (
+    <button onClick={onClick} className="glass p-5 flex justify-between items-center hover:bg-white/5 transition group relative">
+      <div className="flex items-center gap-4">
+        <Icon size={20} className="text-accent group-hover:scale-110 transition-transform" /> 
+        <span className="text-sm font-bold">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {showDot && (
+          <span className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] animate-pulse"></span>
+        )}
+        <ChevronRight size={14} className="text-gray-600" />
+      </div>
+    </button>
+  );
+}
