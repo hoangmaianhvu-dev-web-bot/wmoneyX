@@ -124,8 +124,22 @@ async function startServer() {
 
     try {
       const response = await fetch(url as string);
-      const data = await response.json();
-      res.json(data);
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Proxy Error - Response not OK:", response.status, text);
+        return res.status(response.status).json({ error: `Proxy failed with status ${response.status}`, details: text });
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        res.json(data);
+      } else {
+        const text = await response.text();
+        console.error("Proxy Error - Response not JSON:", text);
+        res.status(500).json({ error: "Response is not JSON", details: text });
+      }
     } catch (err: any) {
       console.error("Proxy Error:", err);
       res.status(500).json({ error: err.message });

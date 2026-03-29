@@ -96,6 +96,12 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       const response = await fetch(finalProxyUrl);
       console.log("Proxy response status:", response.status);
       
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Proxy error response:", errorText);
+        throw new Error(`Proxy error: ${response.status}`);
+      }
+
       const result = await response.json();
       console.log("Proxy response result:", result);
       
