@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import EffectsManager, { EffectType } from './EffectsManager';
+import { EffectType } from './EffectsManager';
 import { supabase } from '../supabase';
 import { 
   Mail, 
@@ -209,7 +209,6 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-6 text-white font-sans relative z-10">
-      <EffectsManager effect={currentEffect} />
       <div className="w-full max-w-sm">
         {/* Logo Area */}
         <div className="text-center mb-10">

@@ -34,7 +34,7 @@ import DailyRewards from './DailyRewards';
 import AdminPanel from './AdminPanel';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
-import EffectsManager from './EffectsManager';
+import BackgroundMusic from './BackgroundMusic';
 
 interface DashboardProps {
   user: any;
@@ -426,7 +426,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
 
   return (
     <div className="min-h-screen text-white font-sans selection:bg-accent selection:text-bg flex flex-col md:flex-row">
-      <EffectsManager effect={currentEffect} />
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-72 border-r border-white/5 p-6 fixed h-full bg-black/50 backdrop-blur-xl z-50">
         <div className="mb-12 px-2">
@@ -569,8 +568,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     {/* Shine effect */}
                     <motion.div
                       animate={{ x: ['-100%', '200%'] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1 }}
-                      className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                      transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
+                      className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]"
                     />
                   </div>
                   <p className="text-[9px] text-gray-500 mt-2 text-center italic">
@@ -590,13 +589,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       animate={{ opacity: 1, y: 0 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
                     >
-                      <motion.div 
-                        animate={{ y: [-5, 5, -5] }}
-                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                        className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-colors"
-                      >
+                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12">
                         <Target size={40} />
-                      </motion.div>
+                      </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
                       <h3 className="text-xl font-black italic text-accent uppercase tracking-tighter relative z-10">Không giới hạn</h3>
                     </motion.div>
@@ -606,13 +601,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       transition={{ delay: 0.1 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
                     >
-                      <motion.div 
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                        className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-colors"
-                      >
+                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:-rotate-12">
                         <CheckSquare size={40} />
-                      </motion.div>
+                      </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ thường</p>
                       <h3 className="text-3xl font-black italic text-accent relative z-10">{profile?.tasks_total || 0}</h3>
                     </motion.div>
@@ -622,13 +613,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       transition={{ delay: 0.15 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group border-red-500/20"
                     >
-                      <motion.div 
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                        className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-colors"
-                      >
+                      <div className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-all group-hover:scale-110 group-hover:rotate-12">
                         <AlertTriangle size={40} />
-                      </motion.div>
+                      </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ đặc biệt</p>
                       <h3 className="text-3xl font-black italic text-red-500 relative z-10">{profile?.special_tasks_total || 0}</h3>
                     </motion.div>

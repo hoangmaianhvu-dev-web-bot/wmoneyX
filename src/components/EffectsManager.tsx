@@ -14,11 +14,11 @@ export const effectNames: Record<EffectType, string> = {
 
 function ParticlesEffect() {
   const particles = useMemo(() => {
-    return Array.from({ length: 80 }).map((_, i) => ({
+    return Array.from({ length: 40 }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
-      size: Math.random() * 6 + 3,
-      duration: Math.random() * 10 + 5,
+      size: Math.random() * 4 + 2,
+      duration: Math.random() * 8 + 6,
       delay: Math.random() * 5,
     }));
   }, []);
@@ -60,11 +60,11 @@ function ParticlesEffect() {
 
 function SnowEffect() {
   const snowflakes = useMemo(() => {
-    return Array.from({ length: 120 }).map((_, i) => ({
+    return Array.from({ length: 60 }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
-      size: Math.random() * 8 + 3,
-      duration: Math.random() * 8 + 4,
+      size: Math.random() * 5 + 2,
+      duration: Math.random() * 6 + 4,
       delay: Math.random() * 5,
     }));
   }, []);
@@ -101,7 +101,7 @@ function SnowEffect() {
 
 function StarsEffect() {
   const stars = useMemo(() => {
-    return Array.from({ length: 15 }).map((_, i) => ({
+    return Array.from({ length: 8 }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -114,17 +114,17 @@ function StarsEffect() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-black/20">
       {/* Static stars */}
-      {Array.from({ length: 150 }).map((_, i) => (
+      {Array.from({ length: 60 }).map((_, i) => (
         <div 
           key={`static-${i}`}
           className="absolute bg-white rounded-full"
           style={{
-            width: Math.random() * 2 + 1,
-            height: Math.random() * 2 + 1,
+            width: Math.random() * 1.5 + 0.5,
+            height: Math.random() * 1.5 + 0.5,
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
-            opacity: Math.random() * 0.8 + 0.2,
-            boxShadow: '0 0 8px rgba(255,255,255,1)'
+            opacity: Math.random() * 0.6 + 0.2,
+            boxShadow: '0 0 4px rgba(255,255,255,0.8)'
           }}
         />
       ))}
@@ -194,9 +194,9 @@ function FireworksEffect() {
           y: Math.random() * 50 + 10,
           color: colors[Math.floor(Math.random() * colors.length)]
         };
-        return [...prev.slice(-14), newFw]; // Keep max 15 fireworks
+        return [...prev.slice(-6), newFw]; // Keep max 7 fireworks
       });
-    }, 400);
+    }, 800);
     return () => clearInterval(interval);
   }, []);
 
@@ -208,7 +208,7 @@ function FireworksEffect() {
           className="absolute"
           style={{ left: `${fw.x}%`, top: `${fw.y}%` }}
         >
-          {Array.from({ length: 24 }).map((_, i) => (
+          {Array.from({ length: 16 }).map((_, i) => (
             <motion.div
               key={i}
               className="absolute w-1.5 h-1.5 rounded-full"
