@@ -21,7 +21,8 @@ import {
   Star,
   Target,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -620,6 +621,34 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       <h3 className="text-3xl font-black italic text-red-500 relative z-10">{profile?.special_tasks_total || 0}</h3>
                     </motion.div>
                   </div>
+
+                  {/* Danh sách nhiệm vụ hệ thống */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.18 }}
+                    className="space-y-4"
+                  >
+                    <h3 className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
+                      <CheckCircle2 size={16} /> Danh sách nhiệm vụ hệ thống
+                    </h3>
+                    <div className="glass p-6 rounded-[2rem] border-white/10">
+                      <div className="flex flex-wrap gap-2">
+                        {/* HOT Tasks */}
+                        {['LINK4M', 'TRAFFIC1M', 'TRAFFIC68'].map(task => (
+                          <span key={task} className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] font-black uppercase flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                            🔥 {task}
+                          </span>
+                        ))}
+                        {/* Normal Tasks */}
+                        {['YEUMONEY', 'UPTOLINK', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
+                          <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-gray-300 text-[10px] font-bold uppercase">
+                            {task}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
 
                   {/* Invite Friends Card */}
                   <motion.div 

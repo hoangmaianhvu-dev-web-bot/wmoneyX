@@ -134,7 +134,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4">
             <p className="text-[9px] text-gray-500 uppercase font-bold mb-2">Hiệu ứng nền</p>
             <div className="flex flex-wrap gap-2">
-              {(['particles', 'snow', 'stars', 'neon', 'fireworks'] as EffectType[]).map(effect => (
+              {(['particles', 'snow', 'stars', 'neon', 'fireworks', 'led'] as EffectType[]).map(effect => (
                 <button
                   key={effect}
                   onClick={() => onEffectChange(effect)}

@@ -7,6 +7,69 @@
     <title> wmoneyX </title>
   </head>
   <body>
+    <!-- 1. Thêm thẻ này vào ngay sau thẻ <body> -->
+    <div id="bubble-overlay"></div>
+
+    <!-- 2. CSS để định vị và tạo hiệu ứng -->
+    <style>
+        #bubble-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Giúp vẫn click được các nút bên dưới */
+            z-index: 999999;      /* Luôn nằm trên cùng */
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), rgba(186, 230, 253, 0.1));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            animation: rise-and-sway var(--duration) ease-in infinite;
+        }
+
+        @keyframes rise-and-sway {
+            0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+            10% { opacity: 0.7; }
+            50% { transform: translateY(-50vh) translateX(20px) scale(1.1); }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-120vh) translateX(-10px) scale(0.8); opacity: 0; }
+        }
+    </style>
+
+    <!-- 3. JavaScript để tạo bong bóng ngẫu nhiên -->
+    <script>
+        function initBubbles() {
+            const container = document.getElementById('bubble-overlay');
+            if (!container) return;
+            const count = 30; // Số lượng bong bóng
+            
+            for (let i = 0; i < count; i++) {
+                const b = document.createElement('div');
+                const size = Math.random() * 40 + 10 + 'px';
+                
+                b.className = 'bubble';
+                b.style.width = size;
+                b.style.height = size;
+                b.style.left = Math.random() * 100 + '%';
+                
+                // Thời gian bay ngẫu nhiên từ 6s đến 10s
+                b.style.setProperty('--duration', Math.random() * 4 + 6 + 's');
+                // Độ trễ ngẫu nhiên để không bay lên cùng lúc
+                b.style.animationDelay = Math.random() * 8 + 's';
+                
+                container.appendChild(b);
+            }
+        }
+
+        // Chạy hàm khi trang web tải xong
+        window.addEventListener('load', initBubbles);
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

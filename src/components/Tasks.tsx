@@ -89,7 +89,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       
       const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
       const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
-      const finalProxyUrl = `/api-server/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
+      const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
       
       console.log("Proxy URL:", finalProxyUrl);
 
@@ -279,40 +279,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         <p className="text-[9px] text-gray-400 leading-relaxed uppercase tracking-tighter">
           Cấm <span className="text-white">VPN, Proxy, 1.1.1.1</span>, Cheat view. Mỗi nhiệm vụ có <span className="text-accent">Mã Định Danh Duy Nhất</span>, gian lận sẽ bị khóa tài khoản.
         </p>
-      </div>
-
-      {/* Danh sách nhiệm vụ hệ thống */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
-          <CheckCircle2 size={16} /> Danh sách nhiệm vụ hệ thống
-        </h3>
-        <div className="glass p-6 rounded-[2rem] border-white/10">
-          <div className="flex flex-wrap gap-2">
-            {/* HOT Tasks */}
-            {['LINK4M', 'TRAFFIC1M', 'TRAFFIC68'].map(task => (
-              <span key={task} className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] font-black uppercase flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-                🔥 {task}
-              </span>
-            ))}
-            {/* Normal Tasks */}
-            {['YEUMONEY', 'UPTOLINK', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
-              <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-gray-300 text-[10px] font-bold uppercase">
-                {task}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Gợi ý nhiệm vụ */}
-      <div className="glass p-4 rounded-xl border-accent/30 bg-accent/5 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0">
-          <CheckCircle2 size={16} />
-        </div>
-        <div>
-          <h4 className="text-[10px] font-black uppercase text-accent">Gợi ý nhiệm vụ hôm nay</h4>
-          <p className="text-[9px] text-gray-400 mt-0.5">Nhiệm vụ <span className="text-white font-bold">LINK4M</span> đang có tỷ lệ duyệt nhanh nhất. Hãy thử ngay!</p>
-        </div>
       </div>
 
       {/* Nhiệm vụ */}

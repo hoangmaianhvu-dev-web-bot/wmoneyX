@@ -39,58 +39,69 @@ export default function App() {
     setIsMusicPlaying(!isMusicPlaying);
   };
 
+  // Global error handler for Supabase auth issues
+  const handleAuthError = async (errorMsg: string) => {
+    if (!errorMsg) return;
+    
+    const lowerMsg = errorMsg.toLowerCase();
+    // Cải thiện điều kiện kiểm tra lỗi
+    const isInvalidRefreshToken = 
+      lowerMsg.includes('invalid refresh token') || 
+      lowerMsg.includes('refresh token not found') ||
+      lowerMsg.includes('refresh_token_not_found') ||
+      lowerMsg.includes('invalid_grant') ||
+      lowerMsg.includes('expired_jwt');
+      
+    const isAuthError = 
+      lowerMsg.includes('refresh_token') || 
+      lowerMsg.includes('refresh token') ||
+      lowerMsg.includes('not found') ||
+      lowerMsg.includes('invalid') ||
+      lowerMsg.includes('session') ||
+      lowerMsg.includes('auth');
+
+    if (isInvalidRefreshToken || (isAuthError && (lowerMsg.includes('token') || lowerMsg.includes('refresh')))) {
+      console.warn('Caught auth error, clearing session:', errorMsg);
+      
+      // Prevent infinite reload loops
+      const lastErrorTime = sessionStorage.getItem('last_auth_error_time');
+      const now = Date.now();
+      
+      if (lastErrorTime && now - parseInt(lastErrorTime) < 5000) {
+        console.error('Auth error loop detected. Stopping automatic cleanup.');
+        return;
+      }
+      
+      sessionStorage.setItem('last_auth_error_time', now.toString());
+
+      // Clear all possible Supabase auth keys from localStorage first
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase.auth.token') || (key.startsWith('sb-') && key.includes('auth-token'))) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        // Ignore sign out errors
+      }
+      
+      setUser(null);
+      setView('landing');
+      
+      // Force a reload to ensure a clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem('app_effect', currentEffect);
   }, [currentEffect]);
 
   useEffect(() => {
-    // Global error handler for Supabase auth issues
-    const handleAuthError = async (errorMsg: string) => {
-      const lowerMsg = errorMsg.toLowerCase();
-      // Cải thiện điều kiện kiểm tra lỗi
-      const isInvalidRefreshToken = lowerMsg.includes('invalid refresh token') || lowerMsg.includes('refresh token not found');
-      const isAuthError = lowerMsg.includes('refresh_token') || 
-                          lowerMsg.includes('refresh token') ||
-                          lowerMsg.includes('not found') ||
-                          lowerMsg.includes('invalid') ||
-                          lowerMsg.includes('session') ||
-                          lowerMsg.includes('auth');
-
-      if (isInvalidRefreshToken || (isAuthError && (lowerMsg.includes('token') || lowerMsg.includes('refresh')))) {
-        console.warn('Caught auth error, clearing session:', errorMsg);
-        
-        // Prevent infinite reload loops
-        const lastErrorTime = sessionStorage.getItem('last_auth_error_time');
-        const now = Date.now();
-        
-        if (lastErrorTime && now - parseInt(lastErrorTime) < 5000) {
-          console.error('Auth error loop detected. Stopping automatic cleanup.');
-          return;
-        }
-        
-        sessionStorage.setItem('last_auth_error_time', now.toString());
-
-        try {
-          await supabase.auth.signOut();
-        } catch (e) {
-          // Ignore sign out errors
-        }
-        
-        // Clear all possible Supabase auth keys from localStorage
-        Object.keys(localStorage).forEach(key => {
-          if (key.includes('supabase.auth.token') || (key.startsWith('sb-') && key.includes('auth-token'))) {
-            localStorage.removeItem(key);
-          }
-        });
-        
-        setUser(null);
-        setView('landing');
-        
-        // Force a reload to ensure a clean state
-        window.location.reload();
-      }
-    };
-
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason?.message || String(event.reason);
       handleAuthError(reason);
@@ -127,17 +138,32 @@ export default function App() {
     // Check current session
     const checkSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Use getUser() as it's more reliable for verifying the session with the server
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (error) {
-          console.error('Auth session error:', error.message);
-          handleAuthError(error.message);
-        } else if (session?.user) {
-          setUser(session.user);
+        if (userError) {
+          // If it's a refresh token error, handle it
+          if (userError.message.toLowerCase().includes('refresh token')) {
+            handleAuthError(userError.message);
+            return;
+          }
+          
+          // For other errors, try getSession as a fallback
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            handleAuthError(sessionError.message);
+          } else if (session?.user) {
+            setUser(session.user);
+            setView('dashboard');
+          } else {
+            setUser(null);
+            setView(prev => prev === 'dashboard' ? 'landing' : prev);
+          }
+        } else if (user) {
+          setUser(user);
           setView('dashboard');
         } else {
           setUser(null);
-          // Only redirect to landing if we are currently in dashboard
           setView(prev => prev === 'dashboard' ? 'landing' : prev);
         }
       } catch (err) {
