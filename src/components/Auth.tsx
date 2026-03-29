@@ -135,6 +135,20 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: captchaToken }),
       });
+      
+      if (!verifyResponse.ok) {
+        const errorText = await verifyResponse.text();
+        console.error("hCaptcha verification failed:", verifyResponse.status, errorText);
+        let errorMsg = `Xác thực thất bại (${verifyResponse.status})`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.message) errorMsg = errorJson.message;
+        } catch (e) {}
+        setError(errorMsg);
+        setLoading(false);
+        return;
+      }
+
       const verifyData = await verifyResponse.json();
       if (!verifyData.success) {
         setError('Xác thực hCaptcha thất bại. Vui lòng thử lại.');

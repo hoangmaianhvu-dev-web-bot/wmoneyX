@@ -85,10 +85,12 @@ async function startServer() {
 
   // hCaptcha verification
   app.post("/api/verify-hcaptcha", async (req, res) => {
+    console.log("Received hCaptcha verification request");
     const { token } = req.body;
     const secret = process.env.HCAPTCHA_SECRET || "ES_cc4c49b56626414a82adf8a814f998e0";
 
     if (!token) {
+      console.error("hCaptcha Error: Token is missing");
       return res.status(400).json({ success: false, message: "Token is required" });
     }
 
@@ -97,6 +99,7 @@ async function startServer() {
       params.append('secret', secret);
       params.append('response', token);
 
+      console.log("Calling hCaptcha siteverify...");
       const response = await fetch("https://hcaptcha.com/siteverify", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -104,10 +107,13 @@ async function startServer() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`hCaptcha API Error (${response.status}):`, errorText);
         throw new Error(`hCaptcha API responded with status ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("hCaptcha verification result:", data.success);
       res.json(data);
     } catch (err: any) {
       console.error("hCaptcha Error:", err);

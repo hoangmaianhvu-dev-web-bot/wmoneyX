@@ -7,14 +7,16 @@ const CONFIG = {
 
 // Helper to get env variables
 const getEnv = (key: string) => {
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
+  if (typeof process !== 'undefined' && process.env) {
+    if (process.env[key]) return process.env[key];
+    if (process.env[`VITE_${key}`]) return process.env[`VITE_${key}`];
   }
   
   // Try to access import.meta.env safely
   const meta = (import.meta as any);
-  if (meta && meta.env && meta.env[`VITE_${key}`]) {
-    return meta.env[`VITE_${key}`];
+  if (meta && meta.env) {
+    if (meta.env[key]) return meta.env[key];
+    if (meta.env[`VITE_${key}`]) return meta.env[`VITE_${key}`];
   }
   return null;
 };
