@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
   Link as LinkIcon, 
@@ -10,7 +10,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface TasksProps {
   balance: number;
@@ -36,8 +35,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [isChecking, setIsChecking] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const hcaptchaRef = useRef<HCaptcha>(null);
 
   const reward = React.useMemo(() => {
     let r = CONFIG.REWARD;
@@ -73,55 +70,26 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   };
 
   const startTask = async () => {
-    if (!captchaToken) {
+    setIsGenerating(true);
+    
+    if (await checkVPN()) {
       showNotification({
-        title: "LỖI",
-        message: "Vui lòng hoàn thành mã xác thực hCaptcha.",
-        type: "error"
+        title: "CẢNH BÁO",
+        message: "Vui lòng tắt VPN/Proxy/1.1.1.1",
+        type: "warning"
       });
+      setIsGenerating(false);
       return;
     }
 
-    setIsGenerating(true);
+    const newCode = generateCode();
+    setCurrentSessionCode(newCode);
     
+    const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
+    const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
+    const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
+
     try {
-      // Verify hCaptcha server-side
-      const verifyResponse = await fetch('/api/verify-hcaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: captchaToken }),
-      });
-      const verifyData = await verifyResponse.json();
-      
-      if (!verifyData.success) {
-        showNotification({
-          title: "LỖI",
-          message: "Xác thực hCaptcha thất bại. Vui lòng thử lại.",
-          type: "error"
-        });
-        hcaptchaRef.current?.resetCaptcha();
-        setCaptchaToken(null);
-        setIsGenerating(false);
-        return;
-      }
-
-      if (await checkVPN()) {
-        showNotification({
-          title: "CẢNH BÁO",
-          message: "Vui lòng tắt VPN/Proxy/1.1.1.1",
-          type: "warning"
-        });
-        setIsGenerating(false);
-        return;
-      }
-
-      const newCode = generateCode();
-      setCurrentSessionCode(newCode);
-      
-      const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
-      const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
-      const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
-
       const response = await fetch(finalProxyUrl);
       const result = await response.json();
       
@@ -308,16 +276,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               <h3 className="text-sm font-black uppercase mb-1">Vượt link rút gọn</h3>
               <p className="text-[10px] text-gray-400 mb-4">Phần thưởng: <span className="text-accent font-bold">{reward} Xu</span></p>
               
-              <div className="flex justify-center mb-4">
-                <HCaptcha
-                  sitekey={import.meta.env.VITE_HCAPTCHA_SITEKEY || "74289632-2ab6-47a2-9046-dd6e37b09250"}
-                  onVerify={(token) => setCaptchaToken(token)}
-                  onExpire={() => setCaptchaToken(null)}
-                  ref={hcaptchaRef}
-                  theme="dark"
-                />
-              </div>
-
               <button 
                 onClick={startTask}
                 disabled={isGenerating}
