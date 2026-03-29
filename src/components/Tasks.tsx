@@ -21,9 +21,10 @@ interface TasksProps {
 }
 
 const CONFIG = {
-  // 2. Cấu hình VuotNhanh (Cập nhật từ image_59018b.png)
-  API_KEY: import.meta.env.VITE_VUOTNHANH_API || "d2ccf7ae-8029-45a8-a149-0013ec3447da", 
-  BASE_API_URL: import.meta.env.VITE_VUOTNHANH_URL || "https://vuotnhanh.com/api?api=", 
+  // VuotNhanh (Old)
+  VUOTNHANH_API: import.meta.env.VITE_VUOTNHANH_API || "d2ccf7ae-8029-45a8-a149-0013ec3447da", 
+  VUOTNHANH_URL: import.meta.env.VITE_VUOTNHANH_URL || "https://vuotnhanh.com/api?api=", 
+  
   BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://xacminhnhiemvu.blogspot.com/",
   REWARD: 200,
   SPECIAL_REWARD: 1000
@@ -35,6 +36,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [verifyCode, setVerifyCode] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const reward = React.useMemo(() => {
     let r = CONFIG.REWARD;
@@ -69,9 +71,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     return (!timezone.includes("Asia/Saigon") && !timezone.includes("Asia/Ho_Chi_Minh"));
   };
 
-  const startTask = async () => {
+  const startTask = async (mode: 'random' | 'vuotnhanh' = 'random') => {
     setIsGenerating(true);
-    console.log("Starting task creation...");
+    console.log("Starting task creation with mode:", mode);
     
     try {
       if (await checkVPN()) {
@@ -88,18 +90,33 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       setCurrentSessionCode(newCode);
       
       const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
-      const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
+      const apiRequestUrl = `${CONFIG.VUOTNHANH_URL}${CONFIG.VUOTNHANH_API}&url=${encodeURIComponent(targetUrl)}`;
+      
       const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
       
       console.log("Proxy URL:", finalProxyUrl);
 
-      const response = await fetch(finalProxyUrl);
-      console.log("Proxy response status:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Proxy error response:", errorText);
-        throw new Error(`Proxy error: ${response.status}`);
+      let response;
+      try {
+        response = await fetch(finalProxyUrl);
+        console.log("Proxy response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Proxy error response:", errorText);
+          throw new Error(`Proxy error: ${response.status}`);
+        }
+      } catch (proxyError: any) {
+        console.warn("Proxy failed, trying direct fetch as fallback:", proxyError);
+        try {
+          response = await fetch(apiRequestUrl);
+          if (!response.ok) {
+            throw new Error(`Direct fetch failed: ${response.status}`);
+          }
+        } catch (directError: any) {
+          console.error("Direct fetch also failed:", directError);
+          throw new Error(proxyError.message || "Failed to generate link");
+        }
       }
 
       const result = await response.json();
@@ -297,11 +314,18 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               <p className="text-[10px] text-gray-400 mb-4">Phần thưởng: <span className="text-accent font-bold">{reward} Xu</span></p>
               
               <button 
-                onClick={startTask}
+                onClick={() => startTask('random')}
                 disabled={isGenerating}
                 className="btn-task w-full py-3 rounded-xl text-[10px] uppercase tracking-widest disabled:opacity-50"
               >
                 {isGenerating ? 'ĐANG TẠO LINK...' : (isTaskStarted ? 'Lấy link mới' : 'Thực hiện nhiệm vụ')}
+              </button>
+
+              <button 
+                onClick={() => setShowGuide(true)}
+                className="w-full mt-2 py-2 glass border-accent/20 text-accent text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-accent/10 transition-all"
+              >
+                Hướng dẫn lấy mã
               </button>
             </div>
           </div>
@@ -399,15 +423,87 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       </div>
 
       {/* Hướng dẫn */}
-      <div className="mt-8 glass p-6 border-dashed border-white/10 rounded-[2rem]">
-        <h4 className="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest text-center">Cách lấy mã xác minh</h4>
-        <div className="space-y-4 text-[9px] text-gray-400 uppercase tracking-tighter">
-          <p><span className="text-white font-bold">01.</span> Nhấn nút thực hiện để hệ thống sinh link nhiệm vụ qua VuotNhanh.</p>
-          <p><span className="text-white font-bold">02.</span> Vượt link rút gọn để đến trang Blog đích.</p>
-          <p><span className="text-white font-bold">03.</span> Chờ 10 giây tại trang Blog đích để mã hiện ra, sau đó sao chép và quay lại đây.</p>
-          <p><span className="text-white font-bold">04.</span> Dán mã vào ô xác nhận phía trên để nhận thưởng.</p>
-        </div>
-      </div>
+      <AnimatePresence>
+        {showGuide && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGuide(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass p-6 w-[92%] max-w-[360px] space-y-4 relative z-10 rounded-[2rem] border-accent/20 overflow-y-auto max-h-[85vh]"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-black uppercase text-accent tracking-widest">Hướng dẫn lấy mã</h3>
+                <button onClick={() => setShowGuide(false)} className="text-gray-500 hover:text-white">
+                  <ExternalLink size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-left">
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">1</div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Bắt đầu nhiệm vụ</h4>
+                    <p className="text-[9px] text-gray-400">Nhấn nút <span className="text-accent">"Thực hiện nhiệm vụ"</span>. Hệ thống sẽ tự động mở một tab mới chứa link rút gọn.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">2</div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Vượt link rút gọn</h4>
+                    <p className="text-[9px] text-gray-400">Thực hiện các bước xác minh (Captcha, Click button) theo yêu cầu của trang rút gọn để tiếp tục.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">3</div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Truy cập trang đích</h4>
+                    <p className="text-[9px] text-gray-400">Sau khi vượt link, bạn sẽ được chuyển đến trang Blog đích. Hãy cuộn xuống dưới cùng của trang.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">4</div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Lấy mã xác nhận</h4>
+                    <p className="text-[9px] text-gray-400">Tìm nút <span className="text-accent">"LẤY MÃ NGAY"</span> hoặc chờ đồng hồ đếm ngược (thường là 10-30 giây). Mã 7 chữ số sẽ hiện ra.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">5</div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Nhập mã & Nhận thưởng</h4>
+                    <p className="text-[9px] text-gray-400">Sao chép mã đó, quay lại ứng dụng wmoneyX và dán vào ô <span className="text-accent">"Dán mã vào đây"</span> để nhận Xu.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl">
+                <p className="text-[8px] text-red-400 font-bold uppercase leading-relaxed">
+                  Lưu ý: Không sử dụng VPN/Proxy. Mỗi mã chỉ có hiệu lực một lần và sẽ hết hạn sau một khoảng thời gian ngắn.
+                </p>
+              </div>
+
+              <button 
+                onClick={() => setShowGuide(false)}
+                className="w-full py-3 btn-primary rounded-xl text-[10px] font-black uppercase tracking-widest"
+              >
+                Đã hiểu
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

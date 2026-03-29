@@ -22,7 +22,8 @@ import {
   Target,
   Layers,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -626,9 +627,17 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     transition={{ delay: 0.18 }}
                     className="space-y-4"
                   >
-                    <h3 className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
-                      <CheckCircle2 size={16} /> Danh sách nhiệm vụ hệ thống
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
+                        <CheckCircle2 size={16} /> Danh sách nhiệm vụ hệ thống
+                      </h3>
+                      <button 
+                        onClick={() => setActiveTab('tasks')}
+                        className="text-[9px] font-black uppercase text-accent tracking-widest hover:underline flex items-center gap-1"
+                      >
+                        <HelpCircle size={12} /> Hướng dẫn lấy mã
+                      </button>
+                    </div>
                     <div className="glass p-6 rounded-[2rem] border-white/10">
                       <div className="flex flex-wrap gap-2">
                         {/* HOT Tasks */}
