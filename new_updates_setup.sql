@@ -95,3 +95,28 @@ CREATE POLICY "Admins can manage withdrawals" ON withdrawals FOR ALL USING (EXIS
 CREATE POLICY "Admins can manage notifications" ON notifications FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 CREATE POLICY "Admins can manage reports" ON reports FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
 CREATE POLICY "Admins can manage payment_proofs" ON payment_proofs FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true));
+
+-- 8. Trigger tự động tạo profile khi user đăng ký (bao gồm Google Sign-In)
+-- Điều này đảm bảo profile luôn được tạo ngay cả khi sign up qua Google
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, username, email, referral_code, referred_by)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
+    new.email,
+    floor(random() * 90000 + 10000)::text,
+    COALESCE(new.raw_user_meta_data->>'referral_code', '')
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Xóa trigger nếu đã tồn tại để tránh lỗi
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Tạo trigger lắng nghe sự kiện INSERT trên bảng auth.users
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

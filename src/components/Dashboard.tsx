@@ -307,7 +307,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             vip_status: 'MEMBER',
             is_verified: false,
             is_admin: false,
-            referred_by: user.user_metadata?.referral_code || null,
+            referred_by: user.user_metadata?.referral_code || new URLSearchParams(window.location.search).get('ref') || null,
             referral_bonus_paid: false,
             referral_code: Math.floor(10000 + Math.random() * 90000).toString(),
             last_task_reset_date: new Date().toISOString().split('T')[0]
@@ -647,7 +647,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                           </span>
                         ))}
                         {/* Normal Tasks */}
-                        {['YEUMONEY', 'UPTOLINK', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
+                        {['YEUMONEY', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
                           <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-gray-300 text-[10px] font-bold uppercase">
                             {task}
                           </span>
