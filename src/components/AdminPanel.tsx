@@ -13,7 +13,10 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   ExternalLink,
-  Wallet
+  Wallet,
+  Image as ImageIcon,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -23,13 +26,14 @@ interface AdminPanelProps {
   onBack: () => void;
 }
 
-type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports';
+type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports' | 'proofs';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
   const [users, setUsers] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
+  const [proofs, setProofs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -49,6 +53,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [notifHistory, setNotifHistory] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
 
+  // Proof form
+  const [proofTitle, setProofTitle] = useState('');
+  const [proofUrl, setProofUrl] = useState('');
+  const [addingProof, setAddingProof] = useState(false);
+
   // Settings form
   const [refBonus, setRefBonus] = useState(1000);
   const [minWithdraw, setMinWithdraw] = useState(50000);
@@ -62,7 +71,52 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     fetchData();
     if (activeTab === 'notify') fetchNotifHistory();
     if (activeTab === 'reports') fetchReports();
+    if (activeTab === 'proofs') fetchProofs();
   }, [activeTab]);
+
+  const fetchProofs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_proofs')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setProofs(data || []);
+    } catch (err) {
+      console.error('Error fetching proofs:', err);
+    }
+  };
+
+  const addProof = async () => {
+    if (!proofUrl.trim()) return;
+    setAddingProof(true);
+    try {
+      const { error } = await supabase
+        .from('payment_proofs')
+        .insert([{ title: proofTitle, image_url: proofUrl }]);
+      if (error) throw error;
+      showNotification({ title: "Thành công", message: "Đã thêm chứng minh thanh toán.", type: "success" });
+      setProofTitle('');
+      setProofUrl('');
+      fetchProofs();
+    } catch (err) {
+      console.error('Error adding proof:', err);
+      showNotification({ title: "Lỗi", message: "Không thể thêm chứng minh.", type: "error" });
+    } finally {
+      setAddingProof(false);
+    }
+  };
+
+  const deleteProof = async (id: string) => {
+    try {
+      const { error } = await supabase.from('payment_proofs').delete().eq('id', id);
+      if (error) throw error;
+      showNotification({ title: "Thành công", message: "Đã xóa chứng minh.", type: "success" });
+      fetchProofs();
+    } catch (err) {
+      console.error('Error deleting proof:', err);
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -280,12 +334,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ contain: 'content' }}>
       <header className="flex items-center justify-between py-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={onBack}
-            className="w-10 h-10 glass flex items-center justify-center text-accent shrink-0 rounded-xl"
+            className="w-10 h-10 glass flex items-center justify-center text-accent shrink-0 rounded-xl hover:scale-105 transition-transform"
+            style={{ willChange: 'transform' }}
           >
             <ChevronLeft size={20} />
           </button>
@@ -298,62 +353,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Thành Viên</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black">{stats.totalUsers}</p>
-            <Users size={16} className="text-accent/50" />
+        {[
+          { label: 'Thành Viên', value: stats.totalUsers, icon: Users, color: '' },
+          { label: 'Chờ Rút', value: stats.pendingPayouts, icon: Clock, color: 'text-yellow-500' },
+          { label: 'Hôm nay (Xu)', value: stats.todayRevenue.toLocaleString(), icon: TrendingUp, color: 'text-emerald-400' },
+          { label: 'Tổng Nhiệm Vụ', value: stats.totalTasks.toLocaleString(), icon: Check, color: 'text-blue-400' },
+          { label: 'NV Thường', value: stats.totalTasks.toLocaleString(), icon: Check, color: 'text-accent' },
+          { label: 'NV Đặc Biệt', value: stats.totalSpecialTasks.toLocaleString(), icon: Check, color: 'text-red-500' },
+          { label: 'Tổng Số Dư', value: stats.totalSystemBalance.toLocaleString(), icon: Wallet, color: 'text-purple-400' },
+          { label: 'Lượt Tải Mod', value: stats.totalModDownloads.toLocaleString(), icon: ExternalLink, color: 'text-orange-400' }
+        ].map((stat, i) => (
+          <div key={i} className="glass p-4 rounded-2xl">
+            <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">{stat.label}</p>
+            <div className="flex items-center justify-between">
+              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
+              <stat.icon size={16} className={`${stat.color || 'text-accent'}/50`} />
+            </div>
           </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Chờ Rút</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-yellow-500">{stats.pendingPayouts}</p>
-            <Clock size={16} className="text-yellow-500/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Hôm nay (Xu)</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-emerald-400">{stats.todayRevenue.toLocaleString()}</p>
-            <TrendingUp size={16} className="text-emerald-400/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Tổng Nhiệm Vụ</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-blue-400">{stats.totalTasks.toLocaleString()}</p>
-            <Check size={16} className="text-blue-400/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">NV Thường</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-accent">{stats.totalTasks.toLocaleString()}</p>
-            <Check size={16} className="text-accent/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">NV Đặc Biệt</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-red-500">{stats.totalSpecialTasks.toLocaleString()}</p>
-            <Check size={16} className="text-red-500/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Tổng Số Dư</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-purple-400">{stats.totalSystemBalance.toLocaleString()}</p>
-            <Wallet size={16} className="text-purple-400/50" />
-          </div>
-        </div>
-        <div className="glass p-4 rounded-2xl">
-          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Lượt Tải Mod</p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-black text-orange-400">{stats.totalModDownloads.toLocaleString()}</p>
-            <ExternalLink size={16} className="text-orange-400/50" />
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Mod Download Details */}
@@ -368,13 +385,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
       {/* Tabs */}
       <div className="flex gap-6 border-b border-white/5 overflow-x-auto no-scrollbar">
-        {(['users', 'payouts', 'notify', 'settings', 'reports'] as AdminTab[]).map(tab => (
+        {(['users', 'payouts', 'notify', 'proofs', 'settings', 'reports'] as AdminTab[]).map(tab => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === tab ? 'text-accent' : 'text-gray-500 hover:text-white'}`}
           >
-            {tab === 'users' ? 'Thành Viên' : tab === 'payouts' ? 'Duyệt Rút' : tab === 'notify' ? 'Thông Báo' : tab === 'reports' ? 'Báo Lỗi' : 'Cài Đặt'}
+            {tab === 'users' ? 'Thành Viên' : tab === 'payouts' ? 'Duyệt Rút' : tab === 'notify' ? 'Thông Báo' : tab === 'proofs' ? 'Thanh Toán' : tab === 'reports' ? 'Báo Lỗi' : 'Cài Đặt'}
             {activeTab === tab && (
               <motion.div layoutId="admin-tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent shadow-[0_0_10px_#add8e6]" />
             )}
@@ -652,6 +669,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
               ) : (
                 <p className="text-xs text-gray-500 text-center py-4">Chưa có báo cáo lỗi nào</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'proofs' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="glass p-8 space-y-6 rounded-3xl md:col-span-1">
+              <div className="flex items-center gap-3 text-accent mb-2">
+                <ImageIcon size={20} />
+                <h3 className="text-sm font-black uppercase tracking-widest">Thêm chứng minh</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase ml-2">Tiêu đề (Tùy chọn)</label>
+                  <input 
+                    type="text" 
+                    value={proofTitle}
+                    onChange={(e) => setProofTitle(e.target.value)}
+                    placeholder="VD: Rút 500k MoMo" 
+                    className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-accent/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase ml-2">Link ảnh (URL)</label>
+                  <input 
+                    type="text" 
+                    value={proofUrl}
+                    onChange={(e) => setProofUrl(e.target.value)}
+                    placeholder="https://..." 
+                    className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-accent/50"
+                  />
+                </div>
+                <button 
+                  onClick={addProof}
+                  disabled={addingProof}
+                  className="w-full btn-primary py-3 rounded-xl text-[10px] font-black tracking-widest uppercase mt-2 flex items-center justify-center gap-2"
+                >
+                  {addingProof ? 'Đang thêm...' : <><Plus size={14} /> Thêm ảnh</>}
+                </button>
+              </div>
+            </div>
+
+            <div className="glass p-8 rounded-3xl md:col-span-2">
+              <h3 className="text-sm font-black uppercase tracking-widest text-white mb-6">Danh sách hình ảnh</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                {proofs.length > 0 ? (
+                  proofs.map((p) => (
+                    <div key={p.id} className="group relative aspect-[3/4] rounded-xl overflow-hidden glass border-white/5">
+                      <img src={p.image_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
+                        <p className="text-[8px] font-black text-white uppercase mb-2">{p.title || 'Không tiêu đề'}</p>
+                        <button 
+                          onClick={() => deleteProof(p.id)}
+                          className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500 text-center py-4 col-span-full italic">Chưa có hình ảnh nào.</p>
+                )}
+              </div>
             </div>
           </div>
         )}

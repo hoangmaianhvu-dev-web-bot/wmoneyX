@@ -14,7 +14,11 @@ import {
   X,
   ArrowRight,
   LogOut,
-  User
+  User,
+  Star,
+  Quote,
+  CheckCircle,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Auth from './components/Auth';
@@ -190,6 +194,74 @@ export default function App() {
     setView('landing');
   };
 
+  const PaymentProofGallery = () => {
+    const [proofs, setProofs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const fetchProofs = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('payment_proofs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(8);
+          if (error) throw error;
+          setProofs(data || []);
+        } catch (err) {
+          console.error('Error fetching payment proofs:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProofs();
+    }, []);
+
+    if (loading) {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="aspect-[3/4] glass rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      );
+    }
+
+    if (proofs.length === 0) {
+      return (
+        <div className="text-center py-12 glass rounded-3xl border-dashed border-white/10">
+          <p className="text-gray-500 text-sm italic">Chưa có hình ảnh thanh toán nào được cập nhật.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {proofs.map((proof, i) => (
+          <motion.div
+            key={proof.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.1 }}
+            className="group relative aspect-[3/4] overflow-hidden rounded-2xl glass border-white/5 hover:border-accent/50 transition-all"
+          >
+            <img 
+              src={proof.image_url} 
+              alt={`Thanh toán ${i + 1}`} 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+              <p className="text-[10px] font-black text-accent uppercase tracking-widest">{proof.title || 'Giao dịch thành công'}</p>
+              <p className="text-[8px] text-gray-400">{new Date(proof.created_at).toLocaleDateString('vi-VN')}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (!authReady) {
       return (
@@ -229,11 +301,13 @@ export default function App() {
           wmoneyX
         </motion.h1>
         
-        <div className="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.2em] font-bold">
-          <a href="#features" className="hover:text-accent transition">Tính năng</a>
-          <a href="#stats" className="hover:text-accent transition">Thống kê</a>
-          <a href="#support" className="hover:text-accent transition">Hỗ trợ</a>
-        </div>
+          <div className="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.2em] font-bold">
+            <a href="#features" className="hover:text-accent transition">Tính năng</a>
+            <a href="#reviews" className="hover:text-accent transition">Đánh giá</a>
+            <a href="#payments" className="hover:text-accent transition">Thanh toán</a>
+            <a href="#stats" className="hover:text-accent transition">Thống kê</a>
+            <a href="#support" className="hover:text-accent transition">Hỗ trợ</a>
+          </div>
 
         <div className="flex items-center gap-4">
           <motion.button
@@ -265,6 +339,8 @@ export default function App() {
           >
             <div className="flex flex-col gap-8 text-center">
               <a href="#features" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest">Tính năng</a>
+              <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest">Đánh giá</a>
+              <a href="#payments" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest">Thanh toán</a>
               <a href="#stats" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest">Thống kê</a>
               <a href="#support" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold uppercase tracking-widest">Hỗ trợ</a>
               <button 
@@ -353,6 +429,61 @@ export default function App() {
             <h4 className="text-xl font-bold mb-4">Hỗ trợ 24/7</h4>
             <p className="text-gray-500 text-sm">Đội ngũ kỹ thuật luôn sẵn sàng giải đáp mọi thắc mắc của bạn bất cứ lúc nào.</p>
           </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section id="reviews" className="py-24 px-6 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h3 className="text-xs font-black uppercase tracking-[0.5em] text-accent mb-4">Đánh giá từ người dùng</h3>
+          <h2 className="text-3xl font-bold">Cộng đồng nói gì về wmoneyX?</h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { name: "Hoàng Minh Quân", role: "Sinh viên ĐH Bách Khoa", content: "Lúc đầu mình cũng nghi ngờ nhưng sau khi rút được 200k đầu tiên qua MoMo chỉ trong 5 phút thì mình hoàn toàn tin tưởng. Web làm nhiệm vụ rất mượt, không bị lỗi vặt như mấy trang khác.", rating: 5, avatar: "H" },
+            { name: "Phan Thanh Thảo", role: "Mẹ bỉm sữa", content: "Công việc văn phòng bận rộn nhưng mình vẫn tranh thủ buổi tối làm vài nhiệm vụ. Thu nhập không quá lớn nhưng đủ tiền bỉm sữa cho con. Rất cảm ơn đội ngũ admin hỗ trợ nhiệt tình.", rating: 5, avatar: "P" },
+            { name: "Đặng Quốc Bảo", role: "Freelancer", content: "Hệ thống referral rất tốt, mình giới thiệu được hơn 50 bạn và thu nhập thụ động mỗi ngày khá ổn định. Điểm cộng lớn nhất là rút tiền tự động 24/7 kể cả ngày lễ.", rating: 5, avatar: "Đ" }
+          ].map((review, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass p-8 rounded-3xl relative border-white/5 hover:border-accent/30 transition-colors"
+            >
+              <Quote className="absolute top-4 right-4 w-8 h-8 text-accent/10" />
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, starI) => (
+                  <Star key={starI} size={14} className="fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <p className="text-gray-300 text-sm mb-6 leading-relaxed italic">"{review.content}"</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center font-black text-accent border border-accent/20">
+                  {review.avatar}
+                </div>
+                <div>
+                  <h5 className="text-sm font-black text-white">{review.name}</h5>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{review.role}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Payment Proof Section */}
+      <section id="payments" className="py-24 px-6 bg-white/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h3 className="text-xs font-black uppercase tracking-[0.5em] text-accent mb-4">Chứng minh thanh toán</h3>
+            <h2 className="text-3xl font-bold">Hình ảnh giao dịch thực tế</h2>
+            <p className="text-gray-500 text-sm mt-4">Tất cả giao dịch đều được công khai để đảm bảo tính minh bạch.</p>
+          </div>
+
+          <PaymentProofGallery />
         </div>
       </section>
 

@@ -46,6 +46,14 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
   const [reportText, setReportText] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [bubblesEnabled, setBubblesEnabled] = useState(() => localStorage.getItem('bubbles_enabled') !== 'false');
+
+  const toggleBubbles = () => {
+    const newValue = !bubblesEnabled;
+    setBubblesEnabled(newValue);
+    localStorage.setItem('bubbles_enabled', newValue.toString());
+    window.dispatchEvent(new CustomEvent('toggle-bubbles'));
+  };
 
   useEffect(() => {
     if (activePage === 'history') {
@@ -111,7 +119,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           <div className="w-20 h-20 bg-accent/10 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-accent/30">
             <UserRound size={40} className="text-accent" />
           </div>
-          <h3 className="text-xl font-black italic tracking-tighter">{profile?.username || '---'}</h3>
+          <h3 className="text-xl font-black italic tracking-tighter">{profile?.username || '0'}</h3>
           <div className="text-[8px] px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black uppercase mt-2 inline-block">
             VIP {levelInfo.vip}
           </div>
@@ -143,6 +151,16 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
                 />
               ))}
             </div>
+          </div>
+
+          <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4 flex items-center justify-between">
+            <p className="text-[9px] text-gray-500 uppercase font-bold">Bong bóng bay</p>
+            <button 
+              onClick={toggleBubbles}
+              className={`w-10 h-5 rounded-full relative transition-all duration-300 ${bubblesEnabled ? 'bg-accent' : 'bg-white/10'}`}
+            >
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${bubblesEnabled ? 'right-1' : 'left-1'}`} />
+            </button>
           </div>
         </div>
 
@@ -315,7 +333,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   };
 
   const renderReferral = () => {
-    const referralCode = profile?.referral_code || '---';
+    const referralCode = profile?.referral_code || '0';
     const referralLink = `${window.location.origin}/?ref=${referralCode}`;
 
     return (
@@ -531,11 +549,12 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   );
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-24" style={{ contain: 'content' }}>
       <header className="flex items-center gap-4 py-6 mb-8">
         <button 
           onClick={() => activePage === 'profile' ? onBack() : setActivePage('profile')} 
           className="w-10 h-10 glass flex items-center justify-center text-accent shrink-0 hover:bg-accent hover:text-black transition-all"
+          style={{ willChange: 'transform' }}
         >
           <ChevronLeft size={20} />
         </button>
@@ -546,9 +565,10 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
         <motion.div
           key={activePage}
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
+          style={{ willChange: 'transform, opacity' }}
         >
           {activePage === 'profile' && renderProfile()}
           {activePage === 'history' && renderHistory()}

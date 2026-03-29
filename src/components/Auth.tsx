@@ -221,8 +221,9 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
         {/* Auth Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
           className="glass p-8 shadow-2xl rounded-[28px]"
+          style={{ willChange: 'transform, opacity' }}
         >
           {/* Tabs Navigation */}
           {mode !== 'forgot' && (

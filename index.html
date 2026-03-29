@@ -14,61 +14,131 @@
     <style>
         #bubble-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             pointer-events: none; /* Giúp vẫn click được các nút bên dưới */
             z-index: 999999;      /* Luôn nằm trên cùng */
             overflow: hidden;
+            contain: strict;
         }
 
+        /* Lớp vỏ bong bóng siêu mỏng */
         .bubble {
             position: absolute;
-            bottom: -100px;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), rgba(186, 230, 253, 0.1));
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            bottom: -150px;
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            /* Độ dày viền cực nhỏ (0.2px) */
+            border: 0.2px solid rgba(255, 255, 255, 0.18);
+            /* Tạo hiệu ứng khúc xạ ánh sáng xuyên qua vỏ */
+            backdrop-filter: blur(0.8px);
+            /* Đổ bóng trong và ngoài tạo khối 3D nhẹ */
+            box-shadow: 
+                inset 0 0 15px rgba(255, 255, 255, 0.05),
+                inset 10px -10px 20px rgba(186, 230, 253, 0.1),
+                0 0 10px rgba(255, 255, 255, 0.05);
+            will-change: transform, opacity;
             animation: rise-and-sway var(--duration) ease-in infinite;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
         }
 
+        /* Điểm phản xạ ánh sáng (Highlight) trên bề mặt */
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 25%;
+            height: 20%;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 50%;
+            transform: rotate(-35deg);
+            filter: blur(1px);
+        }
+
+        /* Hiệu ứng cầu vồng nhiễu xạ (Iridescence) */
+        .bubble::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(
+                circle at 70% 30%, 
+                transparent 40%, 
+                rgba(186, 230, 253, 0.05) 60%, 
+                rgba(255, 192, 203, 0.05) 80%
+            );
+        }
+
+        /* Chuyển động bay và lắc lư */
         @keyframes rise-and-sway {
-            0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
-            10% { opacity: 0.7; }
-            50% { transform: translateY(-50vh) translateX(20px) scale(1.1); }
-            90% { opacity: 0.7; }
-            100% { transform: translateY(-120vh) translateX(-10px) scale(0.8); opacity: 0; }
+            0% { 
+                transform: translate3d(0, 0, 0) scale(1) rotate(0deg); 
+                opacity: 0; 
+            }
+            15% { 
+                opacity: 0.7; 
+            }
+            50% { 
+                /* Lắc lư ngang 50px */
+                transform: translate3d(50px, -60vh, 0) scale(1.1) rotate(180deg); 
+            }
+            85% { 
+                opacity: 0.4; 
+            }
+            100% { 
+                /* Bay quá màn hình và tan biến */
+                transform: translate3d(-20px, -130vh, 0) scale(0.9) rotate(360deg); 
+                opacity: 0; 
+            }
         }
     </style>
 
     <!-- 3. JavaScript để tạo bong bóng ngẫu nhiên -->
     <script>
+        function updateBubblesVisibility() {
+            const container = document.getElementById('bubble-overlay');
+            if (!container) return;
+            const isEnabled = localStorage.getItem('bubbles_enabled') !== 'false';
+            container.style.display = isEnabled ? 'block' : 'none';
+        }
+
         function initBubbles() {
             const container = document.getElementById('bubble-overlay');
             if (!container) return;
+            
+            // Clear existing bubbles if any (for re-init)
+            container.innerHTML = '';
+            
+            updateBubblesVisibility();
+            
             const count = 30; // Số lượng bong bóng
+            const fragment = document.createDocumentFragment();
             
             for (let i = 0; i < count; i++) {
                 const b = document.createElement('div');
-                const size = Math.random() * 40 + 10 + 'px';
+                const sizeVal = Math.random() * 40 + 10;
+                const size = sizeVal + 'px';
                 
                 b.className = 'bubble';
                 b.style.width = size;
                 b.style.height = size;
                 b.style.left = Math.random() * 100 + '%';
                 
-                // Thời gian bay ngẫu nhiên từ 6s đến 10s
-                b.style.setProperty('--duration', Math.random() * 4 + 6 + 's');
+                // Thời gian bay ngẫu nhiên từ 7s đến 12s
+                b.style.setProperty('--duration', Math.random() * 5 + 7 + 's');
                 // Độ trễ ngẫu nhiên để không bay lên cùng lúc
-                b.style.animationDelay = Math.random() * 8 + 's';
+                b.style.animationDelay = Math.random() * 10 + 's';
                 
-                container.appendChild(b);
+                fragment.appendChild(b);
             }
+            container.appendChild(fragment);
         }
 
         // Chạy hàm khi trang web tải xong
         window.addEventListener('load', initBubbles);
+        
+        // Listen for custom event to toggle bubbles
+        window.addEventListener('toggle-bubbles', updateBubblesVisibility);
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

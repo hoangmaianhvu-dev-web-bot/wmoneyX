@@ -455,16 +455,17 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-72 min-h-screen pb-24 md:pb-12 relative">
+      <main className="flex-1 md:ml-72 min-h-screen pb-24 md:pb-12 relative" style={{ contain: 'content' }}>
         {/* Social Icons */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
           <AnimatePresence>
             {isSocialOpen && (
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transform: 'translate3d(0,0,0)' }}
                 exit={{ opacity: 0, y: 20, scale: 0.8 }}
                 className="flex flex-col gap-3"
+                style={{ willChange: 'transform, opacity' }}
               >
                 <a href="https://youtube.com/your-ytb-link" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
                   <span className="font-black text-[10px]">YT</span>
@@ -491,9 +492,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              style={{ willChange: 'transform, opacity' }}
             >
               {activeTab === 'home' && (
             <>
@@ -535,7 +537,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   
                   <div className="glass px-3 py-2 flex items-center gap-2 border-accent/20 rounded-xl">
                     <Coins size={12} className="text-accent" />
-                    <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '---' : profile?.balance.toLocaleString()}</span>
+                    <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '0' : profile?.balance.toLocaleString()}</span>
                   </div>
                 </div>
               </header>
@@ -562,15 +564,17 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <div className="h-3 w-full bg-black/50 rounded-full overflow-hidden border border-white/5 relative">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${levelInfo.progress}%` }}
+                      animate={{ width: `${levelInfo.progress}%`, transform: 'translate3d(0,0,0)' }}
                       transition={{ duration: 1, ease: "easeOut" }}
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent/50 to-accent rounded-full"
+                      style={{ willChange: 'width, transform' }}
                     />
                     {/* Shine effect */}
                     <motion.div
-                      animate={{ x: ['-100%', '200%'] }}
+                      animate={{ x: ['-100%', '200%'], transform: 'translate3d(0,0,0)' }}
                       transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
                       className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]"
+                      style={{ willChange: 'transform' }}
                     />
                   </div>
                   <p className="text-[9px] text-gray-500 mt-2 text-center italic">
@@ -587,10 +591,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
+                      style={{ willChange: 'transform, opacity' }}
                     >
-                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12">
+                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <Target size={40} />
                       </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
@@ -598,11 +603,12 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
                       transition={{ delay: 0.1 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
+                      style={{ willChange: 'transform, opacity' }}
                     >
-                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:-rotate-12">
+                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:-rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <CheckSquare size={40} />
                       </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ thường</p>
@@ -610,11 +616,12 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
                       transition={{ delay: 0.15 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group border-red-500/20"
+                      style={{ willChange: 'transform, opacity' }}
                     >
-                      <div className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-all group-hover:scale-110 group-hover:rotate-12">
+                      <div className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <AlertTriangle size={40} />
                       </div>
                       <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ đặc biệt</p>
