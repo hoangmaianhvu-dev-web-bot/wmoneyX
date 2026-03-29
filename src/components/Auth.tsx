@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import EffectsManager, { EffectType } from './EffectsManager';
 import { supabase } from '../supabase';
 import { 
   Mail, 
@@ -27,10 +26,9 @@ emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
 interface AuthProps {
   onBack: () => void;
   onSuccess: () => void;
-  currentEffect: EffectType;
 }
 
-export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
+export default function Auth({ onBack, onSuccess }: AuthProps) {
   const { showNotification } = useNotification();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
@@ -130,25 +128,11 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
     }
 
     try {
-      const verifyResponse = await fetch('/api-server/verify-hcaptcha', {
+      const verifyResponse = await fetch('/api/verify-hcaptcha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: captchaToken }),
       });
-      
-      if (!verifyResponse.ok) {
-        const errorText = await verifyResponse.text();
-        console.error("hCaptcha verification failed:", verifyResponse.status, errorText);
-        let errorMsg = `Xác thực thất bại (${verifyResponse.status})`;
-        try {
-          const errorJson = JSON.parse(errorText);
-          if (errorJson.message) errorMsg = errorJson.message;
-        } catch (e) {}
-        setError(errorMsg);
-        setLoading(false);
-        return;
-      }
-
       const verifyData = await verifyResponse.json();
       if (!verifyData.success) {
         setError('Xác thực hCaptcha thất bại. Vui lòng thử lại.');
@@ -251,8 +235,7 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-6 text-white font-sans relative z-10">
-      <EffectsManager effect={currentEffect} />
+    <div className="min-h-screen flex items-center justify-center p-6 text-white font-sans relative z-10">
       <div className="w-full max-w-sm">
         {/* Logo Area */}
         <div className="text-center mb-10">

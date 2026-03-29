@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, 
   Landmark, 
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
 import IdentityVerification from './IdentityVerification';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface WithdrawProps {
   balance: number;
@@ -42,6 +43,8 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
   const [showSuccess, setShowSuccess] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const hcaptchaRef = useRef<HCaptcha>(null);
 
   useEffect(() => {
     fetchWithdrawals();
@@ -92,9 +95,38 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
       return;
     }
 
+    if (!captchaToken) {
+      showNotification({
+        title: "Lỗi",
+        message: "Vui lòng hoàn thành mã xác thực hCaptcha.",
+        type: "error"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      // Verify hCaptcha server-side
+      const verifyResponse = await fetch('/api/verify-hcaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+      const verifyData = await verifyResponse.json();
+      
+      if (!verifyData.success) {
+        showNotification({
+          title: "Lỗi",
+          message: "Xác thực hCaptcha thất bại. Vui lòng thử lại.",
+          type: "error"
+        });
+        hcaptchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
+        setIsSubmitting(false);
+        return;
+      }
+
       const numAmount = Number(amount);
       const newBalance = balance - numAmount;
       
@@ -437,6 +469,13 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
             </div>
             
             <div className="flex justify-center py-2">
+              <HCaptcha
+                sitekey={import.meta.env.VITE_HCAPTCHA_SITEKEY || "74289632-2ab6-47a2-9046-dd6e37b09250"}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                ref={hcaptchaRef}
+                theme="dark"
+              />
             </div>
 
             <button 

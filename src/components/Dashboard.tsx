@@ -20,8 +20,7 @@ import {
   Wand2,
   Star,
   Target,
-  Layers,
-  AlertTriangle
+  Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -36,7 +35,6 @@ import Leaderboard from './Leaderboard';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
 import EffectsManager from './EffectsManager';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface DashboardProps {
   user: any;
@@ -53,7 +51,6 @@ interface Profile {
   balance: number;
   tasks_today: number;
   tasks_total: number;
-  special_tasks_total?: number;
   vip_status: 'MEMBER' | 'VIP GOLD';
   is_admin: boolean;
   is_verified: boolean;
@@ -91,7 +88,9 @@ const getLevelInfo = (exp: number) => {
   if (level >= 5 && level < 15) vip = 2;
   else if (level >= 15 && level < 30) vip = 3;
   else if (level >= 30 && level < 50) vip = 4;
-  else if (level >= 50) vip = 5 + Math.floor((level - 50) / 15);
+  else if (level >= 50 && level < 80) vip = 5;
+  else if (level >= 80 && level < 120) vip = 6;
+  else if (level >= 120) vip = 7;
 
   return { level, currentLevelExp, nextLevelExp, progress, vip };
 };
@@ -110,8 +109,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   const [showVerifyReminder, setShowVerifyReminder] = useState(false);
   const [showVerifyRedDot, setShowVerifyRedDot] = useState(false);
   const [isSocialOpen, setIsSocialOpen] = useState(false);
-  const [isTaskVerified, setIsTaskVerified] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const ADMIN_ID = "22072009";
 
@@ -217,7 +214,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   }, [user]);
 
   useEffect(() => {
-    // Leaderboard removed
+    if (profile) {
+      fetchLeaderboard();
+    }
   }, [profile]);
 
   useEffect(() => {
@@ -395,6 +394,43 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
     }
   };
 
+  const fetchLeaderboard = async () => {
+    try {
+      // 1. Fetch top 10
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, balance, tasks_total, vip_status')
+        .order('balance', { ascending: false });
+
+      if (error) throw error;
+      
+      const formattedData = data?.map(item => ({
+        id: item.id,
+        username: item.username,
+        balance: (item.balance || 0).toLocaleString(),
+        tasks: item.tasks_total || 0,
+        vip: item.vip_status === 'VIP GOLD'
+      })) || [];
+
+      setLeaderboard(formattedData);
+
+      // 2. Calculate user rank
+      if (profile) {
+        const { count, error: rankError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gt('balance', profile.balance);
+        
+        if (!rankError) {
+          setUserRank((count || 0) + 1);
+        }
+      }
+    } catch (error: any) {
+      console.error('Lỗi khi tải bảng xếp hạng:', error);
+      // Don't show notification for leaderboard to avoid spamming
+    }
+  };
+
   const currentDate = new Date();
   const monthDisplay = `Tháng ${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
 
@@ -450,6 +486,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="home" icon={Home} label="Trang Chủ" />
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
           <NavItem id="daily" icon={Gift} label="Thưởng Ngày" />
+          <NavItem id="leaderboard" icon={Trophy} label="Đua Top" />
           <NavItem id="mods" icon={Gamepad2} label="Mod Game" />
           <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
           <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
@@ -640,36 +677,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </motion.div>
                   </div>
 
-                  {/* Phân loại nhiệm vụ */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="glass p-6 rounded-3xl border-white/10"
-                  >
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Thống kê loại nhiệm vụ</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent">
-                            <CheckSquare size={14} />
-                          </div>
-                          <span className="text-xs font-bold uppercase text-gray-300">Nhiệm vụ thường</span>
-                        </div>
-                        <span className="text-lg font-black text-accent">{profile?.tasks_total || 0}</span>
-                      </div>
-                      <div className="bg-red-500/5 p-4 rounded-2xl border border-red-500/20 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
-                            <AlertTriangle size={14} />
-                          </div>
-                          <span className="text-xs font-bold uppercase text-gray-300">Nhiệm vụ đặc biệt</span>
-                        </div>
-                        <span className="text-lg font-black text-red-500">{profile?.special_tasks_total || 0}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-
                   {/* Invite Friends Card */}
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -694,7 +701,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     <motion.div 
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab('tasks')}
+                      onClick={() => setActiveTab('daily')}
                       className="glass p-6 rounded-3xl border-accent/20 bg-gradient-to-br from-accent/10 to-transparent cursor-pointer group"
                     >
                       <div className="flex items-center gap-4">
@@ -703,11 +710,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                           transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
                           className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center"
                         >
-                          <CheckSquare className="text-accent" size={24} />
+                          <Gift className="text-accent" size={24} />
                         </motion.div>
                         <div>
-                          <h3 className="text-sm font-black uppercase tracking-widest">Gợi ý nhiệm vụ</h3>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">LINK4M duyệt nhanh</p>
+                          <h3 className="text-sm font-black uppercase tracking-widest">Thưởng Ngày</h3>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Nhận thưởng ngay</p>
                         </div>
                       </div>
                     </motion.div>
@@ -715,20 +722,20 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     <motion.div 
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab('tasks')}
-                      className="glass p-6 rounded-3xl border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent cursor-pointer group"
+                      onClick={() => setActiveTab('daily')}
+                      className="glass p-6 rounded-3xl border-accent/20 bg-gradient-to-br from-accent/10 to-transparent cursor-pointer group"
                     >
                       <div className="flex items-center gap-4">
                         <motion.div 
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                          className="w-12 h-12 bg-red-500/20 rounded-2xl flex items-center justify-center"
+                          className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center"
                         >
-                          <AlertTriangle className="text-red-500" size={24} />
+                          <Gift className="text-accent" size={24} />
                         </motion.div>
                         <div>
-                          <h3 className="text-sm font-black uppercase tracking-widest text-red-500">Nhiệm vụ HOT</h3>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">TRAFFIC1M thưởng cao</p>
+                          <h3 className="text-sm font-black uppercase tracking-widest">Thưởng Ngày</h3>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase">Nhận 10 EXP</p>
                         </div>
                       </div>
                     </motion.div>
@@ -771,6 +778,54 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                           Hiện chưa có gợi ý nào.
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Leaderboard */}
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end px-1">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Bảng Xếp Hạng</h2>
+                    <span className="text-[9px] text-accent font-bold uppercase tracking-widest">{monthDisplay}</span>
+                  </div>
+
+                  <div className="glass overflow-hidden rounded-3xl border-accent/10 max-h-[400px] overflow-y-auto">
+                    <div className="divide-y divide-white/5">
+                      {leaderboard.length > 0 ? (
+                        leaderboard.map((item, index) => (
+                          <div key={item.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition">
+                            <div className="flex items-center gap-4">
+                              <span className={`text-lg font-black italic w-6 ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-gray-600'}`}>
+                                #{index + 1}
+                              </span>
+                              <div>
+                                <div className="flex items-center">
+                                  <p className="text-xs font-bold">{item.username}</p>
+                                  {item.vip && <span className="text-[6px] bg-yellow-400 text-black px-1 rounded ml-1 font-black">VIP</span>}
+                                </div>
+                                <p className="text-[9px] text-gray-500 font-bold uppercase">{item.tasks} Nhiệm vụ</p>
+                              </div>
+                            </div>
+                            <p className="text-xs font-black text-accent">{item.balance}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-gray-500 italic text-xs">
+                          Chưa có dữ liệu xếp hạng.
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* User Rank Footer */}
+                    <div className="p-4 bg-accent/10 flex items-center justify-between border-t border-accent/20">
+                      <div className="flex items-center gap-4">
+                        <span className="text-lg font-black italic text-accent w-6">#{userRank || '---'}</span>
+                        <div>
+                          <p className="text-xs font-bold">{profile?.username}</p>
+                          <p className="text-[9px] text-gray-400 uppercase font-bold">{profile?.tasks_total || 0} Nhiệm vụ</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-black text-accent">{profile?.balance?.toLocaleString() || '0'} Xu</p>
                     </div>
                   </div>
                 </div>
@@ -828,64 +883,16 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           )}
 
           {activeTab === 'tasks' && (
-            isTaskVerified ? (
-              <Tasks 
-                balance={profile?.balance || 0}
-                userId={user.id}
-                profile={profile}
-                onBack={() => {
-                  setActiveTab('home');
-                  setIsTaskVerified(false);
-                }}
-                onUpdateBalance={(newBalance) => {
-                  setProfile(prev => prev ? { ...prev, balance: newBalance } : null);
-                }}
-                onUpdateProfile={fetchProfile}
-              />
-            ) : (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
-                <div className="glass p-8 rounded-[2rem] border-accent/30 text-center">
-                  <h3 className="text-xl font-black uppercase tracking-widest text-accent mb-6">Xác minh nhiệm vụ</h3>
-                  <HCaptcha
-                    sitekey={import.meta.env.VITE_HCAPTCHA_SITEKEY || "74289632-2ab6-47a2-9046-dd6e37b09250"}
-                    onVerify={(token) => setCaptchaToken(token)}
-                    onExpire={() => setCaptchaToken(null)}
-                    theme="dark"
-                  />
-                  <button 
-                    onClick={async () => {
-                      if (!captchaToken) {
-                        showNotification({
-                          title: "LỖI",
-                          message: "Vui lòng hoàn thành hCaptcha.",
-                          type: "error"
-                        });
-                        return;
-                      }
-                      // Verify hCaptcha token on server
-                      const response = await fetch('/api-server/verify-hcaptcha', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token: captchaToken }),
-                      });
-                      const data = await response.json();
-                      if (data.success) {
-                        setIsTaskVerified(true);
-                      } else {
-                        showNotification({
-                          title: "LỖI",
-                          message: "Xác minh hCaptcha thất bại.",
-                          type: "error"
-                        });
-                      }
-                    }}
-                    className="mt-6 w-full py-3 bg-accent text-black font-black uppercase rounded-xl"
-                  >
-                    Xác minh
-                  </button>
-                </div>
-              </div>
-            )
+            <Tasks 
+              balance={profile?.balance || 0}
+              userId={user.id}
+              profile={profile}
+              onBack={() => setActiveTab('home')}
+              onUpdateBalance={(newBalance) => {
+                setProfile(prev => prev ? { ...prev, balance: newBalance } : null);
+              }}
+              onUpdateProfile={fetchProfile}
+            />
           )}
 
           {activeTab === 'daily' && (
@@ -893,6 +900,15 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               userId={user.id}
               profile={profile}
               onUpdateProfile={fetchProfile}
+            />
+          )}
+
+          {activeTab === 'leaderboard' && (
+            <Leaderboard 
+              userId={user.id}
+              profile={profile}
+              onUpdateProfile={fetchProfile}
+              limit={10}
             />
           )}
 

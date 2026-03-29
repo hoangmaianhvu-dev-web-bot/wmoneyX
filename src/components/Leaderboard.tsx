@@ -14,14 +14,12 @@ interface LeaderboardProps {
 const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile, onUpdateProfile, limit = 30 }) => {
   const { showNotification } = useNotification();
   const [topUsers, setTopUsers] = useState<any[]>([]);
-  const [vipLeaderboard, setVipLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [showWheel, setShowWheel] = useState(false);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [showNotice, setShowNotice] = useState(false);
-  const [activeTab, setActiveTab] = useState<'monthly' | 'vip'>('monthly');
 
   const REWARDS = [
     { label: "Chúc may mắn", value: 0, type: 'NONE', color: '#333' },
@@ -33,7 +31,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile, onUpdateProf
 
   useEffect(() => {
     fetchLeaderboard();
-    fetchVipLeaderboard();
 
     const hasSeenNotice = localStorage.getItem('leaderboard_notice_seen');
     if (!hasSeenNotice) {
@@ -53,7 +50,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile, onUpdateProf
         () => {
           console.log('Leaderboard data changed, refetching...');
           fetchLeaderboard();
-          fetchVipLeaderboard();
         }
       )
       .subscribe();
@@ -62,15 +58,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile, onUpdateProf
       supabase.removeChannel(channel);
     };
   }, []);
-
-  const fetchVipLeaderboard = async () => {
-    const { data: vipData } = await supabase
-      .from('profiles')
-      .select('id, username, exp, vip_status')
-      .order('exp', { ascending: false })
-      .limit(10);
-    setVipLeaderboard(vipData || []);
-  };
 
   const fetchLeaderboard = async () => {
     setLoading(true);
