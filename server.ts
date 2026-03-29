@@ -15,6 +15,34 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // hCaptcha verification
+  app.post("/api/verify-hcaptcha", async (req, res) => {
+    const { token } = req.body;
+    const secret = process.env.HCAPTCHA_SECRET || "ES_cc4c49b56626414a82adf8a814f998e0";
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.append('secret', secret);
+      params.append('response', token);
+
+      const response = await fetch("https://hcaptcha.com/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: params,
+      });
+
+      const data = await response.json();
+      res.json(data);
+    } catch (err: any) {
+      console.error("hCaptcha Error:", err);
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
   // Proxy for VuotNhanh API to bypass CORS
   app.get("/api/proxy-vuotnhanh", async (req, res) => {
     const { url } = req.query;
