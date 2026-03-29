@@ -5,7 +5,8 @@ import {
   AlertTriangle, 
   CheckCircle2,
   Clock,
-  ExternalLink
+  ExternalLink,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -37,6 +38,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [isChecking, setIsChecking] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showSpecialGuide, setShowSpecialGuide] = useState(false);
 
   const reward = React.useMemo(() => {
     let r = CONFIG.REWARD;
@@ -313,20 +315,22 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               <h3 className="text-sm font-black uppercase mb-1">Vượt link rút gọn</h3>
               <p className="text-[10px] text-gray-400 mb-4">Phần thưởng: <span className="text-accent font-bold">{reward} Xu</span></p>
               
-              <button 
-                onClick={() => startTask('random')}
-                disabled={isGenerating}
-                className="btn-task w-full py-3 rounded-xl text-[10px] uppercase tracking-widest disabled:opacity-50"
-              >
-                {isGenerating ? 'ĐANG TẠO LINK...' : (isTaskStarted ? 'Lấy link mới' : 'Thực hiện nhiệm vụ')}
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => startTask('random')}
+                  disabled={isGenerating}
+                  className="btn-task flex-1 py-3 rounded-xl text-[10px] uppercase tracking-widest disabled:opacity-50"
+                >
+                  {isGenerating ? 'ĐANG TẠO LINK...' : (isTaskStarted ? 'Lấy link mới' : 'Thực hiện nhiệm vụ')}
+                </button>
 
-              <button 
-                onClick={() => setShowGuide(true)}
-                className="w-full mt-2 py-2 glass border-accent/20 text-accent text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-accent/10 transition-all"
-              >
-                Hướng dẫn lấy mã
-              </button>
+                <button 
+                  onClick={() => setShowGuide(true)}
+                  className="w-12 py-3 glass border-accent/20 text-accent rounded-xl flex items-center justify-center hover:bg-accent/10 transition-all"
+                >
+                  <HelpCircle size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -385,17 +389,25 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                 <span className="text-gray-400">Không giới hạn lượt làm</span>
               </div>
 
-              <button 
-                onClick={async () => {
-                  const el = document.getElementById('special-task-options');
-                  if (el) {
-                    el.classList.toggle('hidden');
-                  }
-                }}
-                className="w-full py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-              >
-                Bắt đầu
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={async () => {
+                    const el = document.getElementById('special-task-options');
+                    if (el) {
+                      el.classList.toggle('hidden');
+                    }
+                  }}
+                  className="flex-1 py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                >
+                  Bắt đầu
+                </button>
+                <button 
+                  onClick={() => setShowSpecialGuide(true)}
+                  className="w-12 py-3 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                >
+                  <HelpCircle size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -497,6 +509,89 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               <button 
                 onClick={() => setShowGuide(false)}
                 className="w-full py-3 btn-primary rounded-xl text-[10px] font-black uppercase tracking-widest"
+              >
+                Đã hiểu
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Hướng dẫn nhiệm vụ đặc biệt */}
+      <AnimatePresence>
+        {showSpecialGuide && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSpecialGuide(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass p-6 w-[92%] max-w-[360px] space-y-4 relative z-10 rounded-[2rem] border-red-500/20 overflow-y-auto max-h-[85vh]"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-black uppercase text-red-500 tracking-widest">Hướng dẫn nhiệm vụ đặc biệt</h3>
+                <button onClick={() => setShowSpecialGuide(false)} className="text-gray-500 hover:text-white">
+                  <ExternalLink size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-left">
+                <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl mb-4">
+                  <p className="text-[9px] text-red-400 font-bold leading-relaxed">
+                    Có thể thực hiện KHÔNG GIỚI HẠN, tuy nhiên để đảm bảo tỷ lệ hiện review cao nhất thì có thể chờ vài tiếng review 1 lần hoặc dùng vài tài khoản Google khác nhau nếu muốn.
+                  </p>
+                  <p className="text-[9px] text-red-400 font-bold leading-relaxed mt-2">
+                    Vui lòng thực hiện đúng yêu cầu nhiệm vụ, Admin sẽ kiểm tra để ban và không thanh toán nếu bạn cố ý không tuân thủ!
+                  </p>
+                  <p className="text-[9px] text-red-500 font-black uppercase leading-relaxed mt-2">
+                    Cảnh báo: Nếu cố ý không hoàn thành nhiệm vụ và có hành vi gian lận khi kiểm tra thì Admin hoàn toàn có quyền khóa tài khoản và không thanh toán.
+                  </p>
+                  <p className="text-[9px] text-red-400 font-bold leading-relaxed mt-2">
+                    Mong mọi người có ý thức để cùng nhau kiếm coins nhé.
+                  </p>
+                </div>
+
+                <h4 className="text-[10px] font-black uppercase text-white mb-2">HƯỚNG DẪN CHI TIẾT:</h4>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-black shrink-0 text-[10px]">1</div>
+                  <div>
+                    <p className="text-[10px] text-gray-300 font-bold mt-1">Xem video hướng dẫn và bật FakeGPS</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-black shrink-0 text-[10px]">2</div>
+                  <div>
+                    <p className="text-[10px] text-gray-300 font-bold mt-1">Đăng nhập vào TripAdvisitor và vào nhiệm vụ được yêu cầu</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-black shrink-0 text-[10px]">3</div>
+                  <div>
+                    <p className="text-[10px] text-gray-300 font-bold mt-1">Viết đánh giá theo yêu cầu nhiệm vụ.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 font-black shrink-0 text-[10px]">4</div>
+                  <div>
+                    <p className="text-[10px] text-gray-300 font-bold mt-1">Copy lại link đánh giá</p>
+                    <p className="text-[8px] text-gray-500 mt-0.5">(VD: https://www.tripadvisor.com.vn/ShowUserReview...)</p>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowSpecialGuide(false)}
+                className="w-full py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors"
               >
                 Đã hiểu
               </button>
