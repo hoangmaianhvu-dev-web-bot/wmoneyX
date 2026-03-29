@@ -363,7 +363,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           { label: 'Tổng Số Dư', value: stats.totalSystemBalance.toLocaleString(), icon: Wallet, color: 'text-purple-400' },
           { label: 'Lượt Tải Mod', value: stats.totalModDownloads.toLocaleString(), icon: ExternalLink, color: 'text-orange-400' }
         ].map((stat, i) => (
-          <div key={i} className="glass p-4 rounded-2xl">
+          <div key={i} className="glass p-4 rounded-2xl hover:scale-105 transition-all duration-300 hover:rotate-y-6 hover:rotate-x-2" style={{ willChange: 'transform' }}>
             <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">{stat.label}</p>
             <div className="flex items-center justify-between">
               <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>

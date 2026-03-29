@@ -22,6 +22,7 @@ import { useNotification } from '../context/NotificationContext';
 import IdentityVerification from './IdentityVerification';
 import { EffectType, effectNames } from './EffectsManager';
 import { supabase } from '../supabase';
+import { getLevelInfo } from '../utils/levelUtils';
 
 interface SettingsProps {
   profile: any;
@@ -98,19 +99,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
     report: 'Báo Lỗi'
   };
 
-  const getLevelInfo = (exp: number) => {
-    const level = Math.floor(Math.sqrt(exp / 10)) + 1;
-    let vip = 1;
-    if (level >= 5 && level < 15) vip = 2;
-    else if (level >= 15 && level < 30) vip = 3;
-    else if (level >= 30 && level < 50) vip = 4;
-    else if (level >= 50 && level < 80) vip = 5;
-    else if (level >= 80 && level < 120) vip = 6;
-    else if (level >= 120) vip = 7;
-    return { level, vip };
-  };
-
-  const levelInfo = profile ? getLevelInfo(profile.exp || 0) : { level: 1, vip: 1 };
+  const levelInfo = profile ? getLevelInfo(profile.exp || 0) : { level: 1, vip: 1, currentLevelExp: 0, nextLevelExp: 10, progress: 0 };
 
   const renderProfile = () => (
     <div className="space-y-6">

@@ -41,8 +41,7 @@ function ParticlesEffect() {
           animate={{
             y: '-10vh',
             x: [`${p.x}%`, `${p.x + (Math.random() * 10 - 5)}%`],
-            opacity: [0, 0.8, 0],
-            transform: 'translate3d(0,0,0)'
+            opacity: [0, 0.8, 0]
           }}
           transition={{
             duration: p.duration,
@@ -53,7 +52,7 @@ function ParticlesEffect() {
         />
       ))}
       <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1], transform: 'translate3d(0,0,0)' }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-[100px]"
         style={{ willChange: 'transform, opacity' }}
@@ -91,8 +90,7 @@ function SnowEffect() {
           animate={{
             y: '110vh',
             x: [`${p.x}%`, `${p.x + (Math.random() * 20 - 10)}%`],
-            opacity: [0, 1, 0],
-            transform: 'translate3d(0,0,0)'
+            opacity: [0, 1, 0]
           }}
           transition={{
             duration: p.duration,
@@ -154,8 +152,7 @@ function StarsEffect() {
           animate={{
             x: `${p.x + 20}vw`,
             y: '110vh',
-            opacity: [0, 1, 0],
-            transform: 'translate3d(0,0,0)'
+            opacity: [0, 1, 0]
           }}
           transition={{
             duration: p.duration,
@@ -174,8 +171,7 @@ function NeonEffect() {
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{ contain: 'strict' }}>
       <motion.div 
         animate={{ 
-          backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-          transform: 'translate3d(0,0,0)'
+          backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
         }}
         transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
         className="absolute inset-0 opacity-30"
@@ -236,8 +232,7 @@ function FireworksEffect() {
                 x: Math.cos((i * 15 * Math.PI) / 180) * 150,
                 y: Math.sin((i * 15 * Math.PI) / 180) * 150 + 80, // gravity effect
                 opacity: 0,
-                scale: 0,
-                transform: 'translate3d(0,0,0)'
+                scale: 0
               }}
               transition={{ duration: 1.5, ease: "easeOut" }}
             />
@@ -263,8 +258,7 @@ function LedStripEffect() {
             backfaceVisibility: 'hidden'
           }}
           animate={{
-            x: ['-100%', '100%'],
-            transform: 'translate3d(0,0,0)'
+            x: ['-100%', '100%']
           }}
           transition={{
             duration: 3 + Math.random() * 2,

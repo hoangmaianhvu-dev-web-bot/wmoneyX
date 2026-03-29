@@ -36,6 +36,7 @@ import AdminPanel from './AdminPanel';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
 import BackgroundMusic from './BackgroundMusic';
+import { getLevelInfo } from '../utils/levelUtils';
 
 interface DashboardProps {
   user: any;
@@ -78,21 +79,6 @@ const formatDate = (dateString: string) => {
     hour: '2-digit',
     minute: '2-digit'
   });
-};
-
-const getLevelInfo = (exp: number) => {
-  const level = Math.floor(Math.sqrt(exp / 10)) + 1;
-  const currentLevelExp = (level - 1) * (level - 1) * 10;
-  const nextLevelExp = level * level * 10;
-  const progress = ((exp - currentLevelExp) / (nextLevelExp - currentLevelExp)) * 100;
-  
-  let vip = 1;
-  if (level >= 5 && level < 15) vip = 2;
-  else if (level >= 15 && level < 30) vip = 3;
-  else if (level >= 30 && level < 50) vip = 4;
-  else if (level >= 50) vip = 5 + Math.floor((level - 50) / 15);
-
-  return { level, currentLevelExp, nextLevelExp, progress, vip };
 };
 
 export default function Dashboard({ user, onLogout, currentEffect, onEffectChange, isMusicPlaying, toggleMusic }: DashboardProps) {
@@ -397,10 +383,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
 
   const NavItem = ({ id, icon: Icon, label }: { id: string, icon: any, label: string }) => (
     <motion.button 
-      whileHover={{ x: 5 }}
+      whileHover={{ x: 5, rotateY: 10, z: 10 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => setActiveTab(id)}
       className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all w-full relative ${activeTab === id ? 'bg-accent text-black font-black shadow-[0_0_15px_rgba(173,216,230,0.3)]' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+      style={{ transformStyle: 'preserve-3d' }}
     >
       <Icon size={20} />
       <span className="text-xs uppercase tracking-widest">{label}</span>
@@ -462,7 +449,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             {isSocialOpen && (
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1, transform: 'translate3d(0,0,0)' }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.8 }}
                 className="flex flex-col gap-3"
                 style={{ willChange: 'transform, opacity' }}
@@ -492,7 +479,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
               style={{ willChange: 'transform, opacity' }}
@@ -564,14 +551,14 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <div className="h-3 w-full bg-black/50 rounded-full overflow-hidden border border-white/5 relative">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${levelInfo.progress}%`, transform: 'translate3d(0,0,0)' }}
+                      animate={{ width: `${levelInfo.progress}%` }}
                       transition={{ duration: 1, ease: "easeOut" }}
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent/50 to-accent rounded-full"
                       style={{ willChange: 'width, transform' }}
                     />
                     {/* Shine effect */}
                     <motion.div
-                      animate={{ x: ['-100%', '200%'], transform: 'translate3d(0,0,0)' }}
+                      animate={{ x: ['-100%', '200%'] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
                       className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg]"
                       style={{ willChange: 'transform' }}
@@ -591,9 +578,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02, rotateY: 5, rotateX: -2, z: 10 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
-                      style={{ willChange: 'transform, opacity' }}
+                      style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
                       <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <Target size={40} />
@@ -603,10 +591,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02, rotateY: -5, rotateX: -2, z: 10 }}
                       transition={{ delay: 0.1 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
-                      style={{ willChange: 'transform, opacity' }}
+                      style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
                       <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:-rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <CheckSquare size={40} />
@@ -616,10 +605,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transform: 'translate3d(0,0,0)' }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.02, rotateY: 5, rotateX: 2, z: 10 }}
                       transition={{ delay: 0.15 }}
                       className="glass p-8 text-center rounded-3xl relative overflow-hidden group border-red-500/20"
-                      style={{ willChange: 'transform, opacity' }}
+                      style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
                       <div className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <AlertTriangle size={40} />
