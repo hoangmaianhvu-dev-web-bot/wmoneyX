@@ -20,7 +20,8 @@ import {
   Wand2,
   Star,
   Target,
-  Layers
+  Layers,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -31,7 +32,6 @@ import Withdraw from './Withdraw';
 import Tasks from './Tasks';
 import DailyRewards from './DailyRewards';
 import AdminPanel from './AdminPanel';
-import Leaderboard from './Leaderboard';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
 import EffectsManager from './EffectsManager';
@@ -51,6 +51,7 @@ interface Profile {
   balance: number;
   tasks_today: number;
   tasks_total: number;
+  special_tasks_total?: number;
   vip_status: 'MEMBER' | 'VIP GOLD';
   is_admin: boolean;
   is_verified: boolean;
@@ -88,9 +89,7 @@ const getLevelInfo = (exp: number) => {
   if (level >= 5 && level < 15) vip = 2;
   else if (level >= 15 && level < 30) vip = 3;
   else if (level >= 30 && level < 50) vip = 4;
-  else if (level >= 50 && level < 80) vip = 5;
-  else if (level >= 80 && level < 120) vip = 6;
-  else if (level >= 120) vip = 7;
+  else if (level >= 50) vip = 5 + Math.floor((level - 50) / 15);
 
   return { level, currentLevelExp, nextLevelExp, progress, vip };
 };
@@ -98,9 +97,7 @@ const getLevelInfo = (exp: number) => {
 export default function Dashboard({ user, onLogout, currentEffect, onEffectChange, isMusicPlaying, toggleMusic }: DashboardProps) {
   const { showNotification } = useNotification();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [suggestedMods, setSuggestedMods] = useState<any[]>([]);
-  const [userRank, setUserRank] = useState<number | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +106,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   const [showVerifyReminder, setShowVerifyReminder] = useState(false);
   const [showVerifyRedDot, setShowVerifyRedDot] = useState(false);
   const [isSocialOpen, setIsSocialOpen] = useState(false);
+  const [isTaskVerified, setIsTaskVerified] = useState(true);
 
   const ADMIN_ID = "22072009";
 
@@ -212,12 +210,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
       supabase.removeChannel(profileChannel);
     };
   }, [user]);
-
-  useEffect(() => {
-    if (profile) {
-      fetchLeaderboard();
-    }
-  }, [profile]);
 
   useEffect(() => {
     if (profile && profile.balance >= 1500 && profile.referred_by && !profile.referral_bonus_paid) {
@@ -394,46 +386,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
     }
   };
 
-  const fetchLeaderboard = async () => {
-    try {
-      // 1. Fetch top 10
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, balance, tasks_total, vip_status')
-        .order('balance', { ascending: false });
-
-      if (error) throw error;
-      
-      const formattedData = data?.map(item => ({
-        id: item.id,
-        username: item.username,
-        balance: (item.balance || 0).toLocaleString(),
-        tasks: item.tasks_total || 0,
-        vip: item.vip_status === 'VIP GOLD'
-      })) || [];
-
-      setLeaderboard(formattedData);
-
-      // 2. Calculate user rank
-      if (profile) {
-        const { count, error: rankError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gt('balance', profile.balance);
-        
-        if (!rankError) {
-          setUserRank((count || 0) + 1);
-        }
-      }
-    } catch (error: any) {
-      console.error('Lỗi khi tải bảng xếp hạng:', error);
-      // Don't show notification for leaderboard to avoid spamming
-    }
-  };
-
-  const currentDate = new Date();
-  const monthDisplay = `Tháng ${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -486,7 +438,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="home" icon={Home} label="Trang Chủ" />
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
           <NavItem id="daily" icon={Gift} label="Thưởng Ngày" />
-          <NavItem id="leaderboard" icon={Trophy} label="Đua Top" />
           <NavItem id="mods" icon={Gamepad2} label="Mod Game" />
           <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
           <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
@@ -549,8 +500,15 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               {/* Top Profile & Balance */}
               <header className="flex justify-between items-center py-6 mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
-                    <UserRound size={24} />
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
+                      <UserRound size={24} />
+                    </div>
+                    {profile?.is_verified && (
+                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-bg shadow-lg">
+                        <ShieldCheck size={10} />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -581,23 +539,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   </div>
                 </div>
               </header>
-
-              {/* User Status Bar */}
-              <div className="glass p-3 rounded-2xl mb-4 flex items-center justify-between border-accent/20">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[8px] px-2 py-1 rounded font-black uppercase ${profile?.is_admin ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-gray-500/20 text-gray-300 border border-gray-500/30'}`}>
-                    {profile?.is_admin ? 'Admin' : 'Member'}
-                  </span>
-                  {profile?.is_verified && (
-                    <div className="flex items-center text-[8px] font-black uppercase text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                      <ShieldCheck size={10} className="mr-1" /> Đã xác minh
-                    </div>
-                  )}
-                </div>
-                {profile?.is_admin && (
-                  <p className="text-[8px] text-accent font-bold tracking-[0.1em]">ID: {ADMIN_ID}</p>
-                )}
-              </div>
 
               {/* Level & VIP Progress Bar */}
               {levelInfo && (
@@ -639,11 +580,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               )}
 
               {/* Dashboard Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Left Column: Stats & Invite */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-3 space-y-6">
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -670,10 +611,26 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                         className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-colors"
                       >
-                        <Layers size={40} />
+                        <CheckSquare size={40} />
                       </motion.div>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Tổng nhiệm vụ</p>
-                      <h3 className="text-3xl font-black italic text-accent relative z-10">{profile?.tasks_total === 0 ? '---' : profile?.tasks_total}</h3>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ thường</p>
+                      <h3 className="text-3xl font-black italic text-accent relative z-10">{profile?.tasks_total || 0}</h3>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group border-red-500/20"
+                    >
+                      <motion.div 
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                        className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-colors"
+                      >
+                        <AlertTriangle size={40} />
+                      </motion.div>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ đặc biệt</p>
+                      <h3 className="text-3xl font-black italic text-red-500 relative z-10">{profile?.special_tasks_total || 0}</h3>
                     </motion.div>
                   </div>
 
@@ -696,62 +653,22 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </button>
                   </motion.div>
 
-                  {/* Quick Access Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab('daily')}
-                      className="glass p-6 rounded-3xl border-accent/20 bg-gradient-to-br from-accent/10 to-transparent cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <motion.div 
-                          animate={{ rotate: [0, 15, -15, 0] }}
-                          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                          className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center"
-                        >
-                          <Gift className="text-accent" size={24} />
-                        </motion.div>
-                        <div>
-                          <h3 className="text-sm font-black uppercase tracking-widest">Thưởng Ngày</h3>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">Nhận thưởng ngay</p>
-                        </div>
-                      </div>
-                    </motion.div>
+                  {/* Suggested Mods Preview moved to right column */}
+                </div>
 
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab('daily')}
-                      className="glass p-6 rounded-3xl border-accent/20 bg-gradient-to-br from-accent/10 to-transparent cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <motion.div 
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                          className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center"
-                        >
-                          <Gift className="text-accent" size={24} />
-                        </motion.div>
-                        <div>
-                          <h3 className="text-sm font-black uppercase tracking-widest">Thưởng Ngày</h3>
-                          <p className="text-[10px] text-gray-500 font-bold uppercase">Nhận 10 EXP</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-
+                {/* Right Column: Suggested Mods */}
+                <div className="space-y-6">
                   {/* Suggested Mods Preview */}
-                  <div className="glass p-8 rounded-3xl">
+                  <div className="glass p-6 rounded-3xl border-white/5">
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Gợi ý Mod Game</h3>
-                      <button onClick={() => setActiveTab('mods')} className="text-accent text-[10px] font-bold uppercase hover:underline">Xem tất cả</button>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Gợi ý Mod Game</h3>
+                      <button onClick={() => setActiveTab('mods')} className="text-accent text-[8px] font-bold uppercase hover:underline">Tất cả</button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {suggestedMods.length > 0 ? (
                         suggestedMods.map(mod => (
-                          <div key={mod.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => setActiveTab('mods')}>
-                            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                          <div key={mod.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={() => setActiveTab('mods')}>
+                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                               <img 
                                 src={mod.image_url || `https://picsum.photos/seed/${mod.id}/200/200`} 
                                 alt={mod.title}
@@ -760,72 +677,19 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-black truncate">{mod.title}</h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className="text-[10px] text-accent font-bold">v{mod.version}</p>
-                                {mod.source_name && (
-                                  <span className="text-[10px] text-gray-500 font-bold">• {mod.source_name}</span>
-                                )}
-                              </div>
+                              <h4 className="text-[11px] font-black truncate">{mod.title}</h4>
+                              <p className="text-[8px] text-accent font-bold">v{mod.version}</p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0">
-                              <Gamepad2 size={14} />
+                            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0">
+                              <Gamepad2 size={10} />
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-8 text-gray-500 italic text-xs">
-                          Hiện chưa có gợi ý nào.
+                        <div className="text-center py-4 text-gray-500 italic text-[10px]">
+                          Chưa có gợi ý.
                         </div>
                       )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Leaderboard */}
-                <div className="space-y-6">
-                  <div className="flex justify-between items-end px-1">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Bảng Xếp Hạng</h2>
-                    <span className="text-[9px] text-accent font-bold uppercase tracking-widest">{monthDisplay}</span>
-                  </div>
-
-                  <div className="glass overflow-hidden rounded-3xl border-accent/10 max-h-[400px] overflow-y-auto">
-                    <div className="divide-y divide-white/5">
-                      {leaderboard.length > 0 ? (
-                        leaderboard.map((item, index) => (
-                          <div key={item.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition">
-                            <div className="flex items-center gap-4">
-                              <span className={`text-lg font-black italic w-6 ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-gray-600'}`}>
-                                #{index + 1}
-                              </span>
-                              <div>
-                                <div className="flex items-center">
-                                  <p className="text-xs font-bold">{item.username}</p>
-                                  {item.vip && <span className="text-[6px] bg-yellow-400 text-black px-1 rounded ml-1 font-black">VIP</span>}
-                                </div>
-                                <p className="text-[9px] text-gray-500 font-bold uppercase">{item.tasks} Nhiệm vụ</p>
-                              </div>
-                            </div>
-                            <p className="text-xs font-black text-accent">{item.balance}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-8 text-center text-gray-500 italic text-xs">
-                          Chưa có dữ liệu xếp hạng.
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* User Rank Footer */}
-                    <div className="p-4 bg-accent/10 flex items-center justify-between border-t border-accent/20">
-                      <div className="flex items-center gap-4">
-                        <span className="text-lg font-black italic text-accent w-6">#{userRank || '---'}</span>
-                        <div>
-                          <p className="text-xs font-bold">{profile?.username}</p>
-                          <p className="text-[9px] text-gray-400 uppercase font-bold">{profile?.tasks_total || 0} Nhiệm vụ</p>
-                        </div>
-                      </div>
-                      <p className="text-xs font-black text-accent">{profile?.balance?.toLocaleString() || '0'} Xu</p>
                     </div>
                   </div>
                 </div>
@@ -887,7 +751,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               balance={profile?.balance || 0}
               userId={user.id}
               profile={profile}
-              onBack={() => setActiveTab('home')}
+              onBack={() => {
+                setActiveTab('home');
+              }}
               onUpdateBalance={(newBalance) => {
                 setProfile(prev => prev ? { ...prev, balance: newBalance } : null);
               }}
@@ -900,15 +766,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               userId={user.id}
               profile={profile}
               onUpdateProfile={fetchProfile}
-            />
-          )}
-
-          {activeTab === 'leaderboard' && (
-            <Leaderboard 
-              userId={user.id}
-              profile={profile}
-              onUpdateProfile={fetchProfile}
-              limit={10}
             />
           )}
 
@@ -948,10 +805,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('mods')} className={`flex flex-col items-center gap-1 ${activeTab === 'mods' ? 'text-accent' : 'text-gray-600'}`}>
           <Gamepad2 size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Mod Game</span>
-        </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('leaderboard')} className={`flex flex-col items-center gap-1 ${activeTab === 'leaderboard' ? 'text-accent' : 'text-gray-600'}`}>
-          <Trophy size={16} />
-          <span className="text-[7px] font-black uppercase tracking-tighter">Đua Top</span>
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 ${activeTab === 'wallet' ? 'text-accent' : 'text-gray-600'}`}>
           <Wallet size={16} />

@@ -436,6 +436,9 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
               </button>
             </div>
             
+            <div className="flex justify-center py-2">
+            </div>
+
             <button 
               onClick={handleWithdraw}
               disabled={isSubmitting}

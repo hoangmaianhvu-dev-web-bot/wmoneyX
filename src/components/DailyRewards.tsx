@@ -429,22 +429,22 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-6 pb-24">
       {/* Tab Switcher */}
-      <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5">
+      <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setActiveTab('daily')}
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'daily' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'daily' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
         >
           <Gift size={14} /> Điểm Danh
         </button>
         <button 
           onClick={() => setActiveTab('blindbag')}
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'blindbag' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'blindbag' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
         >
           <Package size={14} /> Túi Mù
         </button>
         <button 
           onClick={() => setActiveTab('wheel')}
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'wheel' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'wheel' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
         >
           <Disc size={14} /> Vòng Quay
         </button>

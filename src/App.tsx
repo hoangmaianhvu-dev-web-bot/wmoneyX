@@ -31,7 +31,7 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [authReady, setAuthReady] = useState(false);
   const [currentEffect, setCurrentEffect] = useState<EffectType>(() => {
-    return (localStorage.getItem('app_effect') as EffectType) || 'neon';
+    return (localStorage.getItem('app_effect') as EffectType) || 'led';
   });
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
@@ -47,6 +47,8 @@ export default function App() {
     // Global error handler for Supabase auth issues
     const handleAuthError = async (errorMsg: string) => {
       const lowerMsg = errorMsg.toLowerCase();
+      // Cải thiện điều kiện kiểm tra lỗi
+      const isInvalidRefreshToken = lowerMsg.includes('invalid refresh token') || lowerMsg.includes('refresh token not found');
       const isAuthError = lowerMsg.includes('refresh_token') || 
                           lowerMsg.includes('refresh token') ||
                           lowerMsg.includes('not found') ||
@@ -54,7 +56,7 @@ export default function App() {
                           lowerMsg.includes('session') ||
                           lowerMsg.includes('auth');
 
-      if (isAuthError && (lowerMsg.includes('token') || lowerMsg.includes('refresh'))) {
+      if (isInvalidRefreshToken || (isAuthError && (lowerMsg.includes('token') || lowerMsg.includes('refresh')))) {
         console.warn('Caught auth error, clearing session:', errorMsg);
         
         // Prevent infinite reload loops
@@ -172,7 +174,7 @@ export default function App() {
     }
 
     if (view === 'auth') {
-      return <Auth onBack={() => setView('landing')} onSuccess={() => setView('dashboard')} />;
+      return <Auth onBack={() => setView('landing')} onSuccess={() => setView('dashboard')} currentEffect={currentEffect} />;
     }
 
     if (view === 'dashboard' && user) {
@@ -189,7 +191,7 @@ export default function App() {
     }
 
     return (
-      <div className="min-h-screen text-white font-sans selection:bg-accent selection:text-bg">
+      <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-accent selection:text-bg">
       {/* Navbar */}
       <nav className="fixed w-full z-50 px-6 py-6 flex justify-between items-center bg-black/50 backdrop-blur-md border-b border-white/5">
         <motion.h1 
@@ -395,6 +397,7 @@ export default function App() {
   return (
     <>
       <BackgroundMusic isPlaying={isMusicPlaying} />
+      <EffectsManager effect={currentEffect} />
       <div className="relative z-10">
         {renderContent()}
       </div>

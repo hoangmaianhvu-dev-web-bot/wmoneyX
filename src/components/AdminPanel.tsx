@@ -37,6 +37,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     pendingPayouts: 0,
     todayRevenue: 0,
     totalTasks: 0,
+    totalSpecialTasks: 0,
     totalSystemBalance: 0,
     totalModDownloads: 0
   });
@@ -96,8 +97,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
       const { count: pendingCount } = await supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
       
-      const { data: taskData } = await supabase.from('profiles').select('tasks_total, balance');
+      const { data: taskData } = await supabase.from('profiles').select('tasks_total, special_tasks_total, balance');
       const totalTasks = taskData?.reduce((sum, p) => sum + (p.tasks_total || 0), 0) || 0;
+      const totalSpecialTasks = taskData?.reduce((sum, p) => sum + (p.special_tasks_total || 0), 0) || 0;
       const totalSystemBalance = taskData?.reduce((sum, p) => sum + (p.balance || 0), 0) || 0;
 
       const { data: modData } = await supabase.from('mods').select('title, category, download_count');
@@ -129,6 +131,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         pendingPayouts: pendingCount || 0,
         todayRevenue: totalRevenue,
         totalTasks,
+        totalSpecialTasks,
         totalSystemBalance,
         totalModDownloads
       });
@@ -294,7 +297,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <div className="glass p-4 rounded-2xl">
           <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Thành Viên</p>
           <div className="flex items-center justify-between">
@@ -321,6 +324,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           <div className="flex items-center justify-between">
             <p className="text-xl font-black text-blue-400">{stats.totalTasks.toLocaleString()}</p>
             <Check size={16} className="text-blue-400/50" />
+          </div>
+        </div>
+        <div className="glass p-4 rounded-2xl">
+          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">NV Thường</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xl font-black text-accent">{stats.totalTasks.toLocaleString()}</p>
+            <Check size={16} className="text-accent/50" />
+          </div>
+        </div>
+        <div className="glass p-4 rounded-2xl">
+          <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">NV Đặc Biệt</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xl font-black text-red-500">{stats.totalSpecialTasks.toLocaleString()}</p>
+            <Check size={16} className="text-red-500/50" />
           </div>
         </div>
         <div className="glass p-4 rounded-2xl">

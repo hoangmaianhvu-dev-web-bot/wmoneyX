@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import EffectsManager, { EffectType } from './EffectsManager';
 import { supabase } from '../supabase';
 import { 
   Mail, 
@@ -12,12 +13,11 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useNotification } from '../context/NotificationContext';
 import emailjs from '@emailjs/browser';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const EMAILJS_CONFIG = {
-  PUBLIC_KEY: "1JIKXekUB57YWqsHv",
-  SERVICE_ID: "service_rpi21gg",
-  TEMPLATE_ID: "template_k6yvbwj"
+  PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "1JIKXekUB57YWqsHv",
+  SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID || "service_rpi21gg",
+  TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "template_k6yvbwj"
 };
 
 // Initialize EmailJS
@@ -26,9 +26,10 @@ emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
 interface AuthProps {
   onBack: () => void;
   onSuccess: () => void;
+  currentEffect: EffectType;
 }
 
-export default function Auth({ onBack, onSuccess }: AuthProps) {
+export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
   const { showNotification } = useNotification();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
@@ -42,8 +43,6 @@ export default function Auth({ onBack, onSuccess }: AuthProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const hcaptchaRef = React.useRef<HCaptcha>(null);
 
   React.useEffect(() => {
     if (mode === 'forgot' && otpSent && otp.length === 6) {
@@ -115,28 +114,7 @@ export default function Auth({ onBack, onSuccess }: AuthProps) {
     setLoading(true);
     setError(null);
 
-    // Verify hCaptcha
-    if (!captchaToken) {
-      setError('Vui lòng hoàn thành mã xác thực.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const verifyResponse = await fetch('/api/verify-hcaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: captchaToken }),
-      });
-      const verifyData = await verifyResponse.json();
-      if (!verifyData.success) {
-        setError('Xác thực hCaptcha thất bại. Vui lòng thử lại.');
-        hcaptchaRef.current?.resetCaptcha();
-        setCaptchaToken(null);
-        setLoading(false);
-        return;
-      }
-
       if (mode === 'register') {
         // Clear any stale session before signing up
         await supabase.auth.signOut().catch(() => {});
@@ -230,7 +208,8 @@ export default function Auth({ onBack, onSuccess }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 text-white font-sans relative z-10">
+    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-6 text-white font-sans relative z-10">
+      <EffectsManager effect={currentEffect} />
       <div className="w-full max-w-sm">
         {/* Logo Area */}
         <div className="text-center mb-10">
@@ -397,16 +376,6 @@ export default function Auth({ onBack, onSuccess }: AuthProps) {
                 />
               </div>
             )}
-
-            <div className="flex justify-center py-2">
-              <HCaptcha
-                sitekey={import.meta.env.VITE_HCAPTCHA_SITEKEY || "74289632-2ab6-47a2-9046-dd6e37b09250"}
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken(null)}
-                ref={hcaptchaRef}
-                theme="dark"
-              />
-            </div>
 
             {mode === 'forgot' && (
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center mt-4">

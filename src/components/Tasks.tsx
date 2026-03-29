@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, 
   Link as LinkIcon, 
@@ -25,7 +25,8 @@ const CONFIG = {
   API_KEY: import.meta.env.VITE_VUOTNHANH_API || "d2ccf7ae-8029-45a8-a149-0013ec3447da", 
   BASE_API_URL: import.meta.env.VITE_VUOTNHANH_URL || "https://vuotnhanh.com/api?api=", 
   BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://xacminhnhiemvu.blogspot.com/",
-  REWARD: 200
+  REWARD: 200,
+  SPECIAL_REWARD: 1000
 };
 
 const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdateBalance, onUpdateProfile }) => {
@@ -34,7 +35,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [verifyCode, setVerifyCode] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(true);
 
   const reward = React.useMemo(() => {
     let r = CONFIG.REWARD;
@@ -71,27 +71,39 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
   const startTask = async () => {
     setIsGenerating(true);
+    console.log("Starting task creation...");
     
-    if (await checkVPN()) {
-      showNotification({
-        title: "CẢNH BÁO",
-        message: "Vui lòng tắt VPN/Proxy/1.1.1.1",
-        type: "warning"
-      });
-      setIsGenerating(false);
-      return;
-    }
-
-    const newCode = generateCode();
-    setCurrentSessionCode(newCode);
-    
-    const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
-    const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
-    const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
-
     try {
+      if (await checkVPN()) {
+        showNotification({
+          title: "CẢNH BÁO",
+          message: "Vui lòng tắt VPN/Proxy/1.1.1.1",
+          type: "warning"
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      const newCode = generateCode();
+      setCurrentSessionCode(newCode);
+      
+      const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
+      const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
+      const finalProxyUrl = `/api-server/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
+      
+      console.log("Proxy URL:", finalProxyUrl);
+
       const response = await fetch(finalProxyUrl);
+      console.log("Proxy response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Proxy error response:", errorText);
+        throw new Error(`Proxy error: ${response.status}`);
+      }
+
       const result = await response.json();
+      console.log("Proxy response result:", result);
       
       if (result.status === "success" && result.shortenedUrl) {
         window.open(result.shortenedUrl, "_blank");
@@ -136,14 +148,14 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     }
   };
 
-  const handleSuccess = async () => {
+  const handleSuccess = async (isSpecialTask: boolean = false) => {
     try {
       console.log("Starting handleSuccess for user:", userId);
       
       // Fetch latest balance directly from DB to avoid stale prop issues
       const { data: currentProfile, error: fetchBalanceError } = await supabase
         .from('profiles')
-        .select('balance, tasks_total, tasks_today, monthly_tasks, monthly_earnings, last_reset_month, exp, last_task_reset_date')
+        .select('balance, tasks_total, special_tasks_total, tasks_today, monthly_tasks, monthly_earnings, last_reset_month, exp, last_task_reset_date')
         .eq('id', userId)
         .single();
       
@@ -164,25 +176,33 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       const currentBalance = currentProfile?.balance || 0;
       const currentExp = currentProfile?.exp || 0;
-      const newBalance = currentBalance + reward;
+      const taskReward = isSpecialTask ? CONFIG.SPECIAL_REWARD : reward;
+      const newBalance = currentBalance + taskReward;
       const newExp = currentExp + 10; // Award 10 EXP per task
       
       console.log("Current balance:", currentBalance, "New balance:", newBalance);
       console.log("Current EXP:", currentExp, "New EXP:", newExp);
       
+      const updateData: any = {
+        balance: newBalance,
+        exp: newExp,
+        tasks_today: currentTodayTasks + 1,
+        monthly_tasks: currentMonthlyTasks + 1,
+        monthly_earnings: currentMonthlyEarnings + taskReward,
+        last_reset_month: currentMonth,
+        last_task_reset_date: today
+      };
+
+      if (isSpecialTask) {
+        updateData.special_tasks_total = (currentProfile?.special_tasks_total || 0) + 1;
+      } else {
+        updateData.tasks_total = (currentProfile?.tasks_total || 0) + 1;
+      }
+
       // Update profile in Supabase (combined update)
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ 
-          balance: newBalance,
-          exp: newExp,
-          tasks_total: (currentProfile?.tasks_total || 0) + 1,
-          tasks_today: currentTodayTasks + 1,
-          monthly_tasks: currentMonthlyTasks + 1,
-          monthly_earnings: currentMonthlyEarnings + reward,
-          last_reset_month: currentMonth,
-          last_task_reset_date: today
-        })
+        .update(updateData)
         .eq('id', userId);
       
       if (updateError) {
@@ -197,8 +217,8 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         .insert([{
           user_id: userId,
           type: 'TASK',
-          amount: reward,
-          description: 'Hoàn thành nhiệm vụ',
+          amount: taskReward,
+          description: isSpecialTask ? 'Hoàn thành nhiệm vụ đặc biệt' : 'Hoàn thành nhiệm vụ',
           status: 'COMPLETED'
         }]);
       
@@ -213,7 +233,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       
       showNotification({
         title: "NHIỆM VỤ XONG",
-        message: `Đã cộng ${reward.toLocaleString()} Xu và 10 EXP vào tài khoản`,
+        message: `Đã cộng ${taskReward.toLocaleString()} Xu và 10 EXP vào tài khoản`,
         type: "success"
       });
       
@@ -259,6 +279,40 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         <p className="text-[9px] text-gray-400 leading-relaxed uppercase tracking-tighter">
           Cấm <span className="text-white">VPN, Proxy, 1.1.1.1</span>, Cheat view. Mỗi nhiệm vụ có <span className="text-accent">Mã Định Danh Duy Nhất</span>, gian lận sẽ bị khóa tài khoản.
         </p>
+      </div>
+
+      {/* Danh sách nhiệm vụ hệ thống */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
+          <CheckCircle2 size={16} /> Danh sách nhiệm vụ hệ thống
+        </h3>
+        <div className="glass p-6 rounded-[2rem] border-white/10">
+          <div className="flex flex-wrap gap-2">
+            {/* HOT Tasks */}
+            {['LINK4M', 'TRAFFIC1M', 'TRAFFIC68'].map(task => (
+              <span key={task} className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] font-black uppercase flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                🔥 {task}
+              </span>
+            ))}
+            {/* Normal Tasks */}
+            {['YEUMONEY', 'UPTOLINK', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
+              <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-gray-300 text-[10px] font-bold uppercase">
+                {task}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Gợi ý nhiệm vụ */}
+      <div className="glass p-4 rounded-xl border-accent/30 bg-accent/5 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent shrink-0">
+          <CheckCircle2 size={16} />
+        </div>
+        <div>
+          <h4 className="text-[10px] font-black uppercase text-accent">Gợi ý nhiệm vụ hôm nay</h4>
+          <p className="text-[9px] text-gray-400 mt-0.5">Nhiệm vụ <span className="text-white font-bold">LINK4M</span> đang có tỷ lệ duyệt nhanh nhất. Hãy thử ngay!</p>
+        </div>
       </div>
 
       {/* Nhiệm vụ */}
@@ -322,6 +376,60 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Bảng nhiệm vụ đặc biệt (Gộp) */}
+        <div className="glass p-6 relative overflow-hidden group rounded-[2rem] border-red-500/30 bg-red-500/5">
+          <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+            HOT
+          </div>
+          
+          <div className="flex items-start gap-5">
+            <div className="w-14 h-14 glass flex items-center justify-center text-2xl text-red-500 shrink-0 rounded-2xl border-red-500/30">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-black uppercase mb-1 text-white">Nhiệm vụ đặc biệt</h3>
+              <div className="flex items-center gap-3 text-[10px] mb-4">
+                <span className="text-red-400 font-bold">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-gray-400">Không giới hạn lượt làm</span>
+              </div>
+
+              <button 
+                onClick={async () => {
+                  const el = document.getElementById('special-task-options');
+                  if (el) {
+                    el.classList.toggle('hidden');
+                  }
+                }}
+                className="w-full py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+              >
+                Bắt đầu
+              </button>
+            </div>
+          </div>
+
+          {/* Special Task Options (Hidden by default) */}
+          <div id="special-task-options" className="hidden mt-4 pt-4 border-t border-red-500/20 space-y-2">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
+            {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  showNotification({
+                    title: "HỆ THỐNG",
+                    message: "Nhiệm vụ vẫn đang update, vui lòng quay lại sau!",
+                    type: "warning"
+                  });
+                }}
+                className="w-full py-3 px-4 glass border-red-500/20 rounded-xl flex items-center justify-between hover:bg-red-500/10 transition-all group/btn"
+              >
+                <span className="text-[10px] font-bold text-white uppercase">{task}</span>
+                <ChevronLeft size={14} className="text-red-500 rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Hướng dẫn */}
@@ -331,64 +439,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
           <p><span className="text-white font-bold">01.</span> Nhấn nút thực hiện để hệ thống sinh link nhiệm vụ qua VuotNhanh.</p>
           <p><span className="text-white font-bold">02.</span> Vượt link rút gọn để đến trang Blog đích.</p>
           <p><span className="text-white font-bold">03.</span> Chờ 10 giây tại trang Blog đích để mã hiện ra, sau đó sao chép và quay lại đây.</p>
+          <p><span className="text-white font-bold">04.</span> Dán mã vào ô xác nhận phía trên để nhận thưởng.</p>
         </div>
       </div>
-
-      {/* Modal Hướng dẫn chi tiết */}
-      <AnimatePresence>
-        {showInstructions && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 pointer-events-none">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass p-8 rounded-[3rem] border-accent/20 relative overflow-hidden w-full max-w-sm z-10 shadow-2xl pointer-events-auto"
-            >
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-accent/20">
-                  <AlertTriangle className="text-accent" size={32} />
-                </div>
-                <h3 className="text-lg font-black uppercase tracking-widest ocean-glow">Hướng dẫn nhiệm vụ</h3>
-                <p className="text-[9px] text-gray-500 uppercase font-bold mt-1">Vui lòng đọc kỹ để tránh bị khóa tài khoản</p>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex gap-4">
-                  <div className="w-6 h-6 glass rounded-lg flex items-center justify-center text-[10px] font-black text-accent shrink-0">1</div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tighter">
-                    Nhấn nút <span className="text-white font-bold">"THỰC HIỆN"</span> để bắt đầu. Hệ thống sẽ mở một tab mới chứa link rút gọn.
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-6 h-6 glass rounded-lg flex items-center justify-center text-[10px] font-black text-accent shrink-0">2</div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tighter">
-                    Bạn cần <span className="text-white font-bold">VƯỢT LINK RÚT GỌN</span> (thường là tìm kiếm Google theo từ khóa yêu cầu) để đến được trang đích.
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-6 h-6 glass rounded-lg flex items-center justify-center text-[10px] font-black text-accent shrink-0">3</div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tighter">
-                    <span className="text-accent font-black">QUAN TRỌNG:</span> Tại trang đích (thường là Blog), hãy cuộn xuống cuối trang và <span className="text-white font-bold">CHỜ 10 GIÂY</span>. Mã xác nhận gồm <span className="text-accent font-black">7 CHỮ SỐ</span> sẽ tự động xuất hiện.
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-6 h-6 glass rounded-lg flex items-center justify-center text-[10px] font-black text-accent shrink-0">4</div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed uppercase tracking-tighter">
-                    Quay lại ứng dụng và <span className="text-white font-bold">DÁN MÃ</span> vào ô xác nhận để nhận thưởng ngay lập tức.
-                  </p>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => setShowInstructions(false)}
-                className="w-full py-4 bg-accent text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-[0_0_20px_rgba(0,255,255,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
-              >
-                Đã hiểu & Bắt đầu
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

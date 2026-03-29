@@ -1,14 +1,15 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
-export type EffectType = 'particles' | 'snow' | 'stars' | 'neon' | 'fireworks';
+export type EffectType = 'particles' | 'snow' | 'stars' | 'neon' | 'fireworks' | 'led';
 
 export const effectNames: Record<EffectType, string> = {
   particles: 'Hạt Lơ Lửng',
   snow: 'Tuyết Rơi',
   stars: 'Sao Băng',
   neon: 'Dải LED Neon',
-  fireworks: 'Pháo Hoa'
+  fireworks: 'Pháo Hoa',
+  led: 'Dải LED Strip'
 };
 
 function ParticlesEffect() {
@@ -228,11 +229,39 @@ function FireworksEffect() {
   );
 }
 
+function LedStripEffect() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-full h-1"
+          style={{
+            top: `${i * 10}%`,
+            background: `linear-gradient(90deg, transparent, ${i % 2 === 0 ? '#ff0000' : '#00ff00'}, transparent)`,
+            boxShadow: `0 0 20px ${i % 2 === 0 ? '#ff0000' : '#00ff00'}`
+          }}
+          animate={{
+            x: ['-100%', '100%'],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            ease: "linear",
+            delay: i * 0.2
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function EffectsManager({ effect }: { effect: EffectType }) {
   if (effect === 'particles') return <ParticlesEffect />;
   if (effect === 'snow') return <SnowEffect />;
   if (effect === 'stars') return <StarsEffect />;
   if (effect === 'neon') return <NeonEffect />;
   if (effect === 'fireworks') return <FireworksEffect />;
+  if (effect === 'led') return <LedStripEffect />;
   return <ParticlesEffect />;
 }
