@@ -89,7 +89,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       
       const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
       const apiRequestUrl = `${CONFIG.BASE_API_URL}${CONFIG.API_KEY}&url=${encodeURIComponent(targetUrl)}`;
-      const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
+      const finalProxyUrl = `/api-server/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
       
       console.log("Proxy URL:", finalProxyUrl);
 

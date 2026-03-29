@@ -217,9 +217,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   }, [user]);
 
   useEffect(() => {
-    if (profile) {
-      fetchLeaderboard();
-    }
+    // Leaderboard removed
   }, [profile]);
 
   useEffect(() => {
@@ -397,43 +395,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
     }
   };
 
-  const fetchLeaderboard = async () => {
-    try {
-      // 1. Fetch top 10
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, balance, tasks_total, vip_status')
-        .order('balance', { ascending: false });
-
-      if (error) throw error;
-      
-      const formattedData = data?.map(item => ({
-        id: item.id,
-        username: item.username,
-        balance: (item.balance || 0).toLocaleString(),
-        tasks: item.tasks_total || 0,
-        vip: item.vip_status === 'VIP GOLD'
-      })) || [];
-
-      setLeaderboard(formattedData);
-
-      // 2. Calculate user rank
-      if (profile) {
-        const { count, error: rankError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gt('balance', profile.balance);
-        
-        if (!rankError) {
-          setUserRank((count || 0) + 1);
-        }
-      }
-    } catch (error: any) {
-      console.error('Lỗi khi tải bảng xếp hạng:', error);
-      // Don't show notification for leaderboard to avoid spamming
-    }
-  };
-
   const currentDate = new Date();
   const monthDisplay = `Tháng ${currentDate.getMonth() + 1}/${currentDate.getFullYear()}`;
 
@@ -489,7 +450,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="home" icon={Home} label="Trang Chủ" />
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
           <NavItem id="daily" icon={Gift} label="Thưởng Ngày" />
-          <NavItem id="leaderboard" icon={Trophy} label="Đua Top" />
           <NavItem id="mods" icon={Gamepad2} label="Mod Game" />
           <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
           <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
@@ -814,54 +774,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     </div>
                   </div>
                 </div>
-
-                {/* Right Column: Leaderboard */}
-                <div className="space-y-6">
-                  <div className="flex justify-between items-end px-1">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Bảng Xếp Hạng</h2>
-                    <span className="text-[9px] text-accent font-bold uppercase tracking-widest">{monthDisplay}</span>
-                  </div>
-
-                  <div className="glass overflow-hidden rounded-3xl border-accent/10 max-h-[400px] overflow-y-auto">
-                    <div className="divide-y divide-white/5">
-                      {leaderboard.length > 0 ? (
-                        leaderboard.map((item, index) => (
-                          <div key={item.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition">
-                            <div className="flex items-center gap-4">
-                              <span className={`text-lg font-black italic w-6 ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-gray-600'}`}>
-                                #{index + 1}
-                              </span>
-                              <div>
-                                <div className="flex items-center">
-                                  <p className="text-xs font-bold">{item.username}</p>
-                                  {item.vip && <span className="text-[6px] bg-yellow-400 text-black px-1 rounded ml-1 font-black">VIP</span>}
-                                </div>
-                                <p className="text-[9px] text-gray-500 font-bold uppercase">{item.tasks} Nhiệm vụ</p>
-                              </div>
-                            </div>
-                            <p className="text-xs font-black text-accent">{item.balance}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-8 text-center text-gray-500 italic text-xs">
-                          Chưa có dữ liệu xếp hạng.
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* User Rank Footer */}
-                    <div className="p-4 bg-accent/10 flex items-center justify-between border-t border-accent/20">
-                      <div className="flex items-center gap-4">
-                        <span className="text-lg font-black italic text-accent w-6">#{userRank || '---'}</span>
-                        <div>
-                          <p className="text-xs font-bold">{profile?.username}</p>
-                          <p className="text-[9px] text-gray-400 uppercase font-bold">{profile?.tasks_total || 0} Nhiệm vụ</p>
-                        </div>
-                      </div>
-                      <p className="text-xs font-black text-accent">{profile?.balance?.toLocaleString() || '0'} Xu</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </>
           )}
@@ -951,7 +863,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         return;
                       }
                       // Verify hCaptcha token on server
-                      const response = await fetch('/api/verify-hcaptcha', {
+                      const response = await fetch('/api-server/verify-hcaptcha', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token: captchaToken }),
@@ -981,15 +893,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               userId={user.id}
               profile={profile}
               onUpdateProfile={fetchProfile}
-            />
-          )}
-
-          {activeTab === 'leaderboard' && (
-            <Leaderboard 
-              userId={user.id}
-              profile={profile}
-              onUpdateProfile={fetchProfile}
-              limit={10}
             />
           )}
 

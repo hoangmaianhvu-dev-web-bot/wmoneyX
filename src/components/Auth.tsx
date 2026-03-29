@@ -130,7 +130,7 @@ export default function Auth({ onBack, onSuccess, currentEffect }: AuthProps) {
     }
 
     try {
-      const verifyResponse = await fetch('/api/verify-hcaptcha', {
+      const verifyResponse = await fetch('/api-server/verify-hcaptcha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: captchaToken }),
