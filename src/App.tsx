@@ -145,6 +145,19 @@ export default function App() {
         // Use getUser() as it's more reliable for verifying the session with the server
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
+        if (user) {
+          // Check if user is banned
+          const { data: profile } = await supabase.from('profiles').select('is_banned').eq('id', user.id).single();
+          if (profile?.is_banned) {
+            await supabase.auth.signOut();
+            setUser(null);
+            setView('landing');
+            console.warn('Banned user attempted to access:', user.id);
+            setAuthReady(true);
+            return;
+          }
+        }
+
         if (userError) {
           // If it's a refresh token error, handle it
           if (userError.message.toLowerCase().includes('refresh token')) {
@@ -157,6 +170,15 @@ export default function App() {
           if (sessionError) {
             handleAuthError(sessionError.message);
           } else if (session?.user) {
+            // Check if user is banned
+            const { data: profile } = await supabase.from('profiles').select('is_banned').eq('id', session.user.id).single();
+            if (profile?.is_banned) {
+              await supabase.auth.signOut();
+              setUser(null);
+              setView('landing');
+              setAuthReady(true);
+              return;
+            }
             setUser(session.user);
             setView('dashboard');
           } else {

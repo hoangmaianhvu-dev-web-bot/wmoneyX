@@ -107,29 +107,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
-  const toggleBan = async (user: any) => {
-    const isBanned = user.is_banned;
-    const action = isBanned ? 'gỡ ban' : 'ban';
+  const toggleBan = async (user: any, shouldBan: boolean) => {
+    const action = shouldBan ? 'ban' : 'gỡ ban';
     
-    console.log('Toggling ban for user:', user.id, 'Current status:', isBanned);
+    console.log('Attempting to update user ban status:', { userId: user.id, shouldBan });
 
     if (!window.confirm(`Bạn có chắc chắn muốn ${action} người dùng ${user.username}?`)) {
       return;
     }
 
-    const reason = isBanned ? null : 'Vi phạm quy định hệ thống';
+    const reason = shouldBan ? 'Vi phạm quy định hệ thống' : null;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .update({ is_banned: !isBanned })
+        .update({ is_banned: shouldBan, ban_reason: reason })
         .eq('id', user.id)
         .select();
       
       console.log('Supabase update result:', { data, error });
 
       if (error) throw error;
-      showNotification({ title: "Thành công", message: `Đã ${isBanned ? 'mở ban' : 'ban'} người dùng.`, type: "success" });
+      showNotification({ title: "Thành công", message: `Đã ${shouldBan ? 'ban' : 'mở ban'} người dùng.`, type: "success" });
       fetchData();
     } catch (err) {
       console.error('Error toggling ban:', err);
@@ -501,12 +500,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => toggleBan(u)}
-                              className={`w-8 h-8 glass flex items-center justify-center transition-all rounded-lg ${u.is_banned ? 'text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'text-red-500 hover:bg-red-500 hover:text-white'}`}
-                            >
-                              <ShieldCheck size={12} />
-                            </button>
+                            {u.is_banned ? (
+                              <button 
+                                onClick={() => toggleBan(u, false)}
+                                className="w-8 h-8 glass flex items-center justify-center transition-all rounded-lg text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                                title="Gỡ ban"
+                              >
+                                <Check size={12} />
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => toggleBan(u, true)}
+                                className="w-8 h-8 glass flex items-center justify-center transition-all rounded-lg text-red-500 hover:bg-red-500 hover:text-white"
+                                title="Ban"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
                             <button className="w-8 h-8 glass flex items-center justify-center text-accent hover:bg-accent hover:text-black transition-all rounded-lg">
                               <Edit size={12} />
                             </button>
