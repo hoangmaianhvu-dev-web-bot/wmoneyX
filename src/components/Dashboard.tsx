@@ -29,6 +29,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
 import { EffectType, effectNames } from './EffectsManager';
+import Banner from './Banner';
 import Settings from './Settings';
 import Withdraw from './Withdraw';
 import Tasks from './Tasks';
@@ -97,8 +98,30 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   const [showVerifyRedDot, setShowVerifyRedDot] = useState(false);
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [isTaskVerified, setIsTaskVerified] = useState(true);
+  const [announcement, setAnnouncement] = useState<any>(null);
+  const [showBanner, setShowBanner] = useState(true);
 
   const ADMIN_ID = "22072009";
+
+  useEffect(() => {
+    fetchAnnouncement();
+  }, []);
+
+  const fetchAnnouncement = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) setAnnouncement(data);
+    } catch (err) {
+      console.error('Error fetching announcement:', err);
+    }
+  };
 
   useEffect(() => {
     if (profile && !profile.is_verified) {
@@ -531,6 +554,18 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   </div>
                 </div>
               </header>
+
+              {/* Banner */}
+              <AnimatePresence>
+                {showBanner && announcement && (
+                  <Banner
+                    title={announcement.title}
+                    message={announcement.message}
+                    imageUrl={announcement.image_url}
+                    onClose={() => setShowBanner(false)}
+                  />
+                )}
+              </AnimatePresence>
 
               {/* Level & VIP Progress Bar */}
               {levelInfo && (

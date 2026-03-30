@@ -380,14 +380,29 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
   const handleDeleteAccount = async () => {
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
+      const userId = profile.id;
+
+      // 1. Xóa các giao dịch trước (vì có thể có foreign key tới withdrawals)
+      await supabase.from('transactions').delete().eq('user_id', userId);
+      
+      // 2. Xóa các dữ liệu liên quan khác
+      await Promise.all([
+        supabase.from('withdrawals').delete().eq('user_id', userId),
+        supabase.from('payment_proofs').delete().eq('user_id', userId),
+        supabase.from('reports').delete().eq('user_id', userId),
+        supabase.from('game_logs').delete().eq('user_id', userId)
+      ]);
+
+      // 3. Xóa profile cuối cùng
+      const { error } = await supabase.from('profiles').delete().eq('id', userId);
       if (error) throw error;
       
+      // 4. Đăng xuất và xóa session
       await supabase.auth.signOut();
       
       showNotification({
         title: "ĐÃ XÓA TÀI KHOẢN",
-        message: "Tài khoản của bạn đã được xóa thành công.",
+        message: "Toàn bộ dữ liệu của bạn đã được xóa sạch khỏi hệ thống.",
         type: "success"
       });
       
@@ -396,7 +411,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
       console.error('Error deleting account:', error);
       showNotification({
         title: "LỖI",
-        message: "Không thể xóa tài khoản. Vui lòng liên hệ Admin.",
+        message: "Không thể xóa toàn bộ dữ liệu. Vui lòng liên hệ Admin.",
         type: "error"
       });
     }
