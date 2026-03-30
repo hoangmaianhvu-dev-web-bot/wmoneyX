@@ -129,12 +129,26 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
     if (!canClaimRedEnvelope) return;
     setLoading(true);
     try {
-      // Random amount: 1000, 500, 50, 250, 30, 100
       const rewards = [1000, 500, 50, 250, 30, 100];
-      const rewardAmount = rewards[Math.floor(Math.random() * rewards.length)];
+      let rewardAmount = rewards[Math.floor(Math.random() * rewards.length)];
+
+      // Kiểm tra giới hạn cho 500 và 1000
+      if (rewardAmount === 500 || rewardAmount === 1000) {
+        const { count, error: countError } = await supabase
+          .from('red_envelope_claims')
+          .select('*', { count: 'exact', head: true })
+          .eq('amount', rewardAmount);
+        
+        if (count && count >= 5) {
+          // Nếu đã đủ 5 người, re-roll sang các mức nhỏ hơn
+          rewardAmount = [50, 250, 30, 100][Math.floor(Math.random() * 4)];
+        }
+      }
+
       const now = new Date().toISOString();
 
-      const { error } = await supabase
+      // Cập nhật số dư
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           balance: (profile.balance || 0) + rewardAmount,
@@ -142,8 +156,9 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
         })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
+      // Lưu giao dịch
       await supabase
         .from('transactions')
         .insert([{
@@ -154,9 +169,20 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
           status: 'COMPLETED'
         }]);
 
+      // Lưu lịch sử nếu là 500 hoặc 1000
+      if (rewardAmount === 500 || rewardAmount === 1000) {
+        await supabase
+          .from('red_envelope_claims')
+          .insert([{
+            user_id: userId,
+            username: profile.username || 'Người dùng',
+            amount: rewardAmount
+          }]);
+      }
+
       showNotification({ title: "Thành công", message: `Đã nhận lì xì ${rewardAmount} Xu!`, type: "success" });
       onUpdateProfile();
-      setIsOpen(false); // Close modal on success
+      setIsOpen(false);
     } catch (error) {
       console.error('Error claiming red envelope:', error);
       showNotification({ title: "Lỗi", message: "Không thể nhận lì xì.", type: "error" });
@@ -167,6 +193,19 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
 
   const [isDragging, setIsDragging] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      const { data } = await supabase
+        .from('red_envelope_claims')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setHistory(data);
+    };
+    if (isOpen) fetchHistory();
+  }, [isOpen]);
 
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -242,6 +281,20 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
                   <div className="bg-black/40 p-4 rounded-xl border border-white/5">
                     <p className="text-[10px] text-red-400 uppercase font-bold mb-1">Lì xì tiếp theo sau</p>
                     <p className="text-2xl font-black font-mono text-white">{redEnvelopeTimeLeft}</p>
+                  </div>
+                )}
+
+                {history.length > 0 && (
+                  <div className="mt-6 text-left">
+                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lịch sử nhận lì xì lớn (500/1k):</p>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {history.map((item) => (
+                        <div key={item.id} className="flex justify-between text-[10px] bg-black/20 p-2 rounded">
+                          <span className="text-white">{item.username}</span>
+                          <span className="text-yellow-400 font-bold">{item.amount} Xu</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
