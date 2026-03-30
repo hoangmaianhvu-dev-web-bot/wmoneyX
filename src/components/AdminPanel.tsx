@@ -127,12 +127,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       
       console.log('Supabase update result:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        throw new Error('No data returned from update, check if user ID exists.');
+      }
+
       showNotification({ title: "Thành công", message: `Đã ${shouldBan ? 'ban' : 'mở ban'} người dùng.`, type: "success" });
       fetchData();
     } catch (err) {
       console.error('Error toggling ban:', err);
-      showNotification({ title: "Lỗi", message: "Không thể cập nhật trạng thái ban.", type: "error" });
+      showNotification({ title: "Lỗi", message: `Không thể cập nhật trạng thái ban: ${err instanceof Error ? err.message : 'Lỗi không xác định'}`, type: "error" });
     }
   };
 
@@ -176,6 +184,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log('Fetching admin data...');
       // Fetch Stats
       const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
       const { count: pendingCount } = await supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
@@ -235,8 +244,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       });
 
       if (activeTab === 'users') {
-        const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        setUsers(data || []);
+        const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) {
+          console.error('Error fetching users:', error);
+          showNotification({ title: "Lỗi", message: "Không thể tải danh sách người dùng.", type: "error" });
+        } else {
+          console.log('Fetched users:', data);
+          setUsers(data || []);
+        }
       } else if (activeTab === 'payouts') {
         const { data } = await supabase.from('withdrawals').select('*, profiles(username, email)').eq('status', 'PENDING').order('created_at', { ascending: false });
         setPayouts(data || []);
