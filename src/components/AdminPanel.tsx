@@ -107,6 +107,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
+  const toggleBan = async (user: any) => {
+    const isBanned = user.is_banned;
+    const reason = isBanned ? '' : prompt('Nhập lý do ban:');
+    if (!isBanned && reason === null) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: !isBanned, ban_reason: isBanned ? null : reason })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      showNotification({ title: "Thành công", message: `Đã ${isBanned ? 'mở ban' : 'ban'} người dùng.`, type: "success" });
+      fetchData();
+    } catch (err) {
+      console.error('Error toggling ban:', err);
+      showNotification({ title: "Lỗi", message: "Không thể cập nhật trạng thái ban.", type: "error" });
+    }
+  };
+
   const deleteProof = async (id: string) => {
     try {
       const { error } = await supabase.from('payment_proofs').delete().eq('id', id);
@@ -448,6 +468,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                           <div className="font-black text-white">{u.username}</div>
                           <div className="text-[8px] text-gray-500 font-bold uppercase">{u.email}</div>
                           <div className="text-[7px] text-gray-600">ID: {u.id}</div>
+                          {u.is_banned && <div className="text-[8px] font-black text-red-500 uppercase mt-1">Bị Ban</div>}
                         </td>
                         <td className="p-4 font-black text-accent">{(u.balance || 0).toLocaleString()}</td>
                         <td className="p-4">
@@ -467,9 +488,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                           )}
                         </td>
                         <td className="p-4 text-right">
-                          <button className="w-8 h-8 glass flex items-center justify-center text-accent hover:bg-accent hover:text-black transition-all rounded-lg ml-auto">
-                            <Edit size={12} />
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            <button 
+                              onClick={() => toggleBan(u)}
+                              className={`w-8 h-8 glass flex items-center justify-center transition-all rounded-lg ${u.is_banned ? 'text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'text-red-500 hover:bg-red-500 hover:text-white'}`}
+                            >
+                              <ShieldCheck size={12} />
+                            </button>
+                            <button className="w-8 h-8 glass flex items-center justify-center text-accent hover:bg-accent hover:text-black transition-all rounded-lg">
+                              <Edit size={12} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )) : (
