@@ -110,7 +110,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const toggleBan = async (user: any, shouldBan: boolean) => {
     const action = shouldBan ? 'ban' : 'gỡ ban';
     
-    console.log('Attempting to update user ban status:', { userId: user.id, shouldBan });
+    console.log('Attempting to update user ban status:', { userId: user.id, username: user.username, shouldBan, userObject: user });
 
     if (!window.confirm(`Bạn có chắc chắn muốn ${action} người dùng ${user.username}?`)) {
       return;
@@ -119,6 +119,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     const reason = shouldBan ? 'Vi phạm quy định hệ thống' : null;
 
     try {
+      // First, check if the user exists
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching user before update:', fetchError);
+        throw new Error(`User not found or error fetching user: ${fetchError.message}`);
+      }
+
+      console.log('User found, proceeding with update:', existingUser);
+
       const { data, error } = await supabase
         .from('profiles')
         .update({ is_banned: shouldBan, ban_reason: reason })
@@ -128,12 +142,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       console.log('Supabase update result:', { data, error });
 
       if (error) {
-        console.error('Supabase update error:', error);
+        console.error('Supabase update error details:', JSON.stringify(error, null, 2));
         throw error;
       }
       
       if (!data || data.length === 0) {
-        throw new Error('No data returned from update, check if user ID exists.');
+        console.warn('Update successful but no rows affected. User ID:', user.id);
+        throw new Error('No data returned from update, check if user ID exists or if RLS policies are blocking the update.');
       }
 
       showNotification({ title: "Thành công", message: `Đã ${shouldBan ? 'ban' : 'mở ban'} người dùng.`, type: "success" });
