@@ -25,14 +25,14 @@ async function startServer() {
 
   // Proxy for VuotNhanh API to bypass CORS
   app.get("/api/proxy-vuotnhanh", async (req, res) => {
-    const { url } = req.query;
-    if (!url) {
-      return res.status(400).json({ error: "URL is required" });
+    const { api, url } = req.query;
+    if (!api || !url) {
+      return res.status(400).json({ error: "API key and URL are required" });
     }
 
     try {
-      const targetUrl = new URL(url as string);
-      const response = await fetch(url as string, {
+      const targetUrl = `https://vuotnhanh.com/api?api=${api}&url=${encodeURIComponent(url as string)}`;
+      const response = await fetch(targetUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
           'Accept': '*/*',

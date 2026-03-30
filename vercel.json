@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/proxy-vuotnhanh",
+      "destination": "https://vuotnhanh.com/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

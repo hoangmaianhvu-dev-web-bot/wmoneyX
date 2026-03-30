@@ -94,7 +94,8 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
       const apiRequestUrl = `${CONFIG.VUOTNHANH_URL}${CONFIG.VUOTNHANH_API}&url=${encodeURIComponent(targetUrl)}`;
       
-      const finalProxyUrl = `/api/proxy-vuotnhanh?url=${encodeURIComponent(apiRequestUrl)}`;
+      // Use the new format for Vercel rewrites and local proxy
+      const finalProxyUrl = `/api/proxy-vuotnhanh?api=${CONFIG.VUOTNHANH_API}&url=${encodeURIComponent(targetUrl)}`;
       
       console.log("Proxy URL:", finalProxyUrl);
 
@@ -116,8 +117,18 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             throw new Error(`Direct fetch failed: ${response.status}`);
           }
         } catch (directError: any) {
-          console.error("Direct fetch also failed:", directError);
-          throw new Error(proxyError.message || "Failed to generate link");
+          console.warn("Direct fetch also failed, trying public CORS proxy:", directError);
+          try {
+            // Fallback to a public CORS proxy if everything else fails
+            const publicCorsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiRequestUrl)}`;
+            response = await fetch(publicCorsProxyUrl);
+            if (!response.ok) {
+              throw new Error(`Public CORS proxy failed: ${response.status}`);
+            }
+          } catch (corsProxyError: any) {
+            console.error("All fetch methods failed:", corsProxyError);
+            throw new Error("Failed to generate link after all attempts");
+          }
         }
       }
 
