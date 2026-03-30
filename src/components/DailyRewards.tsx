@@ -533,11 +533,11 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                     <Zap className="text-accent" />
                     <div>
                       <p className="font-bold">x2 số tiền thưởng làm nhiệm vụ (24h)</p>
-                      <p className="text-xs text-gray-500">500 EXP</p>
+                      <p className="text-xs text-gray-500">1000 EXP</p>
                     </div>
                   </div>
                   <button 
-                    onClick={() => exchangeBoost(500, 'x2', 24)}
+                    onClick={() => exchangeBoost(1000, 'x2', 24)}
                     disabled={loading}
                     className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
                   >
@@ -549,11 +549,11 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                     <Zap className="text-accent" />
                     <div>
                       <p className="font-bold">x5 số tiền thưởng làm nhiệm vụ (6h)</p>
-                      <p className="text-xs text-gray-500">1000 EXP</p>
+                      <p className="text-xs text-gray-500">5000 EXP</p>
                     </div>
                   </div>
                   <button 
-                    onClick={() => exchangeBoost(1000, 'x5', 6)}
+                    onClick={() => exchangeBoost(5000, 'x5', 6)}
                     disabled={loading}
                     className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
                   >

@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useNotification } from '../context/NotificationContext';
 import IdentityVerification from './IdentityVerification';
+import DeleteAccountVerification from './DeleteAccountVerification';
 import { EffectType, effectNames } from './EffectsManager';
 import { supabase } from '../supabase';
 import { getLevelInfo } from '../utils/levelUtils';
@@ -47,6 +48,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   const [historyFilter, setHistoryFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
   const [reportText, setReportText] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [bubblesEnabled, setBubblesEnabled] = useState(() => localStorage.getItem('bubbles_enabled') !== 'false');
 
   const toggleBubbles = () => {
@@ -143,7 +145,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           </div>
 
           <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4 flex items-center justify-between">
-            <p className="text-[9px] text-gray-500 uppercase font-bold">Bong bóng bay</p>
+            <p className="text-[9px] text-gray-500 uppercase font-bold">Hiệu ứng lá rơi</p>
             <button 
               onClick={toggleBubbles}
               className={`w-10 h-5 rounded-full relative transition-all duration-300 ${bubblesEnabled ? 'bg-accent' : 'bg-white/10'}`}
@@ -376,63 +378,109 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
     );
   };
 
-  const renderSecurity = () => (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="flex gap-2 glass p-1">
-        <button 
-          onClick={() => setSecurityTab('pw')} 
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${securityTab === 'pw' ? 'bg-accent text-black' : 'text-gray-500'}`}
-        >
-          Đổi mật khẩu
-        </button>
-        <button 
-          onClick={() => setSecurityTab('verify')} 
-          className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition relative ${securityTab === 'verify' ? 'bg-accent text-black' : 'text-gray-500'}`}
-        >
-          Xác minh Email
-          {showVerifyRedDot && (
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444] animate-pulse"></span>
-          )}
-        </button>
-      </div>
+  const handleDeleteAccount = async () => {
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
+      if (error) throw error;
+      
+      await supabase.auth.signOut();
+      
+      showNotification({
+        title: "ĐÃ XÓA TÀI KHOẢN",
+        message: "Tài khoản của bạn đã được xóa thành công.",
+        type: "success"
+      });
+      
+      onLogout();
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      showNotification({
+        title: "LỖI",
+        message: "Không thể xóa tài khoản. Vui lòng liên hệ Admin.",
+        type: "error"
+      });
+    }
+  };
 
-      {securityTab === 'pw' ? (
-        <div className="glass p-8 space-y-6">
-          <div className="space-y-4">
-            <input type="password" placeholder="Mật khẩu hiện tại" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
-            <input type="password" placeholder="Mật khẩu mới" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
-            <button className="w-full btn-primary py-4 rounded-xl text-[11px] font-black tracking-widest uppercase mt-4">Cập nhật mật khẩu</button>
+  const renderSecurity = () => {
+    if (showDeleteConfirm) {
+      return (
+        <DeleteAccountVerification
+          email={profile?.email || ''}
+          onSuccess={handleDeleteAccount}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      );
+    }
+
+    return (
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="flex gap-2 glass p-1">
+          <button 
+            onClick={() => setSecurityTab('pw')} 
+            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${securityTab === 'pw' ? 'bg-accent text-black' : 'text-gray-500'}`}
+          >
+            Đổi mật khẩu
+          </button>
+          <button 
+            onClick={() => setSecurityTab('verify')} 
+            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition relative ${securityTab === 'verify' ? 'bg-accent text-black' : 'text-gray-500'}`}
+          >
+            Xác minh Email
+            {showVerifyRedDot && (
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444] animate-pulse"></span>
+            )}
+          </button>
+        </div>
+
+        {securityTab === 'pw' ? (
+          <div className="glass p-8 space-y-6">
+            <div className="space-y-4">
+              <input type="password" placeholder="Mật khẩu hiện tại" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
+              <input type="password" placeholder="Mật khẩu mới" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
+              <button className="w-full btn-primary py-4 rounded-xl text-[11px] font-black tracking-widest uppercase mt-4">Cập nhật mật khẩu</button>
+            </div>
           </div>
+        ) : (
+          <div className="space-y-6">
+            {profile?.is_verified ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass p-8 text-center space-y-4"
+              >
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                  <CheckCircle2 size={32} className="text-emerald-500" />
+                </div>
+                <h3 className="text-lg font-black uppercase tracking-widest text-emerald-500">Đã Xác Minh Uy Tín</h3>
+                <p className="text-xs text-gray-400">Tài khoản của bạn đã được xác minh để nâng cao uy tín và bảo mật tránh mất hoặc hack.</p>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Email liên kết</p>
+                  <p className="text-sm font-bold text-white">{profile?.email}</p>
+                </div>
+              </motion.div>
+            ) : (
+              <IdentityVerification 
+                email={profile?.email || ''}
+                onSuccess={onVerifySuccess}
+                onCancel={() => setSecurityTab('pw')}
+              />
+            )}
+          </div>
+        )}
+
+        <div className="mt-8 pt-8 border-t border-white/10">
+          <button 
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full py-4 rounded-xl text-[11px] font-black tracking-widest uppercase bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
+          >
+            <ShieldAlert size={16} />
+            Xóa tài khoản
+          </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {profile?.is_verified ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass p-8 text-center space-y-4"
-            >
-              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
-                <CheckCircle2 size={32} className="text-emerald-500" />
-              </div>
-              <h3 className="text-lg font-black uppercase tracking-widest text-emerald-500">Đã Xác Minh Uy Tín</h3>
-              <p className="text-xs text-gray-400">Tài khoản của bạn đã được xác minh để nâng cao uy tín và bảo mật tránh mất hoặc hack.</p>
-              <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Email liên kết</p>
-                <p className="text-sm font-bold text-white">{profile?.email}</p>
-              </div>
-            </motion.div>
-          ) : (
-            <IdentityVerification 
-              email={profile?.email || ''}
-              onSuccess={onVerifySuccess}
-              onCancel={() => setSecurityTab('pw')}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   const renderContact = () => (
     <div className="max-w-2xl mx-auto space-y-6">

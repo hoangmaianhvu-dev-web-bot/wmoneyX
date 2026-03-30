@@ -21,73 +21,51 @@
             contain: strict;
         }
 
-        /* Lớp vỏ bong bóng siêu mỏng */
-        .bubble {
+        /* Chiếc lá rơi */
+        .leaf {
             position: absolute;
-            bottom: -150px;
-            border-radius: 50%;
-            /* Độ dày viền cực nhỏ (0.2px) */
-            border: 0.2px solid rgba(255, 255, 255, 0.18);
-            /* Tạo hiệu ứng khúc xạ ánh sáng xuyên qua vỏ */
-            backdrop-filter: blur(0.8px);
-            /* Đổ bóng trong và ngoài tạo khối 3D nhẹ */
-            box-shadow: 
-                inset 0 0 15px rgba(255, 255, 255, 0.05),
-                inset 10px -10px 20px rgba(186, 230, 253, 0.1),
-                0 0 10px rgba(255, 255, 255, 0.05);
+            top: -50px;
+            border-radius: 15px 0 15px 0; /* Hình dáng chiếc lá */
+            background: linear-gradient(135deg, #fbbf24, #ea580c); /* Vàng cam */
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.3), 1px 1px 3px rgba(0,0,0,0.2);
             will-change: transform, opacity;
-            animation: rise-and-sway var(--duration) ease-in infinite;
+            animation: fall-and-sway var(--duration) linear infinite;
             transform: translate3d(0, 0, 0);
             backface-visibility: hidden;
+            opacity: 0.8;
         }
 
-        /* Điểm phản xạ ánh sáng (Highlight) trên bề mặt */
-        .bubble::after {
+        /* Gân lá */
+        .leaf::after {
             content: '';
             position: absolute;
-            top: 15%;
-            left: 15%;
-            width: 25%;
-            height: 20%;
-            background: rgba(255, 255, 255, 0.35);
-            border-radius: 50%;
-            transform: rotate(-35deg);
-            filter: blur(1px);
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: rotate(15deg);
         }
 
-        /* Hiệu ứng cầu vồng nhiễu xạ (Iridescence) */
-        .bubble::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: radial-gradient(
-                circle at 70% 30%, 
-                transparent 40%, 
-                rgba(186, 230, 253, 0.05) 60%, 
-                rgba(255, 192, 203, 0.05) 80%
-            );
-        }
-
-        /* Chuyển động bay và lắc lư */
-        @keyframes rise-and-sway {
+        /* Chuyển động rơi và lắc lư */
+        @keyframes fall-and-sway {
             0% { 
-                transform: translate3d(0, 0, 0) scale(1) rotate(0deg); 
+                transform: translate3d(0, -50px, 0) rotate(0deg); 
                 opacity: 0; 
             }
-            15% { 
-                opacity: 0.7; 
+            10% { 
+                opacity: 0.8; 
             }
             50% { 
-                /* Lắc lư ngang 50px */
-                transform: translate3d(50px, -60vh, 0) scale(1.1) rotate(180deg); 
+                /* Lắc lư ngang */
+                transform: translate3d(var(--sway), 50vh, 0) rotate(180deg); 
             }
-            85% { 
-                opacity: 0.4; 
+            90% { 
+                opacity: 0.8; 
             }
             100% { 
-                /* Bay quá màn hình và tan biến */
-                transform: translate3d(-20px, -130vh, 0) scale(0.9) rotate(360deg); 
+                /* Rơi quá màn hình và tan biến */
+                transform: translate3d(calc(var(--sway) * -1), 110vh, 0) rotate(360deg); 
                 opacity: 0; 
             }
         }
@@ -111,22 +89,26 @@
             
             updateBubblesVisibility();
             
-            const count = 30; // Số lượng bong bóng
+            const count = 25; // Số lượng lá
             const fragment = document.createDocumentFragment();
             
             for (let i = 0; i < count; i++) {
                 const b = document.createElement('div');
-                const sizeVal = Math.random() * 40 + 10;
-                const size = sizeVal + 'px';
+                const widthVal = Math.random() * 10 + 10; // 10px - 20px
+                const heightVal = widthVal * 1.5; // Tỷ lệ lá
                 
-                b.className = 'bubble';
-                b.style.width = size;
-                b.style.height = size;
+                b.className = 'leaf';
+                b.style.width = widthVal + 'px';
+                b.style.height = heightVal + 'px';
                 b.style.left = Math.random() * 100 + '%';
                 
-                // Thời gian bay ngẫu nhiên từ 7s đến 12s
-                b.style.setProperty('--duration', Math.random() * 5 + 7 + 's');
-                // Độ trễ ngẫu nhiên để không bay lên cùng lúc
+                // Độ lắc lư ngẫu nhiên
+                const sway = (Math.random() * 100 - 50) + 'px';
+                b.style.setProperty('--sway', sway);
+                
+                // Thời gian rơi ngẫu nhiên từ 8s đến 15s
+                b.style.setProperty('--duration', Math.random() * 7 + 8 + 's');
+                // Độ trễ ngẫu nhiên
                 b.style.animationDelay = Math.random() * 10 + 's';
                 
                 fragment.appendChild(b);

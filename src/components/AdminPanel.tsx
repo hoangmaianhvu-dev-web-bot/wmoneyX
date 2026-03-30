@@ -151,10 +151,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
       const { count: pendingCount } = await supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
       
-      const { data: taskData } = await supabase.from('profiles').select('tasks_total, special_tasks_total, balance');
-      const totalTasks = taskData?.reduce((sum, p) => sum + (p.tasks_total || 0), 0) || 0;
-      const totalSpecialTasks = taskData?.reduce((sum, p) => sum + (p.special_tasks_total || 0), 0) || 0;
-      const totalSystemBalance = taskData?.reduce((sum, p) => sum + (p.balance || 0), 0) || 0;
+      const { data: profileData } = await supabase.from('profiles').select('balance');
+      const totalSystemBalance = profileData?.reduce((sum, p) => sum + (p.balance || 0), 0) || 0;
+      
+      // Calculate total tasks from transactions table
+      const { count: totalTasks } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('type', 'TASK')
+        .eq('status', 'COMPLETED')
+        .eq('description', 'Hoàn thành nhiệm vụ');
+        
+      const { count: totalSpecialTasks } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('type', 'TASK')
+        .eq('status', 'COMPLETED')
+        .eq('description', 'Hoàn thành nhiệm vụ đặc biệt');
 
       const { data: modData } = await supabase.from('mods').select('title, category, download_count');
       const totalModDownloads = modData?.reduce((sum, m) => sum + (m.download_count || 0), 0) || 0;
@@ -174,7 +187,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       today.setHours(0, 0, 0, 0);
       const { data: revenueData } = await supabase.from('transactions')
         .select('amount')
-        .eq('type', 'DEPOSIT')
+        .in('type', ['TASK', 'REFERRAL', 'DAILY_REWARD'])
         .eq('status', 'COMPLETED')
         .gte('created_at', today.toISOString());
       
@@ -184,8 +197,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         totalUsers: userCount || 0,
         pendingPayouts: pendingCount || 0,
         todayRevenue: totalRevenue,
-        totalTasks,
-        totalSpecialTasks,
+        totalTasks: totalTasks || 0,
+        totalSpecialTasks: totalSpecialTasks || 0,
         totalSystemBalance,
         totalModDownloads
       });
@@ -357,7 +370,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           { label: 'Thành Viên', value: stats.totalUsers, icon: Users, color: '' },
           { label: 'Chờ Rút', value: stats.pendingPayouts, icon: Clock, color: 'text-yellow-500' },
           { label: 'Hôm nay (Xu)', value: stats.todayRevenue.toLocaleString(), icon: TrendingUp, color: 'text-emerald-400' },
-          { label: 'Tổng Nhiệm Vụ', value: stats.totalTasks.toLocaleString(), icon: Check, color: 'text-blue-400' },
+          { label: 'Tổng Nhiệm Vụ', value: (stats.totalTasks + stats.totalSpecialTasks).toLocaleString(), icon: Check, color: 'text-blue-400' },
           { label: 'NV Thường', value: stats.totalTasks.toLocaleString(), icon: Check, color: 'text-accent' },
           { label: 'NV Đặc Biệt', value: stats.totalSpecialTasks.toLocaleString(), icon: Check, color: 'text-red-500' },
           { label: 'Tổng Số Dư', value: stats.totalSystemBalance.toLocaleString(), icon: Wallet, color: 'text-purple-400' },
@@ -422,6 +435,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                     <tr>
                       <th className="p-4">Thành Viên</th>
                       <th className="p-4">Số Dư</th>
+                      <th className="p-4">Nhiệm Vụ</th>
                       <th className="p-4">Cấp Bậc</th>
                       <th className="p-4">Xác Minh</th>
                       <th className="p-4 text-right">Hành Động</th>
@@ -436,6 +450,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                           <div className="text-[7px] text-gray-600">ID: {u.id}</div>
                         </td>
                         <td className="p-4 font-black text-accent">{(u.balance || 0).toLocaleString()}</td>
+                        <td className="p-4">
+                          <div className="text-[10px] font-black text-blue-400">{(u.tasks_total || 0) + (u.special_tasks_total || 0)}</div>
+                          <div className="text-[8px] text-gray-500">T: {u.tasks_total || 0} | ĐB: {u.special_tasks_total || 0}</div>
+                        </td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded-md font-black text-[8px] uppercase ${u.vip_status === 'VIP GOLD' ? 'bg-yellow-400/10 text-yellow-400' : 'bg-zinc-800 text-zinc-500'}`}>
                             {u.vip_status}
@@ -456,7 +474,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={5} className="p-12 text-center text-gray-500 italic">Không tìm thấy thành viên nào.</td>
+                        <td colSpan={6} className="p-12 text-center text-gray-500 italic">Không tìm thấy thành viên nào.</td>
                       </tr>
                     )}
                   </tbody>

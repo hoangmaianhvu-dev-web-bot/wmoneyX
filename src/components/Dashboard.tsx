@@ -37,6 +37,7 @@ import AdminPanel from './AdminPanel';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
 import BackgroundMusic from './BackgroundMusic';
+import RedEnvelopeWidget from './RedEnvelopeWidget';
 import { getLevelInfo } from '../utils/levelUtils';
 
 interface DashboardProps {
@@ -63,6 +64,7 @@ interface Profile {
   last_task_reset_date?: string | null;
   last_blind_bag_free_date?: string | null;
   last_lucky_wheel_free_date?: string | null;
+  last_red_envelope_claim?: string | null;
   referred_by?: string | null;
   referral_bonus_paid?: boolean;
   referral_code?: string;
@@ -939,6 +941,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           </div>
         )}
       </AnimatePresence>
+
+      {/* Red Envelope Widget - Only on Home Tab */}
+      {activeTab === 'home' && (
+        <RedEnvelopeWidget userId={user.id} profile={profile} onUpdateProfile={fetchProfile} />
+      )}
     </div>
   );
 }
