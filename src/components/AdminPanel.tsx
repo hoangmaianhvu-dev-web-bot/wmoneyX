@@ -109,14 +109,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
   const toggleBan = async (user: any) => {
     const isBanned = user.is_banned;
+    const action = isBanned ? 'gỡ ban' : 'ban';
+    
+    console.log('Toggling ban for user:', user.id, 'Current status:', isBanned);
+
+    if (!window.confirm(`Bạn có chắc chắn muốn ${action} người dùng ${user.username}?`)) {
+      return;
+    }
+
     const reason = isBanned ? null : 'Vi phạm quy định hệ thống';
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .update({ is_banned: !isBanned, ban_reason: reason })
-        .eq('id', user.id);
+        .update({ is_banned: !isBanned })
+        .eq('id', user.id)
+        .select();
       
+      console.log('Supabase update result:', { data, error });
+
       if (error) throw error;
       showNotification({ title: "Thành công", message: `Đã ${isBanned ? 'mở ban' : 'ban'} người dùng.`, type: "success" });
       fetchData();
