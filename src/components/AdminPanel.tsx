@@ -109,13 +109,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
   const toggleBan = async (user: any) => {
     const isBanned = user.is_banned;
-    const reason = isBanned ? '' : prompt('Nhập lý do ban:');
-    if (!isBanned && reason === null) return;
+    const reason = isBanned ? null : 'Vi phạm quy định hệ thống';
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_banned: !isBanned, ban_reason: isBanned ? null : reason })
+        .update({ is_banned: !isBanned, ban_reason: reason })
         .eq('id', user.id);
       
       if (error) throw error;
@@ -181,6 +180,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         .eq('type', 'TASK')
         .eq('status', 'COMPLETED')
         .eq('description', 'Hoàn thành nhiệm vụ');
+      console.log('Total Normal Tasks:', totalTasks);
         
       const { count: totalSpecialTasks } = await supabase
         .from('transactions')
@@ -188,6 +188,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         .eq('type', 'TASK')
         .eq('status', 'COMPLETED')
         .eq('description', 'Hoàn thành nhiệm vụ đặc biệt');
+      console.log('Total Special Tasks:', totalSpecialTasks);
 
       const { data: modData } = await supabase.from('mods').select('title, category, download_count');
       const totalModDownloads = modData?.reduce((sum, m) => sum + (m.download_count || 0), 0) || 0;
