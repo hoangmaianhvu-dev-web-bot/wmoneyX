@@ -76,6 +76,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [showSpecialGuide, setShowSpecialGuide] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<'main' | 'special' | null>(null);
   const [taskCreationTime, setTaskCreationTime] = useState("");
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
 
@@ -477,21 +478,16 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       {/* Nhiệm vụ */}
       <div className="space-y-4">
-        <div className="bg-gradient-to-br from-[#1e293b] to-[#312e81] p-8 rounded-[2rem] text-center shadow-2xl border border-white/10">
-          <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4">
-            <Zap className="text-orange-500" size={32} />
+        <div className="anime-card p-8 text-center shadow-[0_10px_30px_rgba(217,70,239,0.15)] border-violet-200 relative">
+          <div className="w-16 h-16 mx-auto bg-violet-50 rounded-full flex items-center justify-center mb-4 border-2 border-violet-200">
+            <Zap className="text-accent" size={32} />
           </div>
-          <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">HỆ THỐNG NHIỆM VỤ</h3>
-          <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-6">Hoàn thành nhiệm vụ để nhận phần thưởng</p>
+          <h3 className="text-xl font-black text-violet-900 uppercase tracking-widest mb-2">HỆ THỐNG NHIỆM VỤ</h3>
+          <p className="text-[10px] text-violet-700 uppercase tracking-widest mb-6">Hoàn thành nhiệm vụ để nhận phần thưởng</p>
           <button 
-            onClick={() => {
-              const el = document.getElementById('main-task-options');
-              if (el) {
-                el.classList.toggle('hidden');
-              }
-            }}
+            onClick={() => setExpandedCategory('main')}
             disabled={isGenerating}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(147,51,234,0.5)] disabled:opacity-50"
+            className="w-full py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)] disabled:opacity-50"
           >
             {isGenerating ? 'ĐANG TẠO...' : `CHỌN NHIỆM VỤ - HIỆN CÓ ${Object.keys(TASK_APIS).length} / ${profile?.tasks_today || 0}`}
           </button>
@@ -532,99 +528,115 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             )}
           </AnimatePresence>
 
-          {/* Main Task Options */}
-          <div id="main-task-options" className="hidden mt-6 pt-6 border-t border-white/10 space-y-2">
-            <h4 className="text-[10px] font-black text-slate-300 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
-            {Object.keys(TASK_DATA).map((taskName, idx) => (
-              <button
-                key={idx}
-                onClick={() => startTask(taskName)}
-                className="w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn"
-              >
-                <div className="flex flex-col items-start">
-                  <span className="text-[10px] font-bold text-white uppercase">{taskName}</span>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-[8px] font-bold text-slate-300 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
-                    <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
-                  </div>
-                </div>
-                <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
-              </button>
-            ))}
-          </div>
+          {/* Main Task Options (Moved to expanded view) */}
         </div>
 
         {/* Bảng nhiệm vụ đặc biệt (Gộp) */}
-        <div className="bg-gradient-to-br from-[#1e293b] to-[#450a0a] p-8 rounded-[2rem] text-center shadow-2xl border border-red-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+        <div className="anime-card p-8 text-center shadow-[0_10px_30px_rgba(217,70,239,0.15)] border-violet-200 relative overflow-hidden">
+          <div className="absolute top-0 right-0 bg-accent text-white text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase shadow-[0_0_10px_rgba(217,70,239,0.5)]">
             HOT
           </div>
-          <div className="w-16 h-16 mx-auto bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-            <Zap className="text-red-500" size={32} />
+          <div className="w-16 h-16 mx-auto bg-violet-50 rounded-full flex items-center justify-center mb-4 border-2 border-violet-200">
+            <Zap className="text-accent" size={32} />
           </div>
-          <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">NHIỆM VỤ ĐẶC BIỆT</h3>
-          <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
+          <h3 className="text-xl font-black text-violet-900 uppercase tracking-widest mb-2">NHIỆM VỤ ĐẶC BIỆT</h3>
+          <p className="text-[10px] text-violet-700 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
           
           <div className="flex gap-2">
             <button 
-              onClick={async () => {
-                const el = document.getElementById('special-task-options');
-                if (el) {
-                  el.classList.toggle('hidden');
-                }
-              }}
-              className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+              onClick={() => setExpandedCategory('special')}
+              className="flex-1 py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)]"
             >
               BẮT ĐẦU NGAY
             </button>
             <button 
               onClick={() => setShowSpecialGuide(true)}
-              className="w-14 py-4 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg"
+              className="w-14 py-4 bg-fuchsia-100 text-accent border border-fuchsia-200 rounded-full flex items-center justify-center hover:bg-accent hover:text-white transition-all shadow-lg"
             >
               <HelpCircle size={20} />
             </button>
           </div>
-
-          {/* Special Task Options (Hidden by default) */}
-          <div id="special-task-options" className="hidden mt-6 pt-6 border-t border-red-500/20 space-y-2">
-            <h4 className="text-[10px] font-black text-slate-300 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
-            {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  showNotification({
-                    title: "HỆ THỐNG",
-                    message: "Nhiệm vụ vẫn đang update, vui lòng quay lại sau!",
-                    type: "warning"
-                  });
-                }}
-                className="w-full py-3 px-4 glass border-red-500/20 rounded-xl flex items-center justify-between hover:bg-red-500/10 transition-all group/btn"
-              >
-                <span className="text-[10px] font-bold text-white uppercase">{task}</span>
-                <ChevronLeft size={14} className="text-red-500 rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
-              </button>
-            ))}
-          </div>
         </div>
+
+        {/* Full-screen expanded view */}
+        <AnimatePresence>
+          {expandedCategory && (
+            <motion.div 
+              initial={{ opacity: 0, y: "100%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "100%" }}
+              className="fixed inset-0 z-[300] bg-white p-6 overflow-y-auto"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <button onClick={() => setExpandedCategory(null)} className="text-black">
+                  <ChevronLeft size={24} />
+                </button>
+                <h3 className="text-lg font-black uppercase text-black tracking-widest">
+                  {expandedCategory === 'main' ? 'HỆ THỐNG NHIỆM VỤ' : 'NHIỆM VỤ ĐẶC BIỆT'}
+                </h3>
+                <div className="w-6" />
+              </div>
+              
+              {expandedCategory === 'main' ? (
+                <div className="space-y-2">
+                  {Object.keys(TASK_DATA).map((taskName, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => startTask(taskName)}
+                      className="w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn"
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="text-[10px] font-bold text-black uppercase">{taskName}</span>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[8px] font-bold text-slate-500 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
+                          <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
+                        </div>
+                      </div>
+                      <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        showNotification({
+                          title: "HỆ THỐNG",
+                          message: "Nhiệm vụ vẫn đang update, vui lòng quay lại sau!",
+                          type: "warning"
+                        });
+                      }}
+                      className="w-full py-3 px-4 glass border-fuchsia-100 rounded-xl flex items-center justify-between hover:bg-fuchsia-50 transition-all group/btn"
+                    >
+                      <span className="text-[10px] font-bold text-violet-900 uppercase">{task}</span>
+                      <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Thông báo nổi khi chọn nhiệm vụ */}
       <AnimatePresence>
         {showTaskModal && selectedTask && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !isGenerating && setShowTaskModal(false)}
-              className="absolute inset-0 full-blur"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass w-full max-w-[340px] relative z-10 rounded-[2rem] border-accent/30 overflow-hidden shadow-[0_0_50px_rgba(173,216,230,0.3)]"
-            >
+          <motion.div 
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            className="fixed inset-0 z-[300] bg-white p-6 overflow-y-auto"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <button onClick={() => !isGenerating && setShowTaskModal(false)} className="text-black">
+                <ChevronLeft size={24} />
+              </button>
+              <h3 className="text-lg font-black uppercase text-black tracking-widest">CHI TIẾT NHIỆM VỤ</h3>
+              <div className="w-6" />
+            </div>
               {isGenerating ? (
                 <div className="p-8 text-center space-y-6">
                   <div className="relative w-24 h-24 mx-auto">
@@ -671,24 +683,24 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase">Nguồn nhiệm vụ</span>
+                      <span className="text-[10px] font-bold text-red-500 uppercase">Nguồn nhiệm vụ</span>
                       <span className="text-[10px] font-black text-accent uppercase">{selectedTask}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase">Số lượt làm</span>
-                      <span className="text-[10px] font-black text-white uppercase">{taskCounts[selectedTask || ""] || 0} / {selectedTask ? TASK_DATA[selectedTask]?.limit : 1} (Hàng ngày)</span>
+                      <span className="text-[10px] font-bold text-red-500 uppercase">Số lượt làm</span>
+                      <span className="text-[10px] font-black text-red-500 uppercase">{taskCounts[selectedTask || ""] || 0} / {selectedTask ? TASK_DATA[selectedTask]?.limit : 1} (Hàng ngày)</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase">Tổng giới hạn ngày</span>
+                      <span className="text-[10px] font-bold text-red-500 uppercase">Tổng giới hạn ngày</span>
                       <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / 99</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase">Phần thưởng</span>
+                      <span className="text-[10px] font-bold text-red-500 uppercase">Phần thưởng</span>
                       <span className="text-[10px] font-black text-yellow-500 uppercase">{reward} XU</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase">Thời gian tạo</span>
-                      <span className="text-[10px] font-black text-white uppercase">{taskCreationTime}</span>
+                      <span className="text-[10px] font-bold text-red-500 uppercase">Thời gian tạo</span>
+                      <span className="text-[10px] font-black text-red-500 uppercase">{taskCreationTime}</span>
                     </div>
                   </div>
 
@@ -707,7 +719,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="flex gap-3 pt-2">
                     <button 
                       onClick={() => setShowTaskModal(false)}
-                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                     >
                       HỦY BỎ
                     </button>
@@ -724,7 +736,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               {/* LED Running Effect */}
               <div className="h-1.5 w-full led-bar" />
             </motion.div>
-          </div>
         )}
       </AnimatePresence>
 
@@ -743,7 +754,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass p-6 w-[92%] max-w-[360px] space-y-4 relative z-10 rounded-[2rem] border-accent/30 bg-accent/10 shadow-[0_0_30px_rgba(0,255,255,0.1)] overflow-y-auto max-h-[85vh]"
+              className="fixed inset-0 z-[200] bg-white p-6 overflow-y-auto"
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-black uppercase text-accent tracking-widest">Hướng dẫn lấy mã</h3>

@@ -418,7 +418,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
       onClick={() => {
         setActiveTab(id);
       }}
-      className={`flex items-center rounded-2xl transition-all relative ${activeTab === id ? 'bg-accent text-white font-black shadow-lg shadow-accent/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'} ${collapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
+      className={`flex items-center rounded-2xl transition-all relative ${activeTab === id ? 'bg-accent text-white font-black shadow-lg shadow-accent/20' : 'text-violet-900 hover:bg-fuchsia-100 hover:text-accent'} ${collapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
       style={{ transformStyle: 'preserve-3d' }}
     >
       <Icon size={collapsed ? 24 : 20} />
@@ -434,10 +434,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   return (
     <div className="min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-white flex flex-col md:flex-row">
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'w-20 px-4 py-6' : 'w-72 p-6'} border-r border-slate-200 fixed h-full z-50 transition-all duration-500 bg-white shadow-xl`}>
+      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'w-20 px-4 py-6' : 'w-72 p-6'} border-r border-fuchsia-200 fixed h-full z-50 transition-all duration-500 bg-white/80 backdrop-blur-xl shadow-xl`}>
         <div className={`mb-12 px-2 flex ${isSidebarCollapsed ? 'flex-col gap-6 items-center' : 'items-center justify-between'}`}>
           {isSidebarCollapsed ? (
-            <div className="w-10 h-10 bg-gradient-to-br from-accent to-blue-600 rounded-xl flex items-center justify-center text-white font-black italic text-xl shadow-lg shadow-accent/20 shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent to-fuchsia-600 rounded-xl flex items-center justify-center text-white font-black italic text-xl shadow-lg shadow-accent/20 shrink-0">
               W
             </div>
           ) : (
@@ -445,13 +445,13 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h1 className="text-2xl font-black italic bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-accent to-slate-900 bg-[length:200%_auto] animate-shine">wmoneyX</h1>
-              <p className="text-[8px] text-slate-500 uppercase tracking-[0.4em] mt-1">Hệ thống kiếm tiền VIP</p>
+              <h1 className="text-2xl font-black italic bg-clip-text text-transparent bg-gradient-to-r from-violet-900 via-accent to-violet-900 bg-[length:200%_auto] animate-shine">wmoneyX</h1>
+              <p className="text-[8px] text-fuchsia-500 uppercase tracking-[0.4em] mt-1">Hệ thống kiếm tiền VIP</p>
             </motion.div>
           )}
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className={`p-2 rounded-xl hover:bg-slate-100 text-slate-900 hover:text-accent transition-all shrink-0`}
+            className={`p-2 rounded-xl hover:bg-fuchsia-100 text-violet-900 hover:text-accent transition-all shrink-0`}
           >
             <Menu size={20} />
           </button>
@@ -466,10 +466,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
         </nav>
 
-        <div className="pt-6 border-t border-slate-200 mt-auto">
+        <div className="pt-6 border-t border-fuchsia-200 mt-auto">
           <button 
             onClick={onLogout}
-            className={`flex items-center rounded-2xl text-red-500 hover:bg-red-50 transition-all ${isSidebarCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
+            className={`flex items-center rounded-2xl text-fuchsia-500 hover:bg-fuchsia-50 transition-all ${isSidebarCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
           >
             <LogOut size={20} />
             {!isSidebarCollapsed && <span className="text-xs uppercase tracking-widest font-bold">Đăng xuất</span>}
@@ -526,7 +526,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               <header className="flex justify-between items-center py-6 mb-8">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 text-accent">
+                    <div className="w-12 h-12 rounded-full bg-fuchsia-100 flex items-center justify-center border-2 border-fuchsia-200 text-accent">
                       <UserRound size={24} />
                     </div>
                     {profile?.is_verified && (
@@ -537,12 +537,12 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-black tracking-tight text-slate-900">{profile?.username}</h2>
+                      <h2 className="text-sm font-black tracking-tight text-violet-900">{profile?.username}</h2>
                       <span className={`text-[7px] px-1.5 py-0.5 rounded font-black uppercase bg-gradient-to-r from-yellow-400 to-orange-500 text-black`}>
                         VIP {levelInfo?.vip || 1}
                       </span>
                     </div>
-                    <p className="text-[9px] text-slate-900 font-medium">{profile?.email}</p>
+                    <p className="text-[9px] text-violet-700 font-medium">{profile?.email}</p>
                   </div>
                 </div>
                 
@@ -550,7 +550,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <MusicToggle isPlaying={isMusicPlaying} togglePlay={toggleMusic} />
                   <button 
                     onClick={() => setShowNotifications(true)}
-                    className="w-9 h-9 glass flex items-center justify-center relative border-slate-200 rounded-xl"
+                    className="w-9 h-9 glass flex items-center justify-center relative border-fuchsia-200 rounded-xl"
                   >
                     <Bell size={16} className="text-accent" />
                     {notifications.length > 0 && (
@@ -558,7 +558,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     )}
                   </button>
                   
-                  <div className="glass px-3 py-2 flex items-center gap-2 border-accent/20 rounded-xl bg-accent/10">
+                  <div className="glass px-3 py-2 flex items-center gap-2 border-fuchsia-200 rounded-xl bg-fuchsia-50">
                     <Coins size={12} className="text-accent" />
                     <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '0' : profile?.balance.toLocaleString()}</span>
                   </div>
