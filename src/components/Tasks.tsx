@@ -24,7 +24,7 @@ interface TasksProps {
 }
 
 const CONFIG = {
-  BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://xacminhnhiemvu.blogspot.com/",
+  BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://wmoneyx.blogspot.com/",
   REWARD: 200,
   SPECIAL_REWARD: 1000
 };
@@ -154,6 +154,16 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
     const currentCount = taskCounts[taskName] || 0;
     const limit = TASK_DATA[taskName]?.limit || 0;
+    const tasksToday = profile?.tasks_today || 0;
+
+    if (tasksToday >= 99) {
+      showNotification({
+        title: "GIỚI HẠN",
+        message: `Bạn đã đạt giới hạn 99 nhiệm vụ mỗi ngày!`,
+        type: "warning"
+      });
+      return;
+    }
 
     if (currentCount >= limit) {
       showNotification({
@@ -667,6 +677,10 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-gray-400 uppercase">Số lượt làm</span>
                       <span className="text-[10px] font-black text-white uppercase">{taskCounts[selectedTask || ""] || 0} / {selectedTask ? TASK_DATA[selectedTask]?.limit : 1} (Hàng ngày)</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Tổng giới hạn ngày</span>
+                      <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / 99</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-gray-400 uppercase">Phần thưởng</span>

@@ -624,8 +624,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <Target size={40} />
                       </div>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
-                      <h3 className="text-xl font-black italic text-accent uppercase tracking-tighter relative z-10">Không giới hạn</h3>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
+                      <h3 className="text-3xl font-black italic text-accent uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 99</h3>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}

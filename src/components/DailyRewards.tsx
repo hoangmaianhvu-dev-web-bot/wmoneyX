@@ -305,9 +305,9 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('type', 'BOOST_EXCHANGE')
+        .in('type', ['BOOST_EXCHANGE', 'EXP_EXCHANGE', 'LIXI_EXCHANGE'])
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
       
       if (!transError) {
         setHistory(transData || []);
@@ -373,7 +373,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
     }
   };
 
-  const exchangeBoost = async (cost: number, type: 'x2' | 'x5', durationHours: number) => {
+  const exchangeBoost = async (cost: number, type: 'x2', durationHours: number) => {
     if ((profile.exp || 0) < cost) {
       showNotification({ title: "Lỗi", message: "Không đủ EXP!", type: "error" });
       return;
@@ -413,14 +413,112 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
-        .eq('type', 'BOOST_EXCHANGE')
+        .in('type', ['BOOST_EXCHANGE', 'EXP_EXCHANGE', 'LIXI_EXCHANGE'])
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
       setHistory(data || []);
 
     } catch (error) {
       console.error('Error exchanging boost:', error);
       showNotification({ title: "Lỗi", message: "Không thể đổi quà.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exchangeExpForXu = async () => {
+    const cost = 100000;
+    const reward = 10000;
+    if ((profile.exp || 0) < cost) {
+      showNotification({ title: "Lỗi", message: "Không đủ 100,000 EXP!", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          exp: (profile.exp || 0) - cost,
+          balance: (profile.balance || 0) + reward
+        })
+        .eq('id', userId);
+      if (updateError) throw updateError;
+
+      await supabase.from('transactions').insert([{
+        user_id: userId,
+        type: 'EXP_EXCHANGE',
+        amount: reward,
+        description: `Đổi 100,000 EXP lấy 10,000 Xu`,
+        status: 'COMPLETED'
+      }]);
+
+      showNotification({ title: "Thành công", message: "Đã đổi 10,000 Xu!", type: "success" });
+      onUpdateProfile();
+      
+      // Refresh history
+      const { data } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .in('type', ['BOOST_EXCHANGE', 'EXP_EXCHANGE', 'LIXI_EXCHANGE'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+      setHistory(data || []);
+    } catch (error) {
+      console.error('Error exchanging EXP for Xu:', error);
+      showNotification({ title: "Lỗi", message: "Không thể đổi quà.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exchangeExpForLixi = async () => {
+    const cost = 10000;
+    if ((profile.exp || 0) < cost) {
+      showNotification({ title: "Lỗi", message: "Không đủ 10,000 EXP!", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const isJackpot = Math.random() < 0.01;
+      const randomReward = isJackpot 
+        ? Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000 
+        : Math.floor(Math.random() * (1999 - 200 + 1)) + 200;
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          exp: (profile.exp || 0) - cost,
+          balance: (profile.balance || 0) + randomReward
+        })
+        .eq('id', userId);
+      if (updateError) throw updateError;
+
+      await supabase.from('transactions').insert([{
+        user_id: userId,
+        type: 'LIXI_EXCHANGE',
+        amount: randomReward,
+        description: `Dùng 10,000 EXP nhận Lì xì ${randomReward} Xu`,
+        status: 'COMPLETED'
+      }]);
+
+      showNotification({ title: "Chúc mừng", message: `Bạn nhận được Lì xì ${randomReward} Xu!`, type: "success" });
+      onUpdateProfile();
+
+      // Refresh history
+      const { data } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .in('type', ['BOOST_EXCHANGE', 'EXP_EXCHANGE', 'LIXI_EXCHANGE'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+      setHistory(data || []);
+    } catch (error) {
+      console.error('Error exchanging EXP for Lixi:', error);
+      showNotification({ title: "Lỗi", message: "Không thể nhận Lì xì.", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -546,18 +644,34 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                 </div>
                 <div className="glass p-6 rounded-[2rem] flex justify-between items-center">
                   <div className="flex items-center gap-4">
-                    <Zap className="text-accent" />
+                    <Coins className="text-accent" />
                     <div>
-                      <p className="font-bold">x5 số tiền thưởng làm nhiệm vụ (6h)</p>
-                      <p className="text-xs text-gray-500">5000 EXP</p>
+                      <p className="font-bold">Đổi 100,000 EXP lấy 10,000 Xu</p>
+                      <p className="text-xs text-gray-500">100,000 EXP</p>
                     </div>
                   </div>
                   <button 
-                    onClick={() => exchangeBoost(5000, 'x5', 6)}
+                    onClick={exchangeExpForXu}
                     disabled={loading}
                     className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
                   >
                     Đổi
+                  </button>
+                </div>
+                <div className="glass p-6 rounded-[2rem] flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <Gift className="text-accent" />
+                    <div>
+                      <p className="font-bold">Nhận Lì xì ngẫu nhiên (200 - 5000 Xu)</p>
+                      <p className="text-xs text-gray-500">10,000 EXP</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={exchangeExpForLixi}
+                    disabled={loading}
+                    className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
+                  >
+                    Nhận
                   </button>
                 </div>
               </div>
