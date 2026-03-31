@@ -49,14 +49,6 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   const [reportText, setReportText] = useState('');
   const [reporting, setReporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [bubblesEnabled, setBubblesEnabled] = useState(() => localStorage.getItem('bubbles_enabled') !== 'false');
-
-  const toggleBubbles = () => {
-    const newValue = !bubblesEnabled;
-    setBubblesEnabled(newValue);
-    localStorage.setItem('bubbles_enabled', newValue.toString());
-    window.dispatchEvent(new CustomEvent('toggle-bubbles'));
-  };
 
   useEffect(() => {
     if (activePage === 'history') {
@@ -106,11 +98,11 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
   const renderProfile = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass p-8 text-center relative overflow-hidden md:col-span-1">
-          <div className="w-20 h-20 bg-accent/10 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-accent/30">
+        <div className="glass p-8 text-center relative overflow-hidden md:col-span-1 border-accent/20 bg-accent/5 shadow-lg rounded-3xl">
+          <div className="w-20 h-20 bg-accent/10 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-accent/20">
             <UserRound size={40} className="text-accent" />
           </div>
-          <h3 className="text-xl font-black italic tracking-tighter">{profile?.username || '0'}</h3>
+          <h3 className="text-xl font-black italic tracking-tighter text-slate-900">{profile?.username || '0'}</h3>
           <div className="text-[8px] px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black uppercase mt-2 inline-block">
             VIP {levelInfo.vip}
           </div>
@@ -120,38 +112,22 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           )}
           
           <div className="grid grid-cols-2 gap-4 mt-6">
-            <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-              <p className="text-[9px] text-gray-500 uppercase font-bold">Số dư</p>
+            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+              <p className="text-[9px] text-slate-600 uppercase font-bold">Số dư</p>
               <p className="text-accent font-black">{profile?.balance.toLocaleString() || 0}</p>
             </div>
-            <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-              <p className="text-[9px] text-gray-500 uppercase font-bold">Nhiệm vụ</p>
+            <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+              <p className="text-[9px] text-slate-600 uppercase font-bold">Nhiệm vụ</p>
               <p className="text-accent font-black">{profile?.tasks_total || 0}</p>
             </div>
           </div>
           
-          <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4">
-            <p className="text-[9px] text-gray-500 uppercase font-bold mb-2">Hiệu ứng nền</p>
-            <div className="flex flex-wrap gap-2">
-              {(['particles', 'snow', 'stars', 'neon', 'fireworks', 'led'] as EffectType[]).map(effect => (
-                <button
-                  key={effect}
-                  onClick={() => onEffectChange(effect)}
-                  className={`w-6 h-6 rounded-full transition-all ${currentEffect === effect ? 'bg-accent shadow-[0_0_10px_#add8e6]' : 'bg-white/10 hover:bg-white/20'}`}
-                  title={effectNames[effect]}
-                />
-              ))}
+          <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm mt-4">
+            <p className="text-[9px] text-slate-600 uppercase font-bold mb-2">Hiệu ứng nền</p>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-accent shadow-md" />
+              <span className="text-[10px] font-bold text-slate-800">Dải LED Neon (Mặc định)</span>
             </div>
-          </div>
-
-          <div className="bg-white/5 p-3 rounded-xl border border-white/5 mt-4 flex items-center justify-between">
-            <p className="text-[9px] text-gray-500 uppercase font-bold">Hiệu ứng lá rơi</p>
-            <button 
-              onClick={toggleBubbles}
-              className={`w-10 h-5 rounded-full relative transition-all duration-300 ${bubblesEnabled ? 'bg-accent' : 'bg-white/10'}`}
-            >
-              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${bubblesEnabled ? 'right-1' : 'left-1'}`} />
-            </button>
           </div>
         </div>
 
@@ -190,7 +166,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           {profile?.is_admin && (
             <button 
               onClick={onOpenAdmin}
-              className="glass p-5 flex justify-between items-center border-accent/20 hover:bg-accent/5 sm:col-span-2 group transition-all"
+              className="bg-white p-5 flex justify-between items-center border border-accent/20 hover:bg-accent/5 sm:col-span-2 group transition-all rounded-2xl shadow-md"
             >
               <div className="flex items-center gap-4 text-accent">
                 <ShieldAlert size={20} />
@@ -201,9 +177,9 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           )}
           <button 
             onClick={onLogout}
-            className="glass p-5 flex justify-between items-center border-red-500/20 hover:bg-red-500/5 sm:col-span-2 group transition-all"
+            className="bg-rose-50 p-5 flex justify-between items-center border border-red-100 hover:bg-rose-100 sm:col-span-2 group transition-all rounded-2xl shadow-md"
           >
-            <div className="flex items-center gap-4 text-red-400">
+            <div className="flex items-center gap-4 text-rose-600">
               <LogOut size={20} />
               <span className="text-sm font-bold uppercase">Đăng xuất tài khoản</span>
             </div>
@@ -226,65 +202,65 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
           <button 
             onClick={() => setHistoryFilter('ALL')}
-            className={`${historyFilter === 'ALL' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+            className={`${historyFilter === 'ALL' ? 'bg-accent text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
           >
             TẤT CẢ
           </button>
           <button 
             onClick={() => setHistoryFilter('IN')}
-            className={`${historyFilter === 'IN' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+            className={`${historyFilter === 'IN' ? 'bg-accent text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
           >
             HOA HỒNG
           </button>
           <button 
             onClick={() => setHistoryFilter('OUT')}
-            className={`${historyFilter === 'OUT' ? 'bg-accent text-black' : 'glass text-gray-400'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
+            className={`${historyFilter === 'OUT' ? 'bg-accent text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'} text-[9px] font-black px-6 py-2 rounded-full transition-all`}
           >
             RÚT TIỀN
           </button>
         </div>
 
         {loadingHistory ? (
-          <div className="glass py-16 text-center">
+          <div className="bg-white p-16 text-center rounded-3xl border border-slate-100">
             <div className="w-10 h-10 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Đang tải lịch sử...</p>
+            <p className="text-[10px] text-slate-700 uppercase font-black tracking-widest">Đang tải lịch sử...</p>
           </div>
         ) : filteredTransactions.length > 0 ? (
           <div className="space-y-3">
             {filteredTransactions.map((tx) => (
-              <div key={tx.id} className="glass p-4 flex items-center justify-between group hover:bg-white/5 transition-all">
+              <div key={tx.id} className="bg-white p-4 flex items-center justify-between group hover:bg-slate-50 transition-all rounded-2xl border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    tx.type === 'WITHDRAW' ? 'bg-red-500/10 text-red-400' : 
-                    tx.type === 'REFUND' ? 'bg-blue-500/10 text-blue-400' :
-                    'bg-emerald-500/10 text-emerald-400'
+                    tx.type === 'WITHDRAW' ? 'bg-red-50 text-red-600' : 
+                    tx.type === 'REFUND' ? 'bg-blue-50 text-blue-600' :
+                    'bg-emerald-50 text-emerald-600'
                   }`}>
                     {tx.type === 'WITHDRAW' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}
                   </div>
                   <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-white">{tx.description}</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">{tx.description}</h4>
                     {tx.withdrawals && (
                       <div className="mt-1 space-y-0.5">
                         {tx.withdrawals.method === 'bank' && (
-                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                          <p className="text-[8px] text-slate-600 font-bold uppercase">
                             {tx.withdrawals.details?.bank} - {tx.withdrawals.details?.stk}
                           </p>
                         )}
                         {tx.withdrawals.method === 'e-wallet' && (
-                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                          <p className="text-[8px] text-slate-600 font-bold uppercase">
                             {tx.withdrawals.details?.type} - {tx.withdrawals.details?.phone}
                           </p>
                         )}
                         {tx.withdrawals.method === 'card' && (
-                          <p className="text-[8px] text-gray-400 font-bold uppercase">
+                          <p className="text-[8px] text-slate-600 font-bold uppercase">
                             {tx.withdrawals.details?.type} - {tx.withdrawals.details?.cardEmail}
                           </p>
                         )}
                       </div>
                     )}
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock size={10} className="text-gray-600" />
-                      <span className="text-[9px] text-gray-500 font-bold uppercase">
+                      <Clock size={10} className="text-slate-500" />
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">
                         {new Date(tx.created_at).toLocaleString('vi-VN')}
                       </span>
                     </div>
@@ -292,17 +268,17 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-black ${
-                    tx.type === 'WITHDRAW' ? 'text-red-400' : 
-                    tx.type === 'REFUND' ? 'text-blue-400' :
-                    'text-emerald-400'
+                    tx.type === 'WITHDRAW' ? 'text-red-600' : 
+                    tx.type === 'REFUND' ? 'text-blue-600' :
+                    'text-emerald-600'
                   }`}>
                     {tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toLocaleString()}
                   </p>
                   <div className="flex justify-end mt-1">
                     <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                      tx.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                      tx.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
-                      'bg-red-500/10 text-red-400 border-red-500/20'
+                      tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
+                      tx.status === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' : 
+                      'bg-red-50 text-red-600 border-red-200'
                     }`}>
                       {tx.status === 'COMPLETED' ? 'Thành công' : tx.status === 'PENDING' ? 'Đang chờ' : 'Đã hủy'}
                     </span>
@@ -312,11 +288,11 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
             ))}
           </div>
         ) : (
-          <div className="glass py-16 text-center">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Book size={32} className="text-gray-700" />
+          <div className="bg-white p-16 text-center rounded-3xl border border-slate-100">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Book size={32} className="text-slate-400" />
             </div>
-            <p className="text-xs text-gray-600 uppercase font-black tracking-widest">Không có giao dịch nào</p>
+            <p className="text-xs text-slate-500 uppercase font-black tracking-widest">Không có giao dịch nào</p>
           </div>
         )}
       </div>
@@ -329,14 +305,14 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
     return (
       <div className="space-y-6 max-w-2xl mx-auto">
-        <div className="glass p-8 text-center space-y-8">
+        <div className="bg-white p-8 text-center space-y-8 rounded-3xl border border-slate-100 shadow-sm">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-4">Mã Giới Thiệu Của Bạn</h3>
-            <div className="bg-black/40 border border-accent/30 p-5 rounded-2xl flex items-center justify-between">
-              <span className="text-2xl font-black ocean-glow tracking-[0.2em]">WMX-{referralCode}</span>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Mã Giới Thiệu Của Bạn</h3>
+            <div className="bg-slate-50 border border-accent/30 p-5 rounded-2xl flex items-center justify-between">
+              <span className="text-2xl font-black text-accent tracking-[0.2em]">WMX-{referralCode}</span>
               <button 
                 onClick={() => handleCopy(`WMX-${referralCode}`, 'code')}
-                className="text-[10px] bg-accent text-black px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
+                className="text-[10px] bg-accent text-white px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
               >
                 {copied === 'code' ? <Check size={12} /> : <Copy size={12} />}
                 {copied === 'code' ? 'Đã chép' : 'Sao chép'}
@@ -345,12 +321,12 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           </div>
 
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-4">Đường Dẫn Giới Thiệu</h3>
-            <div className="bg-black/40 border border-accent/30 p-5 rounded-2xl flex items-center justify-between gap-3">
-              <span className="text-[10px] text-gray-400 font-bold truncate">{referralLink}</span>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Đường Dẫn Giới Thiệu</h3>
+            <div className="bg-slate-50 border border-accent/30 p-5 rounded-2xl flex items-center justify-between gap-3">
+              <span className="text-[10px] text-slate-600 font-bold truncate">{referralLink}</span>
               <button 
                 onClick={() => handleCopy(referralLink, 'link')}
-                className="shrink-0 text-[10px] bg-accent text-black px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
+                className="shrink-0 text-[10px] bg-accent text-white px-4 py-2 rounded-lg font-black uppercase flex items-center gap-2"
               >
                 {copied === 'link' ? <Check size={12} /> : <Copy size={12} />}
                 {copied === 'link' ? 'Đã chép' : 'Sao chép'}
@@ -360,17 +336,17 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
           <div className="space-y-2">
             <p className="text-xs text-accent font-black uppercase">Hoa hồng: 1,000 Xu / Người</p>
-            <p className="text-[10px] text-gray-500 italic">Điều kiện: Người được giới thiệu phải có số dư từ 1,500 Xu trở lên.</p>
+            <p className="text-[10px] text-slate-500 italic">Điều kiện: Người được giới thiệu phải có số dư từ 1,500 Xu trở lên.</p>
           </div>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <div className="glass p-6 text-center">
-            <p className="text-[10px] text-gray-500 uppercase font-bold">Người đã mời</p>
+          <div className="bg-white p-6 text-center rounded-2xl border border-slate-100 shadow-sm">
+            <p className="text-[10px] text-slate-500 uppercase font-bold">Người đã mời</p>
             <p className="text-2xl font-black text-accent">0</p>
           </div>
-          <div className="glass p-6 text-center">
-            <p className="text-[10px] text-gray-500 uppercase font-bold">Hoa hồng nhận</p>
+          <div className="bg-white p-6 text-center rounded-2xl border border-slate-100 shadow-sm">
+            <p className="text-[10px] text-slate-500 uppercase font-bold">Hoa hồng nhận</p>
             <p className="text-2xl font-black text-accent">0</p>
           </div>
         </div>
@@ -430,16 +406,16 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
     return (
       <div className="max-w-xl mx-auto space-y-6">
-        <div className="flex gap-2 glass p-1">
+        <div className="flex gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
           <button 
             onClick={() => setSecurityTab('pw')} 
-            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${securityTab === 'pw' ? 'bg-accent text-black' : 'text-gray-500'}`}
+            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${securityTab === 'pw' ? 'bg-accent text-white' : 'text-slate-500'}`}
           >
             Đổi mật khẩu
           </button>
           <button 
             onClick={() => setSecurityTab('verify')} 
-            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition relative ${securityTab === 'verify' ? 'bg-accent text-black' : 'text-gray-500'}`}
+            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition relative ${securityTab === 'verify' ? 'bg-accent text-white' : 'text-slate-500'}`}
           >
             Xác minh Email
             {showVerifyRedDot && (
@@ -449,10 +425,10 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
         </div>
 
         {securityTab === 'pw' ? (
-          <div className="glass p-8 space-y-6">
+          <div className="bg-white p-8 space-y-6 rounded-3xl border border-slate-100 shadow-sm">
             <div className="space-y-4">
-              <input type="password" placeholder="Mật khẩu hiện tại" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
-              <input type="password" placeholder="Mật khẩu mới" className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50" />
+              <input type="password" placeholder="Mật khẩu hiện tại" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900" />
+              <input type="password" placeholder="Mật khẩu mới" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900" />
               <button className="w-full btn-primary py-4 rounded-xl text-[11px] font-black tracking-widest uppercase mt-4">Cập nhật mật khẩu</button>
             </div>
           </div>
@@ -462,16 +438,16 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="glass p-8 text-center space-y-4"
+                className="bg-white p-8 text-center space-y-4 rounded-3xl border border-slate-100 shadow-sm"
               >
-                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto border border-emerald-100">
                   <CheckCircle2 size={32} className="text-emerald-500" />
                 </div>
-                <h3 className="text-lg font-black uppercase tracking-widest text-emerald-500">Đã Xác Minh Uy Tín</h3>
-                <p className="text-xs text-gray-400">Tài khoản của bạn đã được xác minh để nâng cao uy tín và bảo mật tránh mất hoặc hack.</p>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Email liên kết</p>
-                  <p className="text-sm font-bold text-white">{profile?.email}</p>
+                <h3 className="text-lg font-black uppercase tracking-widest text-emerald-600">Đã Xác Minh Uy Tín</h3>
+                <p className="text-xs text-slate-600">Tài khoản của bạn đã được xác minh để nâng cao uy tín và bảo mật tránh mất hoặc hack.</p>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Email liên kết</p>
+                  <p className="text-sm font-bold text-slate-900">{profile?.email}</p>
                 </div>
               </motion.div>
             ) : (
@@ -484,10 +460,10 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           </div>
         )}
 
-        <div className="mt-8 pt-8 border-t border-white/10">
+        <div className="mt-8 pt-8 border-t border-slate-100">
           <button 
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-full py-4 rounded-xl text-[11px] font-black tracking-widest uppercase bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl text-[11px] font-black tracking-widest uppercase bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-all flex items-center justify-center gap-2"
           >
             <ShieldAlert size={16} />
             Xóa tài khoản
@@ -499,24 +475,24 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
   const renderContact = () => (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="glass p-8 space-y-6">
+      <div className="bg-white p-8 space-y-6 rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Thông tin liên hệ</h3>
         <div className="space-y-4">
-          <a href="https://t.me/VanhTRUM" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+          <a href="https://t.me/VanhTRUM" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition border border-slate-100">
             <span className="text-accent font-black">TELE ADMIN</span>
-            <span className="text-xs text-gray-400">@VanhTRUM</span>
+            <span className="text-xs text-slate-600">@VanhTRUM</span>
           </a>
-          <a href="https://zalo.me/0337117930" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+          <a href="https://zalo.me/0337117930" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition border border-slate-100">
             <span className="text-accent font-black">ZALO ADMIN</span>
-            <span className="text-xs text-gray-400">0337117930</span>
+            <span className="text-xs text-slate-600">0337117930</span>
           </a>
-          <a href="https://t.me/+Drg0EEs27Nw1ZTdl" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+          <a href="https://t.me/+Drg0EEs27Nw1ZTdl" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition border border-slate-100">
             <span className="text-accent font-black">NHÓM TELE</span>
-            <span className="text-xs text-gray-400">Tham gia nhóm</span>
+            <span className="text-xs text-slate-600">Tham gia nhóm</span>
           </a>
-          <a href="https://zalo.me/g/ogveojfwhm3n4ballgzy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition">
+          <a href="https://zalo.me/g/ogveojfwhm3n4ballgzy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition border border-slate-100">
             <span className="text-accent font-black">NHÓM ZALO</span>
-            <span className="text-xs text-gray-400">Tham gia nhóm</span>
+            <span className="text-xs text-slate-600">Tham gia nhóm</span>
           </a>
         </div>
       </div>
@@ -525,13 +501,13 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
   const renderGuide = () => (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="glass p-8 space-y-6 text-left">
+      <div className="bg-white p-8 space-y-6 text-left rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Hướng dẫn sử dụng wmoneyX</h3>
         
         <div className="space-y-6">
           <section>
-            <h4 className="text-xs font-black uppercase text-white mb-2">1. Cách kiếm tiền</h4>
-            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+            <h4 className="text-xs font-black uppercase text-slate-900 mb-2">1. Cách kiếm tiền</h4>
+            <ul className="text-[11px] text-slate-600 space-y-2 list-disc ml-4">
               <li>Hoàn thành các nhiệm vụ hàng ngày trong mục <span className="text-accent">"Nhiệm Vụ"</span>.</li>
               <li>Tham gia các trò chơi trong mục <span className="text-accent">"Thưởng Ngày"</span> (Bóc túi mù, Vòng quay may mắn).</li>
               <li>Giới thiệu bạn bè tham gia để nhận hoa hồng <span className="text-accent">1,000 Xu</span> cho mỗi người.</li>
@@ -539,31 +515,31 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           </section>
 
           <section>
-            <h4 className="text-xs font-black uppercase text-white mb-2">2. Điều kiện nhận hoa hồng</h4>
-            <p className="text-[11px] text-gray-400">
+            <h4 className="text-xs font-black uppercase text-slate-900 mb-2">2. Điều kiện nhận hoa hồng</h4>
+            <p className="text-[11px] text-slate-600">
               Người được giới thiệu phải đạt số dư từ <span className="text-accent">1,500 Xu</span> trở lên thì người giới thiệu mới nhận được thưởng.
             </p>
           </section>
 
           <section>
-            <h4 className="text-xs font-black uppercase text-white mb-2">3. Cấp độ và VIP</h4>
-            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+            <h4 className="text-xs font-black uppercase text-slate-900 mb-2">3. Cấp độ và VIP</h4>
+            <ul className="text-[11px] text-slate-600 space-y-2 list-disc ml-4">
               <li>Tích lũy EXP từ các hoạt động để tăng cấp độ.</li>
               <li>Cấp độ càng cao, quyền lợi VIP càng lớn, giúp tăng thu nhập từ nhiệm vụ.</li>
             </ul>
           </section>
 
           <section>
-            <h4 className="text-xs font-black uppercase text-white mb-2">4. Rút tiền</h4>
-            <ul className="text-[11px] text-gray-400 space-y-2 list-disc ml-4">
+            <h4 className="text-xs font-black uppercase text-slate-900 mb-2">4. Rút tiền</h4>
+            <ul className="text-[11px] text-slate-600 space-y-2 list-disc ml-4">
               <li>Bạn có thể rút tiền về Ngân hàng, Ví điện tử hoặc Thẻ cào.</li>
               <li>Đảm bảo tài khoản đã được <span className="text-accent">xác minh email</span> để thực hiện rút tiền.</li>
             </ul>
           </section>
 
           <section>
-            <h4 className="text-xs font-black uppercase text-white mb-2">5. Hỗ trợ</h4>
-            <p className="text-[11px] text-gray-400">
+            <h4 className="text-xs font-black uppercase text-slate-900 mb-2">5. Hỗ trợ</h4>
+            <p className="text-[11px] text-slate-600">
               Nếu gặp lỗi, hãy sử dụng mục "Báo lỗi hệ thống" hoặc liên hệ trực tiếp với Admin qua Telegram/Zalo trong phần "Liên hệ hỗ trợ".
             </p>
           </section>
@@ -574,13 +550,13 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
   const renderReport = () => (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="glass p-8 space-y-6">
+      <div className="bg-white p-8 space-y-6 rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-sm font-black uppercase tracking-widest text-accent mb-4">Báo cáo lỗi</h3>
         <textarea 
           value={reportText}
           onChange={(e) => setReportText(e.target.value)}
           placeholder="Mô tả lỗi bạn gặp phải..."
-          className="w-full h-40 bg-white/5 border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-accent/50"
+          className="w-full h-40 bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900"
         />
         <button 
           onClick={async () => {
@@ -637,16 +613,16 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
 
 function MenuButton({ icon: Icon, label, onClick, showDot }: { icon: any, label: string, onClick: () => void, showDot?: boolean }) {
   return (
-    <button onClick={onClick} className="glass p-5 flex justify-between items-center hover:bg-white/5 transition group relative">
+    <button onClick={onClick} className="bg-white p-5 flex justify-between items-center border border-slate-100 hover:bg-slate-50 transition-all group relative rounded-2xl shadow-sm">
       <div className="flex items-center gap-4">
         <Icon size={20} className="text-accent group-hover:scale-110 transition-transform" /> 
-        <span className="text-sm font-bold">{label}</span>
+        <span className="text-sm font-bold uppercase tracking-tight text-slate-900">{label}</span>
       </div>
       <div className="flex items-center gap-2">
         {showDot && (
           <span className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] animate-pulse"></span>
         )}
-        <ChevronRight size={14} className="text-gray-600" />
+        <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
       </div>
     </button>
   );

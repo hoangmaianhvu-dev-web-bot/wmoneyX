@@ -530,19 +530,19 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
       <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setActiveTab('daily')}
-          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'daily' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'daily' ? 'bg-accent text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
         >
           <Gift size={14} /> Điểm Danh
         </button>
         <button 
           onClick={() => setActiveTab('blindbag')}
-          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'blindbag' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'blindbag' ? 'bg-accent text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
         >
           <Package size={14} /> Túi Mù
         </button>
         <button 
           onClick={() => setActiveTab('wheel')}
-          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'wheel' ? 'bg-accent text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}
+          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'wheel' ? 'bg-accent text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
         >
           <Disc size={14} /> Vòng Quay
         </button>
@@ -560,61 +560,61 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-black uppercase tracking-widest ocean-glow">Thưởng Hàng Ngày</h2>
               <div className="glass px-4 py-2 rounded-xl border-l-2 border-accent">
-                <span className="text-[8px] text-gray-500 font-bold uppercase block">EXP hiện có</span>
+                <span className="text-[8px] text-slate-500 font-bold uppercase block">EXP hiện có</span>
                 <span className="text-sm font-black text-accent">{(profile?.exp || 0).toLocaleString()} EXP</span>
               </div>
             </div>
             
             {/* Boost Info */}
-            <div className="glass p-6 rounded-[2rem] space-y-3">
+            <div className="glass p-6 rounded-[2rem] space-y-3 border-cyan-200 bg-cyan-50 shadow-md">
               <div className="flex items-center gap-2 mb-2">
-                <Zap className="text-accent" size={20} />
-                <span className="text-xs font-black uppercase tracking-widest">Trạng thái Tăng tốc: {profile?.active_boost_type || "Không"}</span>
+                <Zap className="text-cyan-600" size={20} />
+                <span className="text-xs font-black uppercase tracking-widest text-cyan-700">Trạng thái Tăng tốc: {profile?.active_boost_type || "Không"}</span>
               </div>
               
               {boostInfo ? (
                 <div className="grid grid-cols-1 gap-3">
-                  <div className="bg-white/5 p-3 rounded-xl">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Thời gian đổi</p>
-                    <p className="text-xs font-mono text-white">{formatDateTime(boostInfo.start)}</p>
+                  <div className="bg-white p-3 rounded-xl border border-slate-100">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Thời gian đổi</p>
+                    <p className="text-xs font-mono text-slate-700">{formatDateTime(boostInfo.start)}</p>
                   </div>
-                  <div className="bg-white/5 p-3 rounded-xl border-l-2 border-accent">
-                    <p className="text-[10px] text-accent uppercase font-bold mb-1">Thời gian hết hạn</p>
-                    <p className="text-xs font-mono text-white">{formatDateTime(boostInfo.end)}</p>
+                  <div className="bg-white p-3 rounded-xl border border-cyan-100 border-l-2 border-l-cyan-500">
+                    <p className="text-[10px] text-cyan-600 uppercase font-bold mb-1">Thời gian hết hạn</p>
+                    <p className="text-xs font-mono text-slate-700">{formatDateTime(boostInfo.end)}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-[10px] text-gray-500 uppercase italic">Bạn chưa kích hoạt gói tăng tốc nào.</p>
+                <p className="text-[10px] text-slate-400 uppercase italic">Bạn chưa kích hoạt gói tăng tốc nào.</p>
               )}
             </div>
 
-            <div className="glass p-8 rounded-[2rem] text-center space-y-6 relative overflow-hidden">
+            <div className="glass p-8 rounded-[2rem] text-center space-y-6 relative overflow-hidden border-emerald-200 bg-emerald-50 shadow-lg">
               <div className="absolute top-0 right-0 p-4">
-                <Clock className="text-accent/20" size={64} />
+                <Clock className="text-emerald-500/10" size={64} />
               </div>
               
               <div className="relative z-10">
-                <Gift size={64} className="mx-auto text-accent mb-4" />
-                <h3 className="text-xl font-black uppercase tracking-widest">Thưởng Điểm Danh</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Nhận 10 EXP mỗi ngày</p>
+                <Gift size={64} className="mx-auto text-emerald-600 mb-4" />
+                <h3 className="text-xl font-black uppercase tracking-widest text-emerald-700">Thưởng Điểm Danh</h3>
+                <p className="text-[10px] text-emerald-600/60 font-bold uppercase tracking-widest mt-1">Nhận 10 EXP mỗi ngày</p>
                 
                 <div className="mt-8 space-y-4">
                   {profile.last_daily_reward_date === getLocalDateString() ? (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-center gap-2 text-green-500">
+                      <div className="flex items-center justify-center gap-2 text-emerald-600">
                         <CheckCircle2 size={20} />
                         <span className="text-xs font-black uppercase tracking-widest">Đã nhận hôm nay</span>
                       </div>
-                      <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <p className="text-[9px] text-gray-500 uppercase font-bold mb-1">Reset sau</p>
-                        <p className="text-2xl font-black font-mono text-accent">{timeLeft}</p>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100">
+                        <p className="text-[9px] text-slate-400 uppercase font-bold mb-1">Reset sau</p>
+                        <p className="text-2xl font-black font-mono text-emerald-600">{timeLeft}</p>
                       </div>
                     </div>
                   ) : (
                     <button 
                       onClick={claimDailyReward}
                       disabled={loading}
-                      className="w-full py-5 bg-accent text-black rounded-2xl font-black uppercase tracking-widest shadow-[0_0_20px_rgba(0,255,255,0.3)] active:scale-95 transition-all disabled:opacity-50"
+                      className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
                     >
                       {loading ? <Loader2 className="animate-spin mx-auto" /> : "Nhận ngay 10 EXP"}
                     </button>
@@ -624,52 +624,52 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500">Đổi quà bằng EXP</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Đổi quà bằng EXP</h3>
               <div className="grid grid-cols-1 gap-4">
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center">
+                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-blue-200 bg-blue-50 hover:bg-blue-100 transition-all shadow-md">
                   <div className="flex items-center gap-4">
-                    <Zap className="text-accent" />
+                    <Zap className="text-blue-600" />
                     <div>
-                      <p className="font-bold">x2 số tiền thưởng làm nhiệm vụ (24h)</p>
-                      <p className="text-xs text-gray-500">1000 EXP</p>
+                      <p className="font-bold text-blue-900">x2 số tiền thưởng làm nhiệm vụ (24h)</p>
+                      <p className="text-xs text-blue-600/60">1000 EXP</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => exchangeBoost(1000, 'x2', 24)}
                     disabled={loading}
-                    className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-sm"
                   >
                     Đổi
                   </button>
                 </div>
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center">
+                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-amber-200 bg-amber-50 hover:bg-amber-100 transition-all shadow-md">
                   <div className="flex items-center gap-4">
-                    <Coins className="text-accent" />
+                    <Coins className="text-amber-600" />
                     <div>
-                      <p className="font-bold">Đổi 100,000 EXP lấy 10,000 Xu</p>
-                      <p className="text-xs text-gray-500">100,000 EXP</p>
+                      <p className="font-bold text-amber-900">Đổi 100,000 EXP lấy 10,000 Xu</p>
+                      <p className="text-xs text-amber-600/60">100,000 EXP</p>
                     </div>
                   </div>
                   <button 
                     onClick={exchangeExpForXu}
                     disabled={loading}
-                    className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
+                    className="px-6 py-2 bg-amber-600 text-white rounded-xl font-bold text-xs shadow-sm"
                   >
                     Đổi
                   </button>
                 </div>
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center">
+                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-rose-200 bg-rose-50 hover:bg-rose-100 transition-all shadow-md">
                   <div className="flex items-center gap-4">
-                    <Gift className="text-accent" />
+                    <Gift className="text-rose-600" />
                     <div>
-                      <p className="font-bold">Nhận Lì xì ngẫu nhiên (200 - 5000 Xu)</p>
-                      <p className="text-xs text-gray-500">10,000 EXP</p>
+                      <p className="font-bold text-rose-900">Nhận Lì xì ngẫu nhiên (200 - 5000 Xu)</p>
+                      <p className="text-xs text-rose-600/60">10,000 EXP</p>
                     </div>
                   </div>
                   <button 
                     onClick={exchangeExpForLixi}
                     disabled={loading}
-                    className="px-6 py-2 bg-white/10 rounded-xl font-bold text-xs"
+                    className="px-6 py-2 bg-rose-600 text-white rounded-xl font-bold text-xs shadow-sm"
                   >
                     Nhận
                   </button>
@@ -677,17 +677,16 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
               </div>
             </div>
 
-            {/* History */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500">Lịch sử đổi thưởng</h3>
-              <div className="glass p-6 rounded-[2rem] space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-600">Lịch sử đổi thưởng</h3>
+              <div className="glass p-6 rounded-[2rem] space-y-2 border-white/20 bg-white/15 shadow-[0_0_25px_rgba(255,255,255,0.1)]">
                 {history.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center">Chưa có lịch sử đổi thưởng.</p>
+                  <p className="text-xs text-slate-600 text-center">Chưa có lịch sử đổi thưởng.</p>
                 ) : (
                   history.map((h) => (
                     <div key={h.id} className="flex justify-between text-xs border-b border-white/5 pb-2">
-                      <span>{h.description}</span>
-                      <span className="text-gray-500">{new Date(h.created_at).toLocaleDateString()}</span>
+                      <span className="text-slate-800">{h.description}</span>
+                      <span className="text-slate-600">{new Date(h.created_at).toLocaleDateString()}</span>
                     </div>
                   ))
                 )}
@@ -706,10 +705,10 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
           >
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-black uppercase tracking-[0.2em] ocean-glow">Bóc Túi Mù</h2>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Mỗi ngày 1 lượt miễn phí - Thử vận may ngay!</p>
+              <p className="text-[10px] text-slate-600 uppercase font-bold tracking-widest">Mỗi ngày 1 lượt miễn phí - Thử vận may ngay!</p>
             </div>
 
-            <div className="glass p-12 rounded-[3rem] text-center relative overflow-hidden min-h-[400px] flex flex-col items-center justify-center">
+            <div className="glass p-12 rounded-[3rem] text-center relative overflow-hidden min-h-[400px] flex flex-col items-center justify-center border-accent/30 bg-accent/10 shadow-[0_0_40px_rgba(0,255,255,0.15)]">
               <div className="absolute inset-0 bg-gradient-to-b from-accent/5 to-transparent pointer-events-none" />
               
               <AnimatePresence mode="wait">
@@ -772,21 +771,21 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                         disabled={profile.last_blind_bag_free_date === getLocalDateString()}
                         className="glass p-4 rounded-2xl border-accent/30 hover:bg-accent/10 transition-all disabled:opacity-30 group"
                       >
-                        <p className="text-[8px] text-gray-500 uppercase font-black mb-1">Miễn phí</p>
+                        <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Miễn phí</p>
                         <p className="text-xs font-black text-accent group-hover:scale-110 transition-transform">BÓC NGAY</p>
                       </button>
                       <button 
                         onClick={() => playBlindBag('XU')}
                         className="glass p-4 rounded-2xl border-yellow-500/30 hover:bg-yellow-500/10 transition-all group"
                       >
-                        <p className="text-[8px] text-gray-500 uppercase font-black mb-1">20 XU / Lượt</p>
+                        <p className="text-[8px] text-slate-500 uppercase font-black mb-1">20 XU / Lượt</p>
                         <p className="text-xs font-black text-yellow-500 group-hover:scale-110 transition-transform">DÙNG XU</p>
                       </button>
                       <button 
                         onClick={() => playBlindBag('EXP')}
                         className="glass p-4 rounded-2xl border-purple-500/30 hover:bg-purple-500/10 transition-all group"
                       >
-                        <p className="text-[8px] text-gray-500 uppercase font-black mb-1">70 EXP / Lượt</p>
+                        <p className="text-[8px] text-slate-500 uppercase font-black mb-1">70 EXP / Lượt</p>
                         <p className="text-xs font-black text-purple-500 group-hover:scale-110 transition-transform">DÙNG EXP</p>
                       </button>
                     </div>
@@ -797,14 +796,14 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
 
             {/* Game Stats & Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass p-6 rounded-[2rem] space-y-4">
+              <div className="glass p-6 rounded-[2rem] space-y-4 border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.05)]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                   <Trophy className="text-yellow-500" size={18} />
                   <h3 className="text-xs font-black uppercase tracking-widest">Vinh Danh Độc Đắc</h3>
                 </div>
                 <div className="space-y-3">
                   {leaderboard.filter(l => l.game_type === 'BLIND_BAG').length === 0 ? (
-                    <p className="text-[10px] text-gray-500 italic">Chưa có ai trúng độc đắc.</p>
+                    <p className="text-[10px] text-slate-500 italic">Chưa có ai trúng độc đắc.</p>
                   ) : (
                     leaderboard.filter(l => l.game_type === 'BLIND_BAG').map((l, i) => (
                       <div key={l.id} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border-l-2 border-yellow-500">
@@ -819,23 +818,23 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                 </div>
               </div>
 
-              <div className="glass p-6 rounded-[2rem] space-y-4">
+              <div className="glass p-6 rounded-[2rem] space-y-4 border-accent/20 bg-accent/5 shadow-[0_0_20px_rgba(0,255,255,0.05)]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                   <History className="text-accent" size={18} />
                   <h3 className="text-xs font-black uppercase tracking-widest">Lịch Sử Gần Đây</h3>
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                   {gameHistory.filter(l => l.game_type === 'BLIND_BAG').length === 0 ? (
-                    <p className="text-[10px] text-gray-500 italic">Chưa có lịch sử.</p>
+                    <p className="text-[10px] text-slate-500 italic">Chưa có lịch sử.</p>
                   ) : (
                     gameHistory.filter(l => l.game_type === 'BLIND_BAG').map((l) => (
                       <div key={l.id} className="flex items-center justify-between text-[10px] border-b border-white/5 pb-2">
-                        <span className="text-gray-300">{l.username}</span>
+                        <span className="text-slate-700 font-medium">{l.username}</span>
                         <div className="flex items-center gap-2">
-                          <span className={l.is_jackpot ? 'text-yellow-500 font-bold' : 'text-gray-500'}>
+                          <span className={l.is_jackpot ? 'text-yellow-500 font-bold' : 'text-slate-600'}>
                             {l.reward_amount} {l.reward_type}
                           </span>
-                          <span className="text-[8px] text-gray-600">{new Date(l.created_at).toLocaleTimeString()}</span>
+                          <span className="text-[8px] text-slate-500">{new Date(l.created_at).toLocaleTimeString()}</span>
                         </div>
                       </div>
                     ))
@@ -856,10 +855,10 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
           >
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-black uppercase tracking-[0.2em] ocean-glow">Vòng Quay May Mắn</h2>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Quay là trúng - Cơ hội nhận Lì Xì 43,210 XU!</p>
+              <p className="text-[10px] text-slate-600 uppercase font-bold tracking-widest">Quay là trúng - Cơ hội nhận Lì Xì 43,210 XU!</p>
             </div>
 
-            <div className="glass p-8 md:p-12 rounded-[3rem] text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[500px]">
+            <div className="glass p-8 md:p-12 rounded-[3rem] text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[500px] border-accent/30 bg-accent/10 shadow-[0_0_40px_rgba(0,255,255,0.15)]">
               <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 to-transparent pointer-events-none" />
               
               {/* Wheel Container */}
@@ -917,7 +916,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                   disabled={spinning || profile.last_lucky_wheel_free_date === getLocalDateString()}
                   className="glass p-4 rounded-2xl border-accent/30 hover:bg-accent/10 transition-all disabled:opacity-30 group"
                 >
-                  <p className="text-[8px] text-gray-500 uppercase font-black mb-1">Miễn phí</p>
+                  <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Miễn phí</p>
                   <p className="text-xs font-black text-accent group-hover:scale-110 transition-transform">QUAY NGAY</p>
                 </button>
                 <button 
@@ -925,7 +924,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                   disabled={spinning}
                   className="glass p-4 rounded-2xl border-yellow-500/30 hover:bg-yellow-500/10 transition-all group"
                 >
-                  <p className="text-[8px] text-gray-500 uppercase font-black mb-1">50 XU / Lượt</p>
+                  <p className="text-[8px] text-slate-500 uppercase font-black mb-1">50 XU / Lượt</p>
                   <p className="text-xs font-black text-yellow-500 group-hover:scale-110 transition-transform">DÙNG XU</p>
                 </button>
                 <button 
@@ -933,7 +932,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                   disabled={spinning}
                   className="glass p-4 rounded-2xl border-purple-500/30 hover:bg-purple-500/10 transition-all group"
                 >
-                  <p className="text-[8px] text-gray-500 uppercase font-black mb-1">100 EXP / Lượt</p>
+                  <p className="text-[8px] text-slate-500 uppercase font-black mb-1">100 EXP / Lượt</p>
                   <p className="text-xs font-black text-purple-500 group-hover:scale-110 transition-transform">DÙNG EXP</p>
                 </button>
               </div>
@@ -941,14 +940,14 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
 
             {/* Game Stats & Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass p-6 rounded-[2rem] space-y-4">
+              <div className="glass p-6 rounded-[2rem] space-y-4 border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.05)]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                   <Trophy className="text-yellow-500" size={18} />
                   <h3 className="text-xs font-black uppercase tracking-widest">Vinh Danh Độc Đắc</h3>
                 </div>
                 <div className="space-y-3">
                   {leaderboard.filter(l => l.game_type === 'LUCKY_WHEEL').length === 0 ? (
-                    <p className="text-[10px] text-gray-500 italic">Chưa có ai trúng độc đắc.</p>
+                    <p className="text-[10px] text-slate-500 italic">Chưa có ai trúng độc đắc.</p>
                   ) : (
                     leaderboard.filter(l => l.game_type === 'LUCKY_WHEEL').map((l, i) => (
                       <div key={l.id} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border-l-2 border-yellow-500">
@@ -963,23 +962,23 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
                 </div>
               </div>
 
-              <div className="glass p-6 rounded-[2rem] space-y-4">
+              <div className="glass p-6 rounded-[2rem] space-y-4 border-accent/20 bg-accent/5 shadow-[0_0_20px_rgba(0,255,255,0.05)]">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                   <History className="text-accent" size={18} />
                   <h3 className="text-xs font-black uppercase tracking-widest">Lịch Sử Gần Đây</h3>
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                   {gameHistory.filter(l => l.game_type === 'LUCKY_WHEEL').length === 0 ? (
-                    <p className="text-[10px] text-gray-500 italic">Chưa có lịch sử.</p>
+                    <p className="text-[10px] text-slate-500 italic">Chưa có lịch sử.</p>
                   ) : (
                     gameHistory.filter(l => l.game_type === 'LUCKY_WHEEL').map((l) => (
                       <div key={l.id} className="flex items-center justify-between text-[10px] border-b border-white/5 pb-2">
-                        <span className="text-gray-300">{l.username}</span>
+                        <span className="text-slate-700 font-medium">{l.username}</span>
                         <div className="flex items-center gap-2">
-                          <span className={l.is_jackpot ? 'text-yellow-500 font-bold' : 'text-gray-500'}>
+                          <span className={l.is_jackpot ? 'text-yellow-500 font-bold' : 'text-slate-600'}>
                             {l.reward_amount} {l.reward_type}
                           </span>
-                          <span className="text-[8px] text-gray-600">{new Date(l.created_at).toLocaleTimeString()}</span>
+                          <span className="text-[8px] text-slate-500">{new Date(l.created_at).toLocaleTimeString()}</span>
                         </div>
                       </div>
                     ))

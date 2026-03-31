@@ -10,6 +10,7 @@ import {
   Wallet, 
   Settings as SettingsIcon,
   X,
+  Menu,
   Trophy,
   LogOut,
   ShieldCheck,
@@ -98,6 +99,13 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   const [showVerifyRedDot, setShowVerifyRedDot] = useState(false);
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [isTaskVerified, setIsTaskVerified] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
   const [announcement, setAnnouncement] = useState<any>(null);
   const [showBanner, setShowBanner] = useState(true);
 
@@ -309,10 +317,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
 
   const fetchProfile = async () => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        throw new Error("Supabase chưa được cấu hình. Vui lòng thiết lập VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY.");
-      }
-
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -407,44 +411,50 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
     );
   }
 
-  const NavItem = ({ id, icon: Icon, label }: { id: string, icon: any, label: string }) => (
+  const NavItem = ({ id, icon: Icon, label, collapsed = isSidebarCollapsed }: { id: string, icon: any, label: string, collapsed?: boolean }) => (
     <motion.button 
-      whileHover={{ x: 5, rotateY: 10, z: 10 }}
+      whileHover={{ x: collapsed ? 0 : 5, rotateY: 10, z: 10 }}
       whileTap={{ scale: 0.95 }}
-      onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-3 px-6 py-4 rounded-2xl transition-all w-full relative ${activeTab === id ? 'bg-accent text-black font-black shadow-[0_0_15px_rgba(173,216,230,0.3)]' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+      onClick={() => {
+        setActiveTab(id);
+      }}
+      className={`flex items-center rounded-2xl transition-all relative ${activeTab === id ? 'bg-accent text-white font-black shadow-lg shadow-accent/20' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'} ${collapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
       style={{ transformStyle: 'preserve-3d' }}
     >
-      <Icon size={20} />
-      <span className="text-xs uppercase tracking-widest">{label}</span>
+      <Icon size={collapsed ? 24 : 20} />
+      {!collapsed && <span className="text-xs uppercase tracking-widest whitespace-nowrap">{label}</span>}
       {id === 'settings' && showVerifyRedDot && (
-        <span className="absolute right-4 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] animate-pulse"></span>
+        <span className={`absolute ${collapsed ? 'top-2 right-2' : 'right-4'} w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] animate-pulse`}></span>
       )}
     </motion.button>
   );
 
-  const toggleEffect = () => {
-    const effects: EffectType[] = ['particles', 'snow', 'stars', 'neon', 'fireworks'];
-    const currentIndex = effects.indexOf(currentEffect);
-    const nextIndex = (currentIndex + 1) % effects.length;
-    const nextEffect = effects[nextIndex];
-    onEffectChange(nextEffect);
-    showNotification({
-      title: "Đổi Hiệu Ứng",
-      message: `Đã chuyển sang hiệu ứng: ${effectNames[nextEffect]}`,
-      type: "success"
-    });
-  };
-
   const levelInfo = profile ? getLevelInfo(profile.exp || 0) : null;
 
   return (
-    <div className="min-h-screen text-white font-sans selection:bg-accent selection:text-bg flex flex-col md:flex-row">
+    <div className="min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-white flex flex-col md:flex-row">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 border-r border-white/5 p-6 fixed h-full bg-black/50 backdrop-blur-xl z-50">
-        <div className="mb-12 px-2">
-          <h1 className="text-2xl font-black italic bg-clip-text text-transparent bg-gradient-to-r from-white via-accent to-white bg-[length:200%_auto] animate-shine">wmoneyX</h1>
-          <p className="text-[8px] text-gray-500 uppercase tracking-[0.4em] mt-1">Hệ thống kiếm tiền VIP</p>
+      <aside className={`hidden md:flex flex-col ${isSidebarCollapsed ? 'w-20 px-4 py-6' : 'w-72 p-6'} border-r border-slate-200 fixed h-full z-50 transition-all duration-500 bg-white shadow-xl`}>
+        <div className={`mb-12 px-2 flex ${isSidebarCollapsed ? 'flex-col gap-6 items-center' : 'items-center justify-between'}`}>
+          {isSidebarCollapsed ? (
+            <div className="w-10 h-10 bg-gradient-to-br from-accent to-blue-600 rounded-xl flex items-center justify-center text-white font-black italic text-xl shadow-lg shadow-accent/20 shrink-0">
+              W
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <h1 className="text-2xl font-black italic bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-accent to-slate-900 bg-[length:200%_auto] animate-shine">wmoneyX</h1>
+              <p className="text-[8px] text-slate-500 uppercase tracking-[0.4em] mt-1">Hệ thống kiếm tiền VIP</p>
+            </motion.div>
+          )}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className={`p-2 rounded-xl hover:bg-slate-100 text-slate-900 hover:text-accent transition-all shrink-0`}
+          >
+            <Menu size={20} />
+          </button>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -456,19 +466,19 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
         </nav>
 
-        <div className="pt-6 border-t border-white/5 mt-auto">
+        <div className="pt-6 border-t border-slate-200 mt-auto">
           <button 
             onClick={onLogout}
-            className="flex items-center gap-3 px-6 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all w-full"
+            className={`flex items-center rounded-2xl text-red-500 hover:bg-red-50 transition-all ${isSidebarCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'px-6 py-4 w-full gap-3'}`}
           >
             <LogOut size={20} />
-            <span className="text-xs uppercase tracking-widest font-bold">Đăng xuất</span>
+            {!isSidebarCollapsed && <span className="text-xs uppercase tracking-widest font-bold">Đăng xuất</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-72 min-h-screen pb-24 md:pb-12 relative" style={{ contain: 'content' }}>
+      <main className={`flex-1 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-72'} min-h-screen pb-24 md:pb-12 relative transition-all duration-500`} style={{ contain: 'content' }}>
         {/* Social Icons */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
           <AnimatePresence>
@@ -520,19 +530,19 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       <UserRound size={24} />
                     </div>
                     {profile?.is_verified && (
-                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-bg shadow-lg">
+                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-white shadow-lg">
                         <ShieldCheck size={10} />
                       </div>
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-black tracking-tight">{profile?.username}</h2>
+                      <h2 className="text-sm font-black tracking-tight text-slate-900">{profile?.username}</h2>
                       <span className={`text-[7px] px-1.5 py-0.5 rounded font-black uppercase bg-gradient-to-r from-yellow-400 to-orange-500 text-black`}>
                         VIP {levelInfo?.vip || 1}
                       </span>
                     </div>
-                    <p className="text-[9px] text-gray-400 font-medium">{profile?.email}</p>
+                    <p className="text-[9px] text-slate-900 font-medium">{profile?.email}</p>
                   </div>
                 </div>
                 
@@ -540,7 +550,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   <MusicToggle isPlaying={isMusicPlaying} togglePlay={toggleMusic} />
                   <button 
                     onClick={() => setShowNotifications(true)}
-                    className="w-9 h-9 glass flex items-center justify-center relative border-accent/20 rounded-xl"
+                    className="w-9 h-9 glass flex items-center justify-center relative border-slate-200 rounded-xl"
                   >
                     <Bell size={16} className="text-accent" />
                     {notifications.length > 0 && (
@@ -548,7 +558,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     )}
                   </button>
                   
-                  <div className="glass px-3 py-2 flex items-center gap-2 border-accent/20 rounded-xl">
+                  <div className="glass px-3 py-2 flex items-center gap-2 border-accent/20 rounded-xl bg-accent/10">
                     <Coins size={12} className="text-accent" />
                     <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '0' : profile?.balance.toLocaleString()}</span>
                   </div>
@@ -576,10 +586,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         <Star size={16} className="text-yellow-400 fill-yellow-400" />
                         <span className="text-sm font-black uppercase tracking-widest text-yellow-400">VIP {levelInfo.vip}</span>
                       </div>
-                      <span className="text-xs font-bold text-white">Cấp {levelInfo.level}</span>
+                      <span className="text-xs font-bold text-slate-900">Cấp {levelInfo.level}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Kinh nghiệm</span>
+                      <span className="text-[10px] text-slate-900 uppercase font-bold tracking-widest">Kinh nghiệm</span>
                       <div className="text-xs font-mono text-accent">
                         {profile?.exp || 0} / {levelInfo.nextLevelExp} EXP
                       </div>
@@ -602,7 +612,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       style={{ willChange: 'transform' }}
                     />
                   </div>
-                  <p className="text-[9px] text-gray-500 mt-2 text-center italic">
+                  <p className="text-[9px] text-slate-900 mt-2 text-center italic">
                     Cần thêm {levelInfo.nextLevelExp - (profile?.exp || 0)} EXP để lên cấp {levelInfo.level + 1}
                   </p>
                 </div>
@@ -618,42 +628,42 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, rotateY: 5, rotateX: -2, z: 10 }}
-                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
+                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group bg-blue-50 border-blue-200 shadow-lg"
                       style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
-                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
+                      <div className="absolute top-4 right-4 text-blue-500/20 group-hover:text-blue-500/30 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <Target size={40} />
                       </div>
-                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
-                      <h3 className="text-3xl font-black italic text-accent uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 99</h3>
+                      <p className="text-[10px] text-blue-800 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
+                      <h3 className="text-3xl font-black italic text-blue-700 uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 99</h3>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, rotateY: -5, rotateX: -2, z: 10 }}
                       transition={{ delay: 0.1 }}
-                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group"
+                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group bg-emerald-50 border-emerald-200 shadow-lg"
                       style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
-                      <div className="absolute top-4 right-4 text-accent/20 group-hover:text-accent/40 transition-all group-hover:scale-110 group-hover:-rotate-12" style={{ backfaceVisibility: 'hidden' }}>
+                      <div className="absolute top-4 right-4 text-emerald-500/10 group-hover:text-emerald-500/20 transition-all group-hover:scale-110 group-hover:-rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <CheckSquare size={40} />
                       </div>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ thường</p>
-                      <h3 className="text-3xl font-black italic text-accent relative z-10">{profile?.tasks_total || 0}</h3>
+                      <p className="text-[10px] text-emerald-800 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ thường</p>
+                      <h3 className="text-3xl font-black italic text-emerald-700 relative z-10">{profile?.tasks_total || 0}</h3>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ scale: 1.02, rotateY: 5, rotateX: 2, z: 10 }}
                       transition={{ delay: 0.15 }}
-                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group border-red-500/20"
+                      className="glass p-8 text-center rounded-3xl relative overflow-hidden group bg-rose-50 border-rose-200 shadow-lg"
                       style={{ willChange: 'transform, opacity', perspective: '1000px' }}
                     >
-                      <div className="absolute top-4 right-4 text-red-500/20 group-hover:text-red-500/40 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
+                      <div className="absolute top-4 right-4 text-rose-500/10 group-hover:text-rose-500/20 transition-all group-hover:scale-110 group-hover:rotate-12" style={{ backfaceVisibility: 'hidden' }}>
                         <AlertTriangle size={40} />
                       </div>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ đặc biệt</p>
-                      <h3 className="text-3xl font-black italic text-red-500 relative z-10">{profile?.special_tasks_total || 0}</h3>
+                      <p className="text-[10px] text-rose-800 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ đặc biệt</p>
+                      <h3 className="text-3xl font-black italic text-rose-700 relative z-10">{profile?.special_tasks_total || 0}</h3>
                     </motion.div>
                   </div>
 
@@ -675,7 +685,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         <HelpCircle size={12} /> Hướng dẫn lấy mã
                       </button>
                     </div>
-                    <div className="glass p-6 rounded-[2rem] border-white/10">
+                    <div className="glass p-6 rounded-[2rem] border-emerald-200 bg-emerald-50 shadow-lg">
                       <div className="flex flex-wrap gap-2">
                         {/* HOT Tasks */}
                         {['LINK4M', 'TRAFFIC1M', 'TRAFFIC68'].map(task => (
@@ -685,7 +695,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         ))}
                         {/* Normal Tasks */}
                         {['YEUMONEY', 'TRAFICTOT', 'LINKNGONME', 'LINKNGONIO', 'BBMKTS', 'LINKTOP', 'TAPLAYMA', 'XLINK', '4MMO', 'NHAPMA'].map(task => (
-                          <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-gray-300 text-[10px] font-bold uppercase">
+                          <span key={task} className="px-3 py-1.5 rounded-lg glass border-white/10 text-slate-900 text-[10px] font-bold uppercase">
                             {task}
                           </span>
                         ))}
@@ -698,11 +708,11 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="glass p-8 border-accent/20 bg-gradient-to-r from-accent/5 to-transparent rounded-3xl flex flex-col sm:flex-row justify-between items-center gap-6"
+                    className="glass p-8 border-accent/30 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent rounded-3xl shadow-[0_0_35px_rgba(0,255,255,0.15)] flex flex-col sm:flex-row justify-between items-center gap-6"
                   >
                     <div>
                       <h3 className="text-lg font-black uppercase mb-1">Mời bạn bè nhận ngay 1,000 Xu</h3>
-                      <p className="text-xs text-gray-400">Nhận thưởng khi người được giới thiệu đạt số dư từ 1,500 Xu trở lên.</p>
+                      <p className="text-xs text-slate-900">Nhận thưởng khi người được giới thiệu đạt số dư từ 1,500 Xu trở lên.</p>
                     </div>
                     <button 
                       onClick={() => setActiveTab('settings')}
@@ -718,9 +728,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                 {/* Right Column: Suggested Mods */}
                 <div className="space-y-6">
                   {/* Suggested Mods Preview */}
-                  <div className="glass p-6 rounded-3xl border-white/5">
+                  <div className="glass p-6 rounded-3xl border-indigo-500/30 bg-indigo-500/10 shadow-[0_0_25px_rgba(99,102,241,0.1)]">
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Gợi ý Mod Game</h3>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900">Gợi ý Mod Game</h3>
                       <button onClick={() => setActiveTab('mods')} className="text-accent text-[8px] font-bold uppercase hover:underline">Tất cả</button>
                     </div>
                     <div className="space-y-3">
@@ -745,7 +755,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-4 text-gray-500 italic text-[10px]">
+                        <div className="text-center py-4 text-slate-900 italic text-[10px]">
                           Chưa có gợi ý.
                         </div>
                       )}
@@ -839,37 +849,37 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           </AnimatePresence>
 
           {/* Footer Copyright */}
-          <footer className="mt-16 text-center pb-8 border-t border-white/5 pt-8">
-            <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-medium">
-              © 2026 Developed by <span className="text-white/60 font-bold">HOANG MAI ANH VU</span>
+          <footer className="mt-16 text-center pb-8 border-t border-slate-200 pt-8">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-medium">
+              © 2026 Developed by <span className="text-slate-700 font-bold">HOANG MAI ANH VU</span>
             </p>
           </footer>
         </div>
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-black/85 backdrop-blur-xl border-t border-accent/15 h-20 flex justify-around items-center px-2 z-50 rounded-t-[30px] shadow-2xl">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-accent' : 'text-gray-600'}`}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-200 h-20 flex justify-around items-center px-2 z-50 rounded-t-[30px] shadow-2xl bg-white">
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 ${activeTab === 'home' ? 'text-accent' : 'text-slate-700'}`}>
           <Home size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Trang Chủ</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center gap-1 ${activeTab === 'tasks' ? 'text-accent' : 'text-gray-600'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center gap-1 ${activeTab === 'tasks' ? 'text-accent' : 'text-slate-700'}`}>
           <CheckSquare size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Nhiệm Vụ</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('daily')} className={`flex flex-col items-center gap-1 ${activeTab === 'daily' ? 'text-accent' : 'text-gray-600'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('daily')} className={`flex flex-col items-center gap-1 ${activeTab === 'daily' ? 'text-accent' : 'text-slate-700'}`}>
           <Gift size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Thưởng Ngày</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('mods')} className={`flex flex-col items-center gap-1 ${activeTab === 'mods' ? 'text-accent' : 'text-gray-600'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('mods')} className={`flex flex-col items-center gap-1 ${activeTab === 'mods' ? 'text-accent' : 'text-slate-700'}`}>
           <Gamepad2 size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Mod Game</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 ${activeTab === 'wallet' ? 'text-accent' : 'text-gray-600'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 ${activeTab === 'wallet' ? 'text-accent' : 'text-slate-700'}`}>
           <Wallet size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Rút Tiền</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 relative ${activeTab === 'settings' ? 'text-accent' : 'text-gray-600'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 relative ${activeTab === 'settings' ? 'text-accent' : 'text-slate-700'}`}>
           <SettingsIcon size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Cài Đặt</span>
           {showVerifyRedDot && (
@@ -893,7 +903,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               </div>
               <div className="flex-1">
                 <h4 className="text-xs font-black uppercase tracking-widest text-accent mb-1">Xác minh tài khoản</h4>
-                <p className="text-[10px] text-gray-300 leading-tight">Vui lòng xác minh email để bảo mật tài khoản và rút tiền!</p>
+                <p className="text-[10px] text-slate-600 leading-tight">Vui lòng xác minh email để bảo mật tài khoản và rút tiền!</p>
               </div>
               <button 
                 onClick={() => setShowVerifyReminder(false)}
@@ -929,12 +939,12 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   {notifications.length > 0 && (
                     <button 
                       onClick={() => setNotifications([])}
-                      className="text-[9px] text-gray-500 hover:text-red-400 uppercase font-bold tracking-widest transition-colors"
+                      className="text-[9px] text-slate-500 hover:text-red-400 uppercase font-bold tracking-widest transition-colors"
                     >
                       Xóa tất cả
                     </button>
                   )}
-                  <button onClick={() => setShowNotifications(false)} className="text-gray-500 hover:text-white">
+                  <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-white">
                     <X size={20} />
                   </button>
                 </div>
@@ -944,24 +954,24 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                 {notifications.length > 0 ? (
                   notifications.map((item, index) => (
-                    <div key={item.id || index} className="bg-[#111] p-4 rounded-lg border border-gray-800 mb-3 flex flex-col relative">
+                    <div key={item.id || index} className="bg-white/10 p-4 rounded-lg border border-slate-200 mb-3 flex flex-col relative">
                       <button 
                         onClick={() => setNotifications(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute top-2 right-2 text-gray-500 hover:text-red-400"
+                        className="absolute top-2 right-2 text-slate-400 hover:text-red-400"
                       >
                         <X size={12} />
                       </button>
-                      <div className="text-gray-200 text-sm font-medium mb-2 whitespace-pre-wrap pr-4">
+                      <div className="text-slate-900 text-sm font-medium mb-2 whitespace-pre-wrap pr-4">
                         <p className="font-bold text-accent">{item.title}</p>
-                        <p className="text-xs text-gray-400 mt-1">{item.body}</p>
+                        <p className="text-xs text-slate-700 mt-1">{item.body}</p>
                       </div>
-                      <div className="text-gray-500 text-[10px] self-end">
+                      <div className="text-slate-500 text-[10px] self-end">
                         {formatDate(item.created_at || item.time)}
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-gray-500 italic text-xs">
+                  <div className="p-8 text-center text-slate-500 italic text-xs">
                     Chưa có thông báo nào mới.
                   </div>
                 )}
@@ -979,7 +989,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
 
       {/* Red Envelope Widget - Only on Home Tab */}
       {activeTab === 'home' && (
-        <RedEnvelopeWidget userId={user.id} profile={profile} onUpdateProfile={fetchProfile} />
+        <div className="relative z-[60]">
+          <RedEnvelopeWidget userId={user.id} profile={profile} onUpdateProfile={fetchProfile} />
+        </div>
       )}
     </div>
   );

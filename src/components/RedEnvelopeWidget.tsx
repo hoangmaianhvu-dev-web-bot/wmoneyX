@@ -233,7 +233,7 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
         onDragEnd={() => {
           setTimeout(() => setIsDragging(false), 100);
         }}
-        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 cursor-grab active:cursor-grabbing"
+        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[60] cursor-grab active:cursor-grabbing"
         style={{ touchAction: "none" }}
       >
         <motion.button
@@ -259,15 +259,15 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-sm glass p-6 rounded-3xl border border-red-500/30 shadow-2xl relative"
+              className="w-full max-w-sm bg-white p-6 rounded-3xl border border-red-500/30 shadow-2xl relative"
             >
-              <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-900">
                 <X size={20} />
               </button>
               
               <div className="text-center space-y-4 mt-2">
                 <h3 className="text-lg font-black text-red-500 uppercase tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">Lì Xì Giờ Vàng</h3>
-                <p className="text-[10px] text-gray-400">12:00 - 12:30 & 20:00 - 20:30</p>
+                <p className="text-[10px] text-slate-500">12:00 - 12:30 & 20:00 - 20:30</p>
                 
                 {canClaimRedEnvelope ? (
                   <button 
@@ -278,20 +278,20 @@ const RedEnvelopeWidget: React.FC<RedEnvelopeWidgetProps> = ({ userId, profile, 
                     {loading ? <Loader2 className="animate-spin mx-auto" /> : "Mở Lì Xì Ngay"}
                   </button>
                 ) : (
-                  <div className="bg-black/40 p-4 rounded-xl border border-white/5">
-                    <p className="text-[10px] text-red-400 uppercase font-bold mb-1">Lì xì tiếp theo sau</p>
-                    <p className="text-2xl font-black font-mono text-white">{redEnvelopeTimeLeft}</p>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p className="text-[10px] text-red-600 uppercase font-bold mb-1">Lì xì tiếp theo sau</p>
+                    <p className="text-2xl font-black font-mono text-slate-900">{redEnvelopeTimeLeft}</p>
                   </div>
                 )}
 
                 {history.length > 0 && (
                   <div className="mt-6 text-left">
-                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-2">Lịch sử nhận lì xì lớn (500/1k):</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">Lịch sử nhận lì xì lớn (500/1k):</p>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {history.map((item) => (
-                        <div key={item.id} className="flex justify-between text-[10px] bg-black/20 p-2 rounded">
-                          <span className="text-white">{item.username}</span>
-                          <span className="text-yellow-400 font-bold">{item.amount} Xu</span>
+                        <div key={item.id} className="flex justify-between text-[10px] bg-slate-50 p-2 rounded border border-slate-100">
+                          <span className="text-slate-900">{item.username}</span>
+                          <span className="text-red-600 font-bold">{item.amount} Xu</span>
                         </div>
                       ))}
                     </div>

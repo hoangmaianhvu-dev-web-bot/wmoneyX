@@ -110,8 +110,8 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
               <div className="w-20 h-20 bg-[#add8e6]/10 rounded-full flex items-center justify-center mx-auto border border-[#add8e6]/20 mb-4">
                 <Mail size={40} className="text-[#add8e6] ocean-glow" />
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-white">Xác minh Email</h2>
-              <p className="text-gray-500 text-[10px] mt-2 uppercase tracking-widest">Xác minh để nâng uy tín và bảo mật tài khoản</p>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900">Xác minh Email</h2>
+              <p className="text-slate-600 text-[10px] mt-2 uppercase tracking-widest">Xác minh để nâng uy tín và bảo mật tài khoản</p>
               
               <div className="mt-4 p-3 bg-[#add8e6]/10 border border-[#add8e6]/20 rounded-xl">
                 <p className="text-[9px] text-[#add8e6] font-bold uppercase tracking-widest">
@@ -120,7 +120,7 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
               </div>
             </div>
             
-            <div className="text-sm text-gray-400 leading-relaxed px-4">
+            <div className="text-sm text-slate-700 leading-relaxed px-4">
               Nhấn nút bên dưới để nhận mã OTP qua email đăng ký của bạn:
               <br />
               <span className="text-[#add8e6] font-bold">{email}</span>
@@ -141,13 +141,13 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
               )}
             </button>
 
-            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center mt-2">
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-center mt-2">
               Nếu không nhận mã thì hãy kiểm tra THƯ RÁC hoặc THƯ SPAM
             </p>
 
             <button 
               onClick={onCancel}
-              className="text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-white transition-colors"
+              className="text-[10px] text-slate-700 font-bold uppercase tracking-widest hover:text-accent transition-colors"
             >
               Để sau
             </button>
@@ -161,8 +161,8 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
             className="glass p-8 rounded-[2rem] text-center space-y-8 shadow-2xl"
           >
             <div className="space-y-2">
-              <h2 className="text-xl font-black uppercase tracking-widest text-white">Nhập OTP</h2>
-              <p className="text-xs text-gray-500 uppercase tracking-widest">Đang kiểm tra...</p>
+              <h2 className="text-xl font-black uppercase tracking-widest text-slate-900">Nhập OTP</h2>
+              <p className="text-xs text-slate-600 uppercase tracking-widest">Đang kiểm tra...</p>
             </div>
 
             <div className="relative">
@@ -172,7 +172,7 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                 placeholder="000000" 
-                className="w-full bg-white/5 border border-[#add8e6]/30 py-5 rounded-2xl text-center text-3xl font-black tracking-[0.4em] text-[#add8e6] outline-none focus:border-[#add8e6] transition-all"
+                className="w-full bg-white border border-[#add8e6]/30 py-5 rounded-2xl text-center text-3xl font-black tracking-[0.4em] text-[#add8e6] outline-none focus:border-[#add8e6] transition-all"
                 autoComplete="off"
               />
               {verifying && (
@@ -185,7 +185,7 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ email, onSu
             <div className="flex flex-col gap-4">
               <button 
                 onClick={() => setStep(1)}
-                className="text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-[#add8e6] transition-colors py-2"
+                className="text-[10px] text-slate-700 font-bold uppercase tracking-widest hover:text-[#add8e6] transition-colors py-2"
               >
                 Quay lại
               </button>

@@ -460,7 +460,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
           <h2 className="text-xl font-black uppercase tracking-widest ocean-glow">Nhiệm Vụ</h2>
         </div>
         <div className="glass px-4 py-2 border-l-2 border-accent/30 rounded-xl">
-          <span className="text-[8px] text-gray-500 font-bold uppercase block">Số dư hiện tại</span>
+          <span className="text-[8px] text-slate-700 font-bold uppercase block">Số dư hiện tại</span>
           <span className="text-sm font-black text-accent">{balance.toLocaleString()} Xu</span>
         </div>
       </header>
@@ -470,7 +470,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         <h3 className="text-[10px] font-black uppercase text-red-500 flex items-center gap-2">
           <AlertTriangle size={12} /> Quy định nghiêm ngặt
         </h3>
-        <p className="text-[9px] text-gray-400 leading-relaxed uppercase tracking-tighter">
+        <p className="text-[9px] text-slate-700 leading-relaxed uppercase tracking-tighter">
           Cấm <span className="text-white">VPN, Proxy, 1.1.1.1</span>, Cheat view. Mỗi nhiệm vụ có <span className="text-accent">Mã Định Danh Duy Nhất</span>, gian lận sẽ bị khóa tài khoản.
         </p>
       </div>
@@ -482,7 +482,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             <Zap className="text-orange-500" size={32} />
           </div>
           <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">HỆ THỐNG NHIỆM VỤ</h3>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-6">Hoàn thành nhiệm vụ để nhận phần thưởng</p>
+          <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-6">Hoàn thành nhiệm vụ để nhận phần thưởng</p>
           <button 
             onClick={() => {
               const el = document.getElementById('main-task-options');
@@ -493,7 +493,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             disabled={isGenerating}
             className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(147,51,234,0.5)] disabled:opacity-50"
           >
-            {isGenerating ? 'ĐANG TẠO...' : 'BẮT ĐẦU NGAY'}
+            {isGenerating ? 'ĐANG TẠO...' : `CHỌN NHIỆM VỤ - HIỆN CÓ ${Object.keys(TASK_APIS).length} / ${profile?.tasks_today || 0}`}
           </button>
 
           {/* Ô nhập mã xác nhận (Moved here) */}
@@ -507,7 +507,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               >
                 <div className="text-center mb-4">
                   <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
-                  <p className="text-[9px] text-gray-500 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
+                  <p className="text-[9px] text-slate-400 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
                 </div>
                 <div className="relative">
                   <input 
@@ -534,7 +534,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
           {/* Main Task Options */}
           <div id="main-task-options" className="hidden mt-6 pt-6 border-t border-white/10 space-y-2">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
+            <h4 className="text-[10px] font-black text-slate-300 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
             {Object.keys(TASK_DATA).map((taskName, idx) => (
               <button
                 key={idx}
@@ -544,7 +544,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                 <div className="flex flex-col items-start">
                   <span className="text-[10px] font-bold text-white uppercase">{taskName}</span>
                   <div className="flex gap-2 mt-1">
-                    <span className="text-[8px] font-bold text-gray-400 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
+                    <span className="text-[8px] font-bold text-slate-300 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
                     <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
                   </div>
                 </div>
@@ -563,7 +563,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             <Zap className="text-red-500" size={32} />
           </div>
           <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">NHIỆM VỤ ĐẶC BIỆT</h3>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
+          <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
           
           <div className="flex gap-2">
             <button 
@@ -587,7 +587,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
           {/* Special Task Options (Hidden by default) */}
           <div id="special-task-options" className="hidden mt-6 pt-6 border-t border-red-500/20 space-y-2">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
+            <h4 className="text-[10px] font-black text-slate-300 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
             {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
               <button
                 key={idx}
@@ -646,7 +646,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   
                   <div className="space-y-2">
                     <h3 className="text-lg font-black text-white uppercase tracking-widest">ĐANG TẠO NHIỆM VỤ</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                    <p className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">
                       Vui lòng đợi trong giây lát
                       <span className="loading-dots ml-1">
                         <span>.</span><span>.</span><span>.</span>
@@ -671,23 +671,23 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Nguồn nhiệm vụ</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase">Nguồn nhiệm vụ</span>
                       <span className="text-[10px] font-black text-accent uppercase">{selectedTask}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Số lượt làm</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase">Số lượt làm</span>
                       <span className="text-[10px] font-black text-white uppercase">{taskCounts[selectedTask || ""] || 0} / {selectedTask ? TASK_DATA[selectedTask]?.limit : 1} (Hàng ngày)</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Tổng giới hạn ngày</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase">Tổng giới hạn ngày</span>
                       <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / 99</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Phần thưởng</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase">Phần thưởng</span>
                       <span className="text-[10px] font-black text-yellow-500 uppercase">{reward} XU</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Thời gian tạo</span>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase">Thời gian tạo</span>
                       <span className="text-[10px] font-black text-white uppercase">{taskCreationTime}</span>
                     </div>
                   </div>
@@ -743,11 +743,11 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass p-6 w-[92%] max-w-[360px] space-y-4 relative z-10 rounded-[2rem] border-accent/20 overflow-y-auto max-h-[85vh]"
+              className="glass p-6 w-[92%] max-w-[360px] space-y-4 relative z-10 rounded-[2rem] border-accent/30 bg-accent/10 shadow-[0_0_30px_rgba(0,255,255,0.1)] overflow-y-auto max-h-[85vh]"
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-sm font-black uppercase text-accent tracking-widest">Hướng dẫn lấy mã</h3>
-                <button onClick={() => setShowGuide(false)} className="text-gray-500 hover:text-white">
+                <button onClick={() => setShowGuide(false)} className="text-slate-400 hover:text-white">
                   <ExternalLink size={18} />
                 </button>
               </div>
@@ -757,7 +757,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">1</div>
                   <div>
                     <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Bắt đầu nhiệm vụ</h4>
-                    <p className="text-[9px] text-gray-400">Nhấn nút <span className="text-accent">"Thực hiện nhiệm vụ"</span>. Hệ thống sẽ tự động mở một tab mới chứa link rút gọn.</p>
+                    <p className="text-[9px] text-slate-300">Nhấn nút <span className="text-accent">"Thực hiện nhiệm vụ"</span>. Hệ thống sẽ tự động mở một tab mới chứa link rút gọn.</p>
                   </div>
                 </div>
 
@@ -765,7 +765,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">2</div>
                   <div>
                     <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Vượt link rút gọn</h4>
-                    <p className="text-[9px] text-gray-400">Thực hiện các bước xác minh (Captcha, Click button) theo yêu cầu của trang rút gọn để tiếp tục.</p>
+                    <p className="text-[9px] text-slate-300">Thực hiện các bước xác minh (Captcha, Click button) theo yêu cầu của trang rút gọn để tiếp tục.</p>
                   </div>
                 </div>
 
@@ -773,7 +773,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">3</div>
                   <div>
                     <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Truy cập trang đích</h4>
-                    <p className="text-[9px] text-gray-400">Sau khi vượt link, bạn sẽ được chuyển đến trang Blog đích. Hãy cuộn xuống dưới cùng của trang.</p>
+                    <p className="text-[9px] text-slate-300">Sau khi vượt link, bạn sẽ được chuyển đến trang Blog đích. Hãy cuộn xuống dưới cùng của trang.</p>
                   </div>
                 </div>
 
@@ -781,7 +781,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">4</div>
                   <div>
                     <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Lấy mã xác nhận</h4>
-                    <p className="text-[9px] text-gray-400">Tìm nút <span className="text-accent">"LẤY MÃ NGAY"</span> hoặc chờ đồng hồ đếm ngược (thường là 10-30 giây). Mã 7 chữ số sẽ hiện ra.</p>
+                    <p className="text-[9px] text-slate-300">Tìm nút <span className="text-accent">"LẤY MÃ NGAY"</span> hoặc chờ đồng hồ đếm ngược (thường là 10-30 giây). Mã 7 chữ số sẽ hiện ra.</p>
                   </div>
                 </div>
 
@@ -789,7 +789,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent font-black shrink-0 text-[10px]">5</div>
                   <div>
                     <h4 className="text-[10px] font-black uppercase text-white mb-0.5">Nhập mã & Nhận thưởng</h4>
-                    <p className="text-[9px] text-gray-400">Sao chép mã đó, quay lại ứng dụng wmoneyX và dán vào ô <span className="text-accent">"Dán mã vào đây"</span> để nhận Xu.</p>
+                    <p className="text-[9px] text-slate-300">Sao chép mã đó, quay lại ứng dụng wmoneyX và dán vào ô <span className="text-accent">"Dán mã vào đây"</span> để nhận Xu.</p>
                   </div>
                 </div>
               </div>

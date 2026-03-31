@@ -107,8 +107,8 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20 mb-4">
                 <AlertTriangle size={40} className="text-red-500" />
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-white">Xác nhận xóa tài khoản</h2>
-              <p className="text-gray-500 text-[10px] mt-2 uppercase tracking-widest">Hành động này không thể hoàn tác</p>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900">Xác nhận xóa tài khoản</h2>
+              <p className="text-slate-600 text-[10px] mt-2 uppercase tracking-widest">Hành động này không thể hoàn tác</p>
               
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                 <p className="text-[9px] text-red-500 font-bold uppercase tracking-widest">
@@ -117,7 +117,7 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
               </div>
             </div>
             
-            <div className="text-sm text-gray-400 leading-relaxed px-4">
+            <div className="text-sm text-slate-700 leading-relaxed px-4">
               Nhấn nút bên dưới để nhận mã OTP xác nhận xóa qua email:
               <br />
               <span className="text-red-400 font-bold">{email}</span>
@@ -140,7 +140,7 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
 
             <button 
               onClick={onCancel}
-              className="text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-white transition-colors"
+              className="text-[10px] text-slate-700 font-bold uppercase tracking-widest hover:text-accent transition-colors"
             >
               Hủy bỏ
             </button>
@@ -157,8 +157,8 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20 mb-4">
                 <Mail size={40} className="text-red-500" />
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-white">Nhập mã OTP</h2>
-              <p className="text-gray-500 text-[10px] mt-2 uppercase tracking-widest">Mã đã được gửi đến email của bạn</p>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-900">Nhập mã OTP</h2>
+              <p className="text-slate-600 text-[10px] mt-2 uppercase tracking-widest">Mã đã được gửi đến email của bạn</p>
             </div>
 
             <div className="space-y-4">
@@ -167,7 +167,7 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="Nhập 6 số OTP"
-                className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-2xl tracking-[0.5em] text-center font-black outline-none focus:border-red-500/50 transition-colors"
+                className="w-full bg-white border border-slate-200 p-4 rounded-xl text-2xl tracking-[0.5em] text-center font-black outline-none focus:border-red-500/50 text-slate-900 transition-colors"
                 maxLength={6}
               />
               
@@ -179,7 +179,7 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
                 >
                   Gửi lại mã
                 </button>
-                <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                <span className="text-[10px] text-slate-700 font-bold uppercase tracking-widest">
                   {otp.length}/6
                 </span>
               </div>
@@ -194,7 +194,7 @@ const DeleteAccountVerification: React.FC<DeleteAccountVerificationProps> = ({ e
 
             <button 
               onClick={onCancel}
-              className="text-[10px] text-gray-600 font-bold uppercase tracking-widest hover:text-white transition-colors mt-4"
+              className="text-[10px] text-slate-700 font-bold uppercase tracking-widest hover:text-accent transition-colors mt-4"
             >
               Hủy bỏ
             </button>

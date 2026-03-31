@@ -184,7 +184,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
           <h2 className="text-2xl font-black uppercase tracking-[0.2em] ocean-glow flex items-center gap-3">
             <Gamepad2 className="text-accent" /> Mod Game Miễn Phí
           </h2>
-          <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Kho ứng dụng và trò chơi đã được MOD</p>
+          <p className="text-[10px] text-slate-600 uppercase font-bold tracking-widest">Kho ứng dụng và trò chơi đã được MOD</p>
         </div>
 
         {isAdmin && (
@@ -200,13 +200,13 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
       {/* Search */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text" 
             placeholder="Tìm kiếm game mod..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm focus:border-accent/50 outline-none transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-slate-900 focus:border-accent/50 outline-none transition-all"
           />
         </div>
       </div>
@@ -215,7 +215,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
       {loading ? (
         <div className="py-20 text-center">
           <Loader2 className="animate-spin mx-auto text-accent mb-4" size={32} />
-          <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">Đang tải kho ứng dụng...</p>
+          <p className="text-xs text-slate-600 uppercase font-bold tracking-widest">Đang tải kho ứng dụng...</p>
         </div>
       ) : filteredMods.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,7 +224,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
               key={mod.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass group relative overflow-hidden rounded-[2.5rem] border-white/5 hover:border-accent/20 transition-all"
+              className="glass group relative overflow-hidden rounded-[2.5rem] border-white/10 bg-white/5 hover:bg-accent/5 hover:border-accent/30 transition-all shadow-lg"
             >
               <div className="aspect-video w-full overflow-hidden relative">
                 <img 
@@ -278,14 +278,14 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                     <div className="flex items-center gap-2">
                       <p className="text-[10px] text-accent font-bold">Phiên bản: {mod.version}</p>
                       {mod.source_name && (
-                        <span className="text-[10px] text-gray-500 font-bold">• Nguồn: {mod.source_name}</span>
+                        <span className="text-[10px] text-slate-500 font-bold">• Nguồn: {mod.source_name}</span>
                       )}
                     </div>
                   </div>
-                  <Download className="text-gray-600 group-hover:text-accent transition-colors" size={20} />
+                  <Download className="text-slate-600 group-hover:text-accent transition-colors" size={20} />
                 </div>
 
-                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-700 line-clamp-2 leading-relaxed">
                   {mod.description || "Bản mod tuyệt vời cho trải nghiệm chơi game mới lạ."}
                 </p>
 
@@ -303,8 +303,8 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
         </div>
       ) : (
         <div className="py-20 text-center glass rounded-[3rem]">
-          <Gamepad2 className="mx-auto text-gray-700 mb-4" size={48} />
-          <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">Không tìm thấy bản mod nào</p>
+          <Gamepad2 className="mx-auto text-slate-400 mb-4" size={48} />
+          <p className="text-sm text-slate-600 font-bold uppercase tracking-widest">Không tìm thấy bản mod nào</p>
         </div>
       )}
 
@@ -337,7 +337,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                     setShowAddModal(false);
                     setEditingMod(null);
                   }} 
-                  className="text-gray-500 hover:text-white"
+                  className="text-slate-400 hover:text-white"
                 >
                   <X size={24} />
                 </button>
@@ -345,7 +345,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
 
               <form onSubmit={handleAddMod} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Tên Game/App</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Tên Game/App</label>
                   <input 
                     type="text" 
                     required
@@ -354,14 +354,14 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                       ? setEditingMod({...editingMod, title: e.target.value})
                       : setNewMod({...newMod, title: e.target.value})
                     }
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50"
                     placeholder="Ví dụ: Minecraft Mod"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Phiên bản</label>
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Phiên bản</label>
                     <input 
                       type="text" 
                       value={(editingMod ? editingMod.version : newMod.version) || ""}
@@ -369,19 +369,19 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                         ? setEditingMod({...editingMod, version: e.target.value})
                         : setNewMod({...newMod, version: e.target.value})
                       }
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50"
                       placeholder="1.0.0"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Danh mục</label>
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Danh mục</label>
                     <select 
                       value={(editingMod ? editingMod.category : newMod.category) || "Tất cả"}
                       onChange={(e) => editingMod
                         ? setEditingMod({...editingMod, category: e.target.value})
                         : setNewMod({...newMod, category: e.target.value})
                       }
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50 appearance-none"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50 appearance-none"
                     >
                       <option value="Tất cả">Tất cả</option>
                       <option value="Game">Game</option>
@@ -392,7 +392,7 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Link Ảnh (URL)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Link Ảnh (URL)</label>
                   <input 
                     type="url" 
                     value={(editingMod ? editingMod.image_url : newMod.image_url) || ""}
@@ -400,13 +400,13 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                       ? setEditingMod({...editingMod, image_url: e.target.value})
                       : setNewMod({...newMod, image_url: e.target.value})
                     }
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50"
                     placeholder="https://..."
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Nguồn Link (Ví dụ: Link4M)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Nguồn Link (Ví dụ: Link4M)</label>
                   <input 
                     type="text" 
                     value={(editingMod ? editingMod.source_name : newMod.source_name) || ""}
@@ -414,13 +414,13 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                       ? setEditingMod({...editingMod, source_name: e.target.value})
                       : setNewMod({...newMod, source_name: e.target.value})
                     }
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50"
                     placeholder="Link4M, Google Drive, Mega..."
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Link Tải (URL)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Link Tải (URL)</label>
                   <input 
                     type="url" 
                     required
@@ -429,20 +429,20 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
                       ? setEditingMod({...editingMod, download_url: e.target.value})
                       : setNewMod({...newMod, download_url: e.target.value})
                     }
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50"
                     placeholder="https://..."
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2">Mô tả</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-2">Mô tả</label>
                   <textarea 
                     value={(editingMod ? editingMod.description : newMod.description) || ""}
                     onChange={(e) => editingMod
                       ? setEditingMod({...editingMod, description: e.target.value})
                       : setNewMod({...newMod, description: e.target.value})
                     }
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-accent/50 h-24 resize-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-900 outline-none focus:border-accent/50 h-24 resize-none"
                     placeholder="Mô tả các tính năng mod..."
                   />
                 </div>
