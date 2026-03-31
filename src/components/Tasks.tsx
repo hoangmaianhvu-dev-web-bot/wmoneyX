@@ -157,10 +157,10 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     const limit = TASK_DATA[taskName]?.limit || 0;
     const tasksToday = profile?.tasks_today || 0;
 
-    if (tasksToday >= 99) {
+    if (tasksToday >= 666) {
       showNotification({
         title: "GIỚI HẠN",
-        message: `Bạn đã đạt giới hạn 99 nhiệm vụ mỗi ngày!`,
+        message: `Bạn đã đạt giới hạn 666 nhiệm vụ mỗi ngày!`,
         type: "warning"
       });
       return;
@@ -280,6 +280,8 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       if (isSuccess && link) {
         window.open(link, "_blank");
+        setShowTaskModal(false);
+        setExpandedCategory('verification');
         setIsTaskStarted(true);
         showNotification({
           title: "HỆ THỐNG",
@@ -492,42 +494,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             {isGenerating ? 'ĐANG TẠO...' : `CHỌN NHIỆM VỤ - HIỆN CÓ ${Object.keys(TASK_APIS).length} / ${profile?.tasks_today || 0}`}
           </button>
 
-          {/* Ô nhập mã xác nhận (Moved here) */}
-          <AnimatePresence>
-            {isTaskStarted && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="mt-6 p-6 glass border-accent/30 rounded-3xl"
-              >
-                <div className="text-center mb-4">
-                  <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
-                  <p className="text-[9px] text-slate-400 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
-                </div>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    maxLength={7} 
-                    value={verifyCode}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setVerifyCode(val);
-                      handleVerify(val);
-                    }}
-                    placeholder="Dán mã vào đây..." 
-                    className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center text-2xl font-black tracking-[0.5em] text-accent outline-none focus:border-accent/50"
-                  />
-                  {isChecking && (
-                    <div className="absolute -bottom-6 left-0 right-0 text-center">
-                      <span className="text-[8px] text-accent font-bold uppercase animate-pulse">Đang xác thực mã định danh...</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Main Task Options (Moved to expanded view) */}
         </div>
 
@@ -595,6 +561,41 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                       <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                     </button>
                   ))}
+                </div>
+              ) : expandedCategory === 'verification' ? (
+                <div className="space-y-5">
+                  <div className="text-center mb-4">
+                    <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
+                    <p className="text-[9px] text-slate-400 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      maxLength={7} 
+                      value={verifyCode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setVerifyCode(val);
+                        handleVerify(val);
+                      }}
+                      placeholder="Dán mã vào đây..." 
+                      className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center text-2xl font-black tracking-[0.5em] text-accent outline-none focus:border-accent/50"
+                    />
+                    {isChecking && (
+                      <div className="absolute -bottom-6 left-0 right-0 text-center">
+                        <span className="text-[8px] text-accent font-bold uppercase animate-pulse">Đang xác thực mã định danh...</span>
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setIsTaskStarted(false);
+                      setExpandedCategory(null);
+                    }}
+                    className="w-full py-3 bg-white/5 hover:bg-white/10 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    HỦY BỎ
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -672,6 +673,41 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     </p>
                   </div>
                 </div>
+              ) : isTaskStarted ? (
+                <div className="p-6 space-y-5">
+                  <div className="text-center mb-4">
+                    <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
+                    <p className="text-[9px] text-slate-400 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      maxLength={7} 
+                      value={verifyCode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setVerifyCode(val);
+                        handleVerify(val);
+                      }}
+                      placeholder="Dán mã vào đây..." 
+                      className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center text-2xl font-black tracking-[0.5em] text-accent outline-none focus:border-accent/50"
+                    />
+                    {isChecking && (
+                      <div className="absolute -bottom-6 left-0 right-0 text-center">
+                        <span className="text-[8px] text-accent font-bold uppercase animate-pulse">Đang xác thực mã định danh...</span>
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setIsTaskStarted(false);
+                      setShowTaskModal(false);
+                    }}
+                    className="w-full py-3 bg-white/5 hover:bg-white/10 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    HỦY BỎ
+                  </button>
+                </div>
               ) : (
                 <div className="p-6 space-y-5">
                   <div className="text-center">
@@ -692,7 +728,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-red-500 uppercase">Tổng giới hạn ngày</span>
-                      <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / 99</span>
+                      <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / {Object.keys(TASK_DATA).length + 500}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-red-500 uppercase">Phần thưởng</span>

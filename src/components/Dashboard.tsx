@@ -635,7 +635,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         <Target size={40} />
                       </div>
                       <p className="text-[10px] text-blue-800 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
-                      <h3 className="text-3xl font-black italic text-blue-700 uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 99</h3>
+                      <h3 className="text-3xl font-black italic text-blue-700 uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 666</h3>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
