@@ -93,3 +93,47 @@ body {
 .animate-shine {
   animation: shine 3s linear infinite;
 }
+
+@keyframes led-running {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.led-bar {
+  background: linear-gradient(90deg, transparent, #add8e6, transparent);
+  background-size: 200% 100%;
+  animation: led-running 2s linear infinite;
+}
+
+/* Animal Running Animation */
+.animal-running {
+  animation: animal-bounce 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes animal-bounce {
+  from { transform: translateY(0) rotate(-5deg); }
+  to { transform: translateY(-10px) rotate(5deg); }
+}
+
+.loading-dots span {
+  display: inline-block;
+  animation: loading-dots 1.4s infinite both;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes loading-dots {
+  0%, 80%, 100% { opacity: 0; transform: scale(0); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+.full-blur {
+  backdrop-filter: blur(40px) brightness(0.2);
+}
+
+.led-bar {
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+  background-size: 200% 100%;
+  animation: led-running 2s linear infinite;
+}

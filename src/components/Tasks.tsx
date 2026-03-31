@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  Zap,
+  Cat
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -22,13 +24,46 @@ interface TasksProps {
 }
 
 const CONFIG = {
-  // VuotNhanh (Old)
-  VUOTNHANH_API: import.meta.env.VITE_VUOTNHANH_API || "d2ccf7ae-8029-45a8-a149-0013ec3447da", 
-  VUOTNHANH_URL: import.meta.env.VITE_VUOTNHANH_URL || "https://vuotnhanh.com/api?api=", 
-  
   BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://xacminhnhiemvu.blogspot.com/",
   REWARD: 200,
   SPECIAL_REWARD: 1000
+};
+
+const TASK_APIS: Record<string, string> = {
+  "🔥 BBMKTS": "https://bbmkts.com/dapi?token=d285ce6c761cc5961316783a&longurl=",
+  "🔥 LINK4M": "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=",
+  "🔥 LINKNGONIO": "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=",
+  "🔥 LINKTOT": "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
+  "TRAFICTOT": "https://services.traffictot.com/api/v1/shorten?api_key=3066e5a6df247cd2cf73b122e518a29e061e2823c969cefa75e05252513e6363&url=",
+  "🔥 TRAFFIC1M": "https://traffic1m.net/apidevelop?api=dfe44a5e9704a90f5932d3f2bd924902&url=",
+  "🔥 UPTOLINK SET3": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
+  "UPTOLINK SET2": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
+  "🔥 LINKNGONME": "https://linkngon.me/api?api=FwrA3chMbKkJ3s2UBA7I6XRMeuhUx8GjK8zlNUiCvDn0q4&url=",
+  "🔥 TRAFFIC68": "https://traffic68.com/api/quicklink/api?api=tf68_c42992fb620964a590a36f35a0412f70bab3236f1e0aeb08&url=",
+  "🔥 NHAPMA": "https://service.nhapma.com/api?token=4e715a3b-d40e-4712-91a9-9a7af0564749&url=",
+  "🔥 TAPLAYMA": "https://api.taplayma.com/api?token=9015c633-5cbb-42c0-a97a-5d6750d2b291&url=",
+  "4MMO": "https://4mmo.net/api?api=f043a9bcb47e1fe0be2d73825a1a8975a62f60d5&url=",
+  "XLINK": "https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=",
+  "LINKTOP": "https://linktop.run/api?api=kDk3dqyoTbFP29S4wNmAbwVuDg5RBS0HQ8M9V8BgfwF8IH&url=",
+};
+
+const TASK_DATA: Record<string, { reward: number, limit: number }> = {
+  "🔥 LINK4M": { reward: 100, limit: 2 },
+  "🔥 TRAFFIC1M": { reward: 300, limit: 3 },
+  "🔥 TRAFFIC68": { reward: 200, limit: 2 },
+  "YEUMONEY": { reward: 0, limit: 0 },
+  "TRAFICTOT": { reward: 100, limit: 3 },
+  "🔥 LINKTOT": { reward: 100, limit: 1 },
+  "🔥 LINKNGONME": { reward: 200, limit: 2 },
+  "🔥 LINKNGONIO": { reward: 200, limit: 2 },
+  "🔥 BBMKTS": { reward: 200, limit: 1 },
+  "LINKTOP": { reward: 100, limit: 2 },
+  "🔥 TAPLAYMA": { reward: 150, limit: 3 },
+  "XLINK": { reward: 50, limit: 2 },
+  "4MMO": { reward: 100, limit: 2 },
+  "🔥 NHAPMA": { reward: 100, limit: 3 },
+  "🔥 UPTOLINK SET3": { reward: 100, limit: 100 },
+  "UPTOLINK SET2": { reward: 150, limit: 100 },
 };
 
 const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdateBalance, onUpdateProfile }) => {
@@ -39,9 +74,43 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [isGenerating, setIsGenerating] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showSpecialGuide, setShowSpecialGuide] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskCreationTime, setTaskCreationTime] = useState("");
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (userId) {
+      fetchTaskCounts();
+    }
+  }, [userId]);
+
+  const fetchTaskCounts = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('task_completions')
+        .select('task_name')
+        .eq('user_id', userId)
+        .eq('completed_at', today);
+
+      if (error) {
+        console.error("Error fetching task counts:", error);
+        return;
+      }
+
+      const counts: Record<string, number> = {};
+      data?.forEach((item: any) => {
+        counts[item.task_name] = (counts[item.task_name] || 0) + 1;
+      });
+      setTaskCounts(counts);
+    } catch (error) {
+      console.error("Error in fetchTaskCounts:", error);
+    }
+  };
 
   const reward = React.useMemo(() => {
-    let r = CONFIG.REWARD;
+    let r = selectedTask ? (TASK_DATA[selectedTask]?.reward || CONFIG.REWARD) : CONFIG.REWARD;
     if (profile?.active_boost_type && profile?.active_boost_end) {
       const now = new Date();
       const endTime = new Date(profile.active_boost_end);
@@ -55,7 +124,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       }
     }
     return r;
-  }, [profile]);
+  }, [profile, selectedTask]);
 
   const { showNotification } = useNotification();
 
@@ -73,9 +142,50 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     return (!timezone.includes("Asia/Saigon") && !timezone.includes("Asia/Ho_Chi_Minh"));
   };
 
-  const startTask = async (mode: 'random' | 'vuotnhanh' = 'random') => {
+  const startTask = (taskName: string) => {
+    if (taskName === "YEUMONEY") {
+      showNotification({
+        title: "HỆ THỐNG",
+        message: "Hiện tại không có nhiệm vụ nào cho YEUMONEY",
+        type: "info"
+      });
+      return;
+    }
+
+    const currentCount = taskCounts[taskName] || 0;
+    const limit = TASK_DATA[taskName]?.limit || 0;
+
+    if (currentCount >= limit) {
+      showNotification({
+        title: "GIỚI HẠN",
+        message: `Bạn đã hết lượt làm nhiệm vụ ${taskName} hôm nay!`,
+        type: "warning"
+      });
+      return;
+    }
+
+    setSelectedTask(taskName);
+    setTaskCreationTime(new Date().toLocaleTimeString('vi-VN'));
+    setShowTaskModal(true);
+  };
+
+  const confirmTask = async () => {
+    if (!selectedTask) return;
+    const taskName = selectedTask;
+    // setShowTaskModal(false); // Keep modal open to show loading animation
+
+    const apiBaseUrl = TASK_APIS[taskName];
+    if (!apiBaseUrl) {
+      showNotification({
+        title: "LỖI",
+        message: "Không tìm thấy cấu hình cho nhiệm vụ này",
+        type: "error"
+      });
+      return;
+    }
+
     setIsGenerating(true);
-    console.log("Starting task creation with mode:", mode);
+    console.log("Starting task creation for:", taskName);
     
     try {
       if (await checkVPN()) {
@@ -85,6 +195,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
           type: "warning"
         });
         setIsGenerating(false);
+        setShowTaskModal(false);
         return;
       }
 
@@ -92,51 +203,72 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       setCurrentSessionCode(newCode);
       
       const targetUrl = `${CONFIG.BLOG_URL}?code=${newCode}`;
-      const apiRequestUrl = `${CONFIG.VUOTNHANH_URL}${CONFIG.VUOTNHANH_API}&url=${encodeURIComponent(targetUrl)}`;
+      let apiRequestUrl = `${apiBaseUrl}${encodeURIComponent(targetUrl)}`;
       
-      // Use the new format for Vercel rewrites and local proxy
-      const finalProxyUrl = `/api/proxy-vuotnhanh?api=${CONFIG.VUOTNHANH_API}&url=${encodeURIComponent(targetUrl)}`;
+      // Xử lý cơ chế riêng cho Uptolink
+      if (taskName.includes('UPTOLINK SET2')) apiRequestUrl += "&type=4";
+      if (taskName.includes('UPTOLINK SET3')) apiRequestUrl += "&type=3";
       
-      console.log("Proxy URL:", finalProxyUrl);
+      console.log("API Request URL:", apiRequestUrl);
 
       let response;
-      try {
-        response = await fetch(finalProxyUrl);
-        console.log("Proxy response status:", response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Proxy error response:", errorText);
-          throw new Error(`Proxy error: ${response.status}`);
-        }
-      } catch (proxyError: any) {
-        console.warn("Proxy failed, trying direct fetch as fallback:", proxyError);
+      const proxyList = [
+        (url: string) => url, // Direct
+        (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      ];
+
+      for (let i = 0; i < proxyList.length; i++) {
         try {
-          response = await fetch(apiRequestUrl);
-          if (!response.ok) {
-            throw new Error(`Direct fetch failed: ${response.status}`);
+          const currentUrl = proxyList[i](apiRequestUrl);
+          console.log(`Attempt ${i + 1}: Fetching from ${currentUrl}`);
+          response = await fetch(currentUrl, {
+            method: 'GET'
+          });
+          if (response.ok) {
+            console.log(`Attempt ${i + 1} succeeded!`);
+            break;
+          } else {
+            console.warn(`Attempt ${i + 1} failed with status: ${response.status}`);
           }
-        } catch (directError: any) {
-          console.warn("Direct fetch also failed, trying public CORS proxy:", directError);
-          try {
-            // Fallback to a public CORS proxy if everything else fails
-            const publicCorsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiRequestUrl)}`;
-            response = await fetch(publicCorsProxyUrl);
-            if (!response.ok) {
-              throw new Error(`Public CORS proxy failed: ${response.status}`);
-            }
-          } catch (corsProxyError: any) {
-            console.error("All fetch methods failed:", corsProxyError);
-            throw new Error("Failed to generate link after all attempts");
-          }
+        } catch (e) {
+          console.warn(`Attempt ${i + 1} threw error:`, e);
         }
+        // Small delay before next attempt if current one failed
+        if (i < proxyList.length - 1) await new Promise(r => setTimeout(r, 500));
       }
 
-      const result = await response.json();
-      console.log("Proxy response result:", result);
+      if (!response || !response.ok) {
+        throw new Error("Failed to generate link after all attempts. Please check your network or try another task.");
+      }
+
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error("API returned empty response. Please try again later.");
+      }
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse response as JSON:", responseText);
+        throw new Error("API returned invalid data format. Please try again later.");
+      }
       
-      if (result.status === "success" && result.shortenedUrl) {
-        window.open(result.shortenedUrl, "_blank");
+      console.log("Response result:", result);
+      
+      // TRÍCH XUẤT LINK LINH HOẠT TỪ NHIỀU CẤU TRÚC JSON
+      const link = 
+        result.shortenedUrl || 
+        result.url || 
+        result.bbmktsUrl || 
+        result.short_url ||
+        result.data?.short_url; // Cấu trúc lồng nhau của một số API
+
+      const isSuccess = result.status === "success" || result.success === true || !!link;
+
+      if (isSuccess && link) {
+        window.open(link, "_blank");
         setIsTaskStarted(true);
         showNotification({
           title: "HỆ THỐNG",
@@ -155,6 +287,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       });
     } finally {
       setIsGenerating(false);
+      setShowTaskModal(false);
     }
   };
 
@@ -256,6 +389,27 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         console.error("Transaction record error:", transError);
       }
 
+      // Record task completion for limit tracking
+      if (!isSpecialTask && selectedTask) {
+        const { error: completionError } = await supabase
+          .from('task_completions')
+          .insert([{
+            user_id: userId,
+            task_name: selectedTask,
+            completed_at: today
+          }]);
+        
+        if (completionError) {
+          console.error("Task completion record error:", completionError);
+        } else {
+          // Update local counts
+          setTaskCounts(prev => ({
+            ...prev,
+            [selectedTask]: (prev[selectedTask] || 0) + 1
+          }));
+        }
+      }
+
       onUpdateBalance(newBalance);
       if (onUpdateProfile) {
         await onUpdateProfile();
@@ -313,117 +467,116 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       {/* Nhiệm vụ */}
       <div className="space-y-4">
-        <div className="glass p-6 relative overflow-hidden group rounded-[2rem]">
-          <div className="absolute top-0 right-0 bg-accent text-black text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase">
-            Không giới hạn
+        <div className="bg-gradient-to-br from-[#1e293b] to-[#312e81] p-8 rounded-[2rem] text-center shadow-2xl border border-white/10">
+          <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4">
+            <Zap className="text-orange-500" size={32} />
           </div>
-          
-          <div className="flex items-start gap-5">
-            <div className="w-14 h-14 glass flex items-center justify-center text-2xl text-accent shrink-0 rounded-2xl">
-              <LinkIcon size={24} />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-black uppercase mb-1">Vượt link rút gọn</h3>
-              <p className="text-[10px] text-gray-400 mb-4">Phần thưởng: <span className="text-accent font-bold">{reward} Xu</span></p>
-              
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => startTask('random')}
-                  disabled={isGenerating}
-                  className="btn-task flex-1 py-3 rounded-xl text-[10px] uppercase tracking-widest disabled:opacity-50"
-                >
-                  {isGenerating ? 'ĐANG TẠO LINK...' : (isTaskStarted ? 'Lấy link mới' : 'Thực hiện nhiệm vụ')}
-                </button>
+          <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">HỆ THỐNG NHIỆM VỤ</h3>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-6">Hoàn thành nhiệm vụ để nhận phần thưởng</p>
+          <button 
+            onClick={() => {
+              const el = document.getElementById('main-task-options');
+              if (el) {
+                el.classList.toggle('hidden');
+              }
+            }}
+            disabled={isGenerating}
+            className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(147,51,234,0.5)] disabled:opacity-50"
+          >
+            {isGenerating ? 'ĐANG TẠO...' : 'BẮT ĐẦU NGAY'}
+          </button>
 
-                <button 
-                  onClick={() => setShowGuide(true)}
-                  className="w-12 py-3 glass border-accent/20 text-accent rounded-xl flex items-center justify-center hover:bg-accent/10 transition-all"
-                >
-                  <HelpCircle size={16} />
-                </button>
-              </div>
-            </div>
+          {/* Ô nhập mã xác nhận (Moved here) */}
+          <AnimatePresence>
+            {isTaskStarted && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="mt-6 p-6 glass border-accent/30 rounded-3xl"
+              >
+                <div className="text-center mb-4">
+                  <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
+                  <p className="text-[9px] text-gray-500 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
+                </div>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    maxLength={7} 
+                    value={verifyCode}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setVerifyCode(val);
+                      handleVerify(val);
+                    }}
+                    placeholder="Dán mã vào đây..." 
+                    className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center text-2xl font-black tracking-[0.5em] text-accent outline-none focus:border-accent/50"
+                  />
+                  {isChecking && (
+                    <div className="absolute -bottom-6 left-0 right-0 text-center">
+                      <span className="text-[8px] text-accent font-bold uppercase animate-pulse">Đang xác thực mã định danh...</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Main Task Options */}
+          <div id="main-task-options" className="hidden mt-6 pt-6 border-t border-white/10 space-y-2">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
+            {Object.keys(TASK_DATA).map((taskName, idx) => (
+              <button
+                key={idx}
+                onClick={() => startTask(taskName)}
+                className="w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn"
+              >
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] font-bold text-white uppercase">{taskName}</span>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[8px] font-bold text-gray-400 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
+                    <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
+                  </div>
+                </div>
+                <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Ô nhập mã xác nhận */}
-        <AnimatePresence>
-          {isTaskStarted && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="glass p-6 border-accent/30 rounded-[2rem]"
-            >
-              <div className="text-center mb-4">
-                <h3 className="text-[10px] font-black uppercase text-accent tracking-widest mb-1">Xác minh hoàn thành</h3>
-                <p className="text-[9px] text-gray-500 uppercase italic">Mã 7 số xáo trộn - Hiệu lực 1 lần</p>
-              </div>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  maxLength={7} 
-                  value={verifyCode}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setVerifyCode(val);
-                    handleVerify(val);
-                  }}
-                  placeholder="Dán mã vào đây..." 
-                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center text-2xl font-black tracking-[0.5em] text-accent outline-none focus:border-accent/50"
-                />
-                {isChecking && (
-                  <div className="absolute -bottom-6 left-0 right-0 text-center">
-                    <span className="text-[8px] text-accent font-bold uppercase animate-pulse">Đang xác thực mã định danh...</span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Bảng nhiệm vụ đặc biệt (Gộp) */}
-        <div className="glass p-6 relative overflow-hidden group rounded-[2rem] border-red-500/30 bg-red-500/5">
+        <div className="bg-gradient-to-br from-[#1e293b] to-[#450a0a] p-8 rounded-[2rem] text-center shadow-2xl border border-red-500/20 relative overflow-hidden">
           <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black px-4 py-1 rounded-bl-xl uppercase shadow-[0_0_10px_rgba(239,68,68,0.5)]">
             HOT
           </div>
+          <div className="w-16 h-16 mx-auto bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+            <Zap className="text-red-500" size={32} />
+          </div>
+          <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">NHIỆM VỤ ĐẶC BIỆT</h3>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
           
-          <div className="flex items-start gap-5">
-            <div className="w-14 h-14 glass flex items-center justify-center text-2xl text-red-500 shrink-0 rounded-2xl border-red-500/30">
-              <AlertTriangle size={24} />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-black uppercase mb-1 text-white">Nhiệm vụ đặc biệt</h3>
-              <div className="flex items-center gap-3 text-[10px] mb-4">
-                <span className="text-red-400 font-bold">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</span>
-                <span className="text-gray-500">•</span>
-                <span className="text-gray-400">Không giới hạn lượt làm</span>
-              </div>
-
-              <div className="flex gap-2">
-                <button 
-                  onClick={async () => {
-                    const el = document.getElementById('special-task-options');
-                    if (el) {
-                      el.classList.toggle('hidden');
-                    }
-                  }}
-                  className="flex-1 py-3 bg-red-500/20 text-red-400 border border-red-500/50 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                >
-                  Bắt đầu
-                </button>
-                <button 
-                  onClick={() => setShowSpecialGuide(true)}
-                  className="w-12 py-3 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-                >
-                  <HelpCircle size={16} />
-                </button>
-              </div>
-            </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={async () => {
+                const el = document.getElementById('special-task-options');
+                if (el) {
+                  el.classList.toggle('hidden');
+                }
+              }}
+              className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+            >
+              BẮT ĐẦU NGAY
+            </button>
+            <button 
+              onClick={() => setShowSpecialGuide(true)}
+              className="w-14 py-4 bg-red-500/10 text-red-400 border border-red-500/30 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg"
+            >
+              <HelpCircle size={20} />
+            </button>
           </div>
 
           {/* Special Task Options (Hidden by default) */}
-          <div id="special-task-options" className="hidden mt-4 pt-4 border-t border-red-500/20 space-y-2">
+          <div id="special-task-options" className="hidden mt-6 pt-6 border-t border-red-500/20 space-y-2">
             <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 text-center">Chọn nhiệm vụ</h4>
             {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
               <button
@@ -444,6 +597,122 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
           </div>
         </div>
       </div>
+
+      {/* Thông báo nổi khi chọn nhiệm vụ */}
+      <AnimatePresence>
+        {showTaskModal && selectedTask && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isGenerating && setShowTaskModal(false)}
+              className="absolute inset-0 full-blur"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass w-full max-w-[340px] relative z-10 rounded-[2rem] border-accent/30 overflow-hidden shadow-[0_0_50px_rgba(173,216,230,0.3)]"
+            >
+              {isGenerating ? (
+                <div className="p-8 text-center space-y-6">
+                  <div className="relative w-24 h-24 mx-auto">
+                    <motion.div
+                      animate={{ 
+                        rotate: 360,
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{ 
+                        rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                        scale: { duration: 1, repeat: Infinity }
+                      }}
+                      className="absolute inset-0 rounded-full border-4 border-t-accent border-r-transparent border-b-accent/20 border-l-transparent"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Cat className="text-accent animal-running" size={40} />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-black text-white uppercase tracking-widest">ĐANG TẠO NHIỆM VỤ</h3>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                      Vui lòng đợi trong giây lát
+                      <span className="loading-dots ml-1">
+                        <span>.</span><span>.</span><span>.</span>
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="bg-accent/5 border border-accent/10 p-4 rounded-2xl">
+                    <p className="text-[9px] text-accent/60 font-bold uppercase leading-relaxed italic">
+                      "Hệ thống đang kết nối với máy chủ an toàn để lấy link nhiệm vụ cho bạn..."
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 space-y-5">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto bg-accent/20 rounded-full flex items-center justify-center mb-3">
+                      <Zap className="text-accent" size={24} />
+                    </div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-widest">XÁC NHẬN NHIỆM VỤ</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Nguồn nhiệm vụ</span>
+                      <span className="text-[10px] font-black text-accent uppercase">{selectedTask}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Số lượt làm</span>
+                      <span className="text-[10px] font-black text-white uppercase">{taskCounts[selectedTask || ""] || 0} / {selectedTask ? TASK_DATA[selectedTask]?.limit : 1} (Hàng ngày)</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Phần thưởng</span>
+                      <span className="text-[10px] font-black text-yellow-500 uppercase">{reward} XU</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Thời gian tạo</span>
+                      <span className="text-[10px] font-black text-white uppercase">{taskCreationTime}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2 text-red-500">
+                      <AlertTriangle size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-wider">CẢNH BÁO QUAN TRỌNG</span>
+                    </div>
+                    <p className="text-[9px] text-red-400 font-bold leading-relaxed uppercase">
+                      • CẤM SỬ DỤNG VPN / PROXY / 1.1.1.1<br/>
+                      • CẤM CHEAT VIEW / GIAN LẬN<br/>
+                      • PHÁT HIỆN GIAN LẬN SẼ KHÓA TÀI KHOẢN VĨNH VIỄN
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button 
+                      onClick={() => setShowTaskModal(false)}
+                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      HỦY BỎ
+                    </button>
+                    <button 
+                      onClick={confirmTask}
+                      className="flex-1 py-3 bg-accent text-bg rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(173,216,230,0.4)]"
+                    >
+                      BẮT ĐẦU
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* LED Running Effect */}
+              <div className="h-1.5 w-full led-bar" />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Hướng dẫn */}
       <AnimatePresence>
