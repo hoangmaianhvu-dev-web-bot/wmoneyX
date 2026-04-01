@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import CountdownTimer from './CountdownTimer';
 import { 
   ChevronLeft, 
   Link as LinkIcon, 
@@ -81,12 +82,28 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [expandedCategory, setExpandedCategory] = useState<'main' | 'special' | null>(null);
   const [taskCreationTime, setTaskCreationTime] = useState("");
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
+  const [specialTasks, setSpecialTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (userId) {
       fetchTaskCounts();
+      fetchSpecialTasks();
     }
   }, [userId]);
+
+  const fetchSpecialTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('special_task_submissions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setSpecialTasks(data || []);
+    } catch (err) {
+      console.error('Error fetching special tasks:', err);
+    }
+  };
 
   const fetchTaskCounts = async () => {
     try {
@@ -593,9 +610,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     HỦY BỎ
                   </button>
                 </div>
-              ) : (
+              ) : expandedCategory === 'special' ? (
                 <div className="space-y-2">
-                  {['REVIEW MAP', 'ĐÁNH GIÁ MAP', 'TẠO EMAIL'].map((task, idx) => (
+                  {['REVIEW MAP', 'REVIEW TRIP', 'REVIEW APP or TẢI APP'].map((task, idx) => (
                     <button
                       key={idx}
                       onClick={() => {
@@ -611,8 +628,70 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                       <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
                     </button>
                   ))}
+                  <button
+                    onClick={() => setExpandedCategory('history')}
+                    className="w-full py-3 px-4 glass border-accent/30 rounded-xl flex items-center justify-between hover:bg-accent/10 transition-all group/btn mt-4"
+                  >
+                    <span className="text-[10px] font-bold text-accent uppercase">XEM LỊCH SỬ NHIỆM VỤ</span>
+                    <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                  </button>
                 </div>
-              )}
+              ) : expandedCategory === 'history' ? (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-black uppercase text-black tracking-widest">Lịch sử nhiệm vụ đặc biệt</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[10px] min-w-[800px]">
+                      <thead className="bg-white/5 text-gray-500 uppercase font-black tracking-widest">
+                        <tr>
+                          <th className="p-4">Loại</th>
+                          <th className="p-4">Duyệt 1 (24h)</th>
+                          <th className="p-4">Duyệt 2 (10 ngày)</th>
+                          <th className="p-4">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {specialTasks.length > 0 ? specialTasks.map(task => (
+                          <tr key={task.id} className="hover:bg-white/5 transition">
+                            <td className="p-4">{task.task_type}</td>
+                            <td className="p-4">
+                              {task.status_1 === 'PENDING' ? (
+                                <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />
+                              ) : (
+                                <span className={`font-black uppercase ${task.status_1 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                  {task.status_1}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              {task.status_1 === 'APPROVED' && task.status_2 === 'PENDING' ? (
+                                <CountdownTimer startTime={task.approved_at_1} durationMs={10 * 24 * 60 * 60 * 1000} />
+                              ) : task.status_2 === 'PENDING' ? (
+                                <span className="text-gray-500 font-black uppercase">Chờ duyệt 1</span>
+                              ) : (
+                                <span className={`font-black uppercase ${task.status_2 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                  {task.status_2}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 rounded-md font-black text-[9px] uppercase ${
+                                task.total_status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
+                                task.total_status === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                              }`}>
+                                {task.total_status}
+                              </span>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={4} className="p-12 text-center text-gray-500 italic uppercase font-black tracking-widest">Chưa có lịch sử nhiệm vụ</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
             </motion.div>
           )}
         </AnimatePresence>

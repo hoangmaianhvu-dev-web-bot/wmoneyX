@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ChevronLeft, 
+  ChevronLeft,
   Users, 
   Clock, 
   TrendingUp, 
@@ -18,6 +18,7 @@ import {
   Trash2,
   Plus
 } from 'lucide-react';
+import CountdownTimer from './CountdownTimer';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
@@ -26,7 +27,7 @@ interface AdminPanelProps {
   onBack: () => void;
 }
 
-type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports' | 'proofs';
+type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports' | 'proofs' | 'special_tasks';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const { showNotification } = useNotification();
@@ -51,7 +52,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [notifTitle, setNotifTitle] = useState('');
   const [notifBody, setNotifBody] = useState('');
   const [notifHistory, setNotifHistory] = useState<any[]>([]);
-  const [reports, setReports] = useState<any[]>([]);
+  const [specialTasks, setSpecialTasks] = useState<any[]>([]);
 
   // Proof form
   const [proofTitle, setProofTitle] = useState('');
@@ -72,6 +73,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     if (activeTab === 'notify') fetchNotifHistory();
     if (activeTab === 'reports') fetchReports();
     if (activeTab === 'proofs') fetchProofs();
+    if (activeTab === 'special_tasks') fetchSpecialTasks();
   }, [activeTab]);
 
   const fetchProofs = async () => {
@@ -183,16 +185,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
-  const fetchNotifHistory = async () => {
+  const fetchSpecialTasks = async () => {
     try {
       const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
+        .from('special_task_submissions')
+        .select('*, profiles(username)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setNotifHistory(data || []);
+      setSpecialTasks(data || []);
     } catch (err) {
-      console.error('Error fetching notification history:', err);
+      console.error('Error fetching special tasks:', err);
     }
   };
 
@@ -459,13 +461,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
       {/* Tabs */}
       <div className="flex gap-6 border-b border-white/5 overflow-x-auto no-scrollbar">
-        {(['users', 'payouts', 'notify', 'proofs', 'settings', 'reports'] as AdminTab[]).map(tab => (
+        {(['users', 'payouts', 'notify', 'proofs', 'settings', 'reports', 'special_tasks'] as AdminTab[]).map(tab => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === tab ? 'text-accent' : 'text-gray-500 hover:text-white'}`}
           >
-            {tab === 'users' ? 'Thành Viên' : tab === 'payouts' ? 'Duyệt Rút' : tab === 'notify' ? 'Thông Báo' : tab === 'proofs' ? 'Thanh Toán' : tab === 'reports' ? 'Báo Lỗi' : 'Cài Đặt'}
+            {tab === 'users' ? 'Thành Viên' : tab === 'payouts' ? 'Duyệt Rút' : tab === 'notify' ? 'Thông Báo' : tab === 'proofs' ? 'Thanh Toán' : tab === 'reports' ? 'Báo Lỗi' : tab === 'special_tasks' ? 'Duyệt NV Đặc Biệt' : 'Cài Đặt'}
             {activeTab === tab && (
               <motion.div layoutId="admin-tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent shadow-[0_0_10px_#add8e6]" />
             )}
@@ -768,6 +770,77 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
               ) : (
                 <p className="text-xs text-gray-500 text-center py-4">Chưa có báo cáo lỗi nào</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'special_tasks' && (
+          <div className="glass p-8 rounded-3xl">
+            <h3 className="text-sm font-black uppercase tracking-widest text-white mb-6">Duyệt nhiệm vụ đặc biệt</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[10px] min-w-[800px]">
+                <thead className="bg-white/5 text-gray-500 uppercase font-black tracking-widest">
+                  <tr>
+                    <th className="p-4">Người dùng</th>
+                    <th className="p-4">Loại nhiệm vụ</th>
+                    <th className="p-4">Link bài review</th>
+                    <th className="p-4">Phần thưởng</th>
+                    <th className="p-4">Duyệt 1 (24h)</th>
+                    <th className="p-4">Duyệt 2 (10 ngày)</th>
+                    <th className="p-4">Trạng thái</th>
+                    <th className="p-4 text-right">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {specialTasks.length > 0 ? specialTasks.map(task => (
+                    <tr key={task.id} className="hover:bg-white/5 transition">
+                      <td className="p-4">{task.profiles?.username || 'Unknown'}</td>
+                      <td className="p-4">{task.task_type}</td>
+                      <td className="p-4">
+                        <a href={task.review_link} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Xem bài</a>
+                      </td>
+                      <td className="p-4 text-accent font-black">+{task.reward_amount} XU</td>
+                      <td className="p-4">
+                        {task.status_1 === 'PENDING' ? (
+                          <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />
+                        ) : (
+                          <span className={`font-black uppercase ${task.status_1 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {task.status_1}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {task.status_1 === 'APPROVED' && task.status_2 === 'PENDING' ? (
+                          <CountdownTimer startTime={task.approved_at_1} durationMs={10 * 24 * 60 * 60 * 1000} />
+                        ) : task.status_2 === 'PENDING' ? (
+                          <span className="text-gray-500 font-black uppercase">Chờ duyệt 1</span>
+                        ) : (
+                          <span className={`font-black uppercase ${task.status_2 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {task.status_2}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-md font-black text-[9px] uppercase ${
+                          task.total_status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
+                          task.total_status === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                        }`}>
+                          {task.total_status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        {task.total_status === 'PENDING' && (
+                          <button className="text-accent hover:text-white font-black uppercase">Duyệt</button>
+                        )}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-gray-500 italic uppercase font-black tracking-widest">Chưa có nhiệm vụ nào</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
