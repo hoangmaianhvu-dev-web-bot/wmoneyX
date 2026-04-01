@@ -62,7 +62,7 @@ const TASK_DATA: Record<string, { reward: number, limit: number }> = {
   "XLINK": { reward: 50, limit: 2 },
   "4MMO": { reward: 100, limit: 2 },
   "🔥 NHAPMA": { reward: 100, limit: 3 },
-  "🔥 UPTOLINK SET3": { reward: 100, limit: 100 },
+  "🔥 UPTOLINK SET3": { reward: 200, limit: 100 },
   "UPTOLINK SET2": { reward: 150, limit: 100 },
 };
 
