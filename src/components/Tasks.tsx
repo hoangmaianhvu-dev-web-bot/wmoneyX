@@ -24,7 +24,8 @@ interface TasksProps {
 }
 
 const CONFIG = {
-  BLOG_URL: import.meta.env.VITE_BLOG_URL || "https://wmoneyx.blogspot.com/",
+  // Gán thẳng luôn, bỏ qua check biến môi trường cho chắc chắn 100%
+  BLOG_URL: "https://wmoneyx.blogspot.com/", 
   REWARD: 200,
   SPECIAL_REWARD: 1000
 };
@@ -34,30 +35,31 @@ const TASK_APIS: Record<string, string> = {
   "🔥 LINK4M": "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=",
   "🔥 LINKNGONIO": "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=",
   "🔥 LINKTOT": "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
+  "TIMMAP": "https://linktot.net/api_timmap.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
   "TRAFICTOT": "https://services.traffictot.com/api/v1/shorten?api_key=3066e5a6df247cd2cf73b122e518a29e061e2823c969cefa75e05252513e6363&url=",
   "🔥 TRAFFIC1M": "https://traffic1m.net/apidevelop?api=dfe44a5e9704a90f5932d3f2bd924902&url=",
   "🔥 UPTOLINK SET3": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
   "UPTOLINK SET2": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
-  "🔥 LINKNGONME": "https://linkngon.me/api?api=FwrA3chMbKkJ3s2UBA7I6XRMeuhUx8GjK8zlNUiCvDn0q4&url=",
   "🔥 TRAFFIC68": "https://traffic68.com/api/quicklink/api?api=tf68_c42992fb620964a590a36f35a0412f70bab3236f1e0aeb08&url=",
   "🔥 NHAPMA": "https://service.nhapma.com/api?token=4e715a3b-d40e-4712-91a9-9a7af0564749&url=",
   "🔥 TAPLAYMA": "https://api.taplayma.com/api?token=9015c633-5cbb-42c0-a97a-5d6750d2b291&url=",
   "4MMO": "https://4mmo.net/api?api=f043a9bcb47e1fe0be2d73825a1a8975a62f60d5&url=",
   "XLINK": "https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=",
   "LINKTOP": "https://linktop.run/api?api=kDk3dqyoTbFP29S4wNmAbwVuDg5RBS0HQ8M9V8BgfwF8IH&url=",
+  "LINKNGONCOM": "https://linkngon.com/api?api=lqbSkVWzCCIcWZWyt52j2DC9tBu53SEr&url=",
 };
 
 const TASK_DATA: Record<string, { reward: number, limit: number }> = {
   "🔥 LINK4M": { reward: 100, limit: 2 },
   "🔥 TRAFFIC1M": { reward: 300, limit: 3 },
   "🔥 TRAFFIC68": { reward: 200, limit: 2 },
-  "YEUMONEY": { reward: 0, limit: 0 },
   "TRAFICTOT": { reward: 100, limit: 3 },
   "🔥 LINKTOT": { reward: 100, limit: 1 },
-  "🔥 LINKNGONME": { reward: 200, limit: 2 },
   "🔥 LINKNGONIO": { reward: 200, limit: 2 },
   "🔥 BBMKTS": { reward: 200, limit: 1 },
+  "TIMMAP": { reward: 100, limit: 2 },
   "LINKTOP": { reward: 100, limit: 2 },
+  "LINKNGONCOM": { reward: 200, limit: 2 },
   "🔥 TAPLAYMA": { reward: 150, limit: 3 },
   "XLINK": { reward: 50, limit: 2 },
   "4MMO": { reward: 100, limit: 2 },
@@ -511,15 +513,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
           <div className="flex gap-2">
             <button 
               onClick={() => setExpandedCategory('special')}
-              className="flex-1 py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)]"
+              className="w-full py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)]"
             >
-              BẮT ĐẦU NGAY
-            </button>
-            <button 
-              onClick={() => setShowSpecialGuide(true)}
-              className="w-14 py-4 bg-fuchsia-100 text-accent border border-fuchsia-200 rounded-full flex items-center justify-center hover:bg-accent hover:text-white transition-all shadow-lg"
-            >
-              <HelpCircle size={20} />
+              CHỌN NHIỆM VỤ {taskCounts['special'] || 0} / {Object.keys(TASK_DATA).length}
             </button>
           </div>
         </div>
