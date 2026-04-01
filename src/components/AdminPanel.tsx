@@ -53,6 +53,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [notifBody, setNotifBody] = useState('');
   const [notifHistory, setNotifHistory] = useState<any[]>([]);
   const [specialTasks, setSpecialTasks] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
 
   // Proof form
   const [proofTitle, setProofTitle] = useState('');
@@ -172,6 +173,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
+  const fetchNotifHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setNotifHistory(data || []);
+    } catch (err) {
+      console.error('Error fetching notification history:', err);
+    }
+  };
+
   const fetchReports = async () => {
     try {
       const { data, error } = await supabase
@@ -192,6 +206,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         .select('*, profiles(username)')
         .order('created_at', { ascending: false });
       if (error) throw error;
+      console.log('Fetched special tasks:', data);
       setSpecialTasks(data || []);
     } catch (err) {
       console.error('Error fetching special tasks:', err);
@@ -277,6 +292,70 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       console.error('Error fetching admin data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSpecialTaskApproval = async (task: any, stage: number, action: 'APPROVED' | 'REJECTED') => {
+    const actionText = action === 'APPROVED' ? 'DUYỆT' : 'TỪ CHỐI';
+    const confirmMessage = `Bạn có chắc chắn muốn ${actionText} nhiệm vụ này ở LẦN ${stage}?`;
+    
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      let updateData: any = {};
+      let notificationMessage = '';
+      let rewardAmount = 0;
+
+      if (stage === 1) {
+        updateData = {
+          status_1: action,
+          approved_at_1: action === 'APPROVED' ? new Date().toISOString() : null,
+          total_status: action === 'REJECTED' ? 'REJECTED' : 'PENDING'
+        };
+        notificationMessage = action === 'APPROVED' ? 'Duyệt lần 1 thành công!' : 'Nhiệm vụ bị từ chối ở lần 1.';
+      } else {
+        updateData = {
+          status_2: action,
+          total_status: action === 'APPROVED' ? 'COMPLETED' : 'REJECTED'
+        };
+        notificationMessage = action === 'APPROVED' ? 'Duyệt lần 2 thành công! Đã cộng thưởng.' : 'Nhiệm vụ bị từ chối ở lần 2.';
+        if (action === 'APPROVED') rewardAmount = task.reward_amount;
+      }
+
+      const { error } = await supabase
+        .from('special_task_submissions')
+        .update(updateData)
+        .eq('id', task.id);
+      if (error) throw error;
+
+      if (rewardAmount > 0) {
+        // Add reward to user balance
+        const { data: profile } = await supabase.from('profiles').select('balance').eq('id', task.user_id).single();
+        if (profile) {
+          await supabase.from('profiles').update({ balance: profile.balance + rewardAmount }).eq('id', task.user_id);
+          await supabase.from('transactions').insert([{
+            user_id: task.user_id,
+            type: 'TASK',
+            amount: rewardAmount,
+            description: 'Thưởng nhiệm vụ đặc biệt',
+            status: 'COMPLETED'
+          }]);
+        }
+      }
+
+      // Send notification
+      await supabase.from('notifications').insert([{
+        user_id: task.user_id,
+        title: 'Thông báo nhiệm vụ',
+        body: notificationMessage,
+        created_at: new Date().toISOString()
+      }]);
+
+      showNotification({ title: "Thành công", message: notificationMessage, type: "success" });
+      fetchSpecialTasks();
+    } catch (err) {
+      console.error('Error approving task:', err);
+      showNotification({ title: "Lỗi", message: "Không thể xử lý yêu cầu.", type: "error" });
     }
   };
 
@@ -801,37 +880,76 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                       </td>
                       <td className="p-4 text-accent font-black">+{task.reward_amount} XU</td>
                       <td className="p-4">
-                        {task.status_1 === 'PENDING' ? (
+                        {task.status_1?.toUpperCase() === 'PENDING' ? (
                           <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />
                         ) : (
-                          <span className={`font-black uppercase ${task.status_1 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                          <span className={`font-black uppercase ${task.status_1?.toUpperCase() === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
                             {task.status_1}
                           </span>
                         )}
                       </td>
                       <td className="p-4">
-                        {task.status_1 === 'APPROVED' && task.status_2 === 'PENDING' ? (
+                        {task.status_1?.toUpperCase() === 'APPROVED' && task.status_2?.toUpperCase() === 'PENDING' ? (
                           <CountdownTimer startTime={task.approved_at_1} durationMs={10 * 24 * 60 * 60 * 1000} />
-                        ) : task.status_2 === 'PENDING' ? (
+                        ) : task.status_2?.toUpperCase() === 'PENDING' ? (
                           <span className="text-gray-500 font-black uppercase">Chờ duyệt 1</span>
                         ) : (
-                          <span className={`font-black uppercase ${task.status_2 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                          <span className={`font-black uppercase ${task.status_2?.toUpperCase() === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
                             {task.status_2}
                           </span>
                         )}
                       </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-md font-black text-[9px] uppercase ${
-                          task.total_status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
-                          task.total_status === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                          task.total_status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
+                          task.total_status?.toUpperCase() === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
                         }`}>
                           {task.total_status}
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        {task.total_status === 'PENDING' && (
-                          <button className="text-accent hover:text-white font-black uppercase">Duyệt</button>
-                        )}
+                        <div className="flex justify-end gap-3">
+                          {(!task.status_1 || task.status_1.toUpperCase() === 'PENDING') && (
+                            <>
+                              <button 
+                                onClick={() => handleSpecialTaskApproval(task, 1, 'APPROVED')} 
+                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative"
+                                title="Duyệt lần 1"
+                              >
+                                <Check size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Duyệt 1</span>
+                              </button>
+                              <button 
+                                onClick={() => handleSpecialTaskApproval(task, 1, 'REJECTED')} 
+                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative"
+                                title="Từ chối lần 1"
+                              >
+                                <X size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Hủy 1</span>
+                              </button>
+                            </>
+                          )}
+                          {(task.status_1?.toUpperCase() === 'APPROVED' && (!task.status_2 || task.status_2.toUpperCase() === 'PENDING')) && (
+                            <>
+                              <button 
+                                onClick={() => handleSpecialTaskApproval(task, 2, 'APPROVED')} 
+                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative"
+                                title="Duyệt lần 2"
+                              >
+                                <Check size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Duyệt 2</span>
+                              </button>
+                              <button 
+                                onClick={() => handleSpecialTaskApproval(task, 2, 'REJECTED')} 
+                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative"
+                                title="Từ chối lần 2"
+                              >
+                                <X size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Hủy 2</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )) : (

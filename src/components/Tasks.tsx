@@ -83,6 +83,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [taskCreationTime, setTaskCreationTime] = useState("");
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [specialTasks, setSpecialTasks] = useState<any[]>([]);
+  const [reviewLink, setReviewLink] = useState("");
+  const [taskType, setTaskType] = useState("Khác");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -102,6 +105,37 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       setSpecialTasks(data || []);
     } catch (err) {
       console.error('Error fetching special tasks:', err);
+    }
+  };
+
+  const handleSpecialTaskSubmission = async () => {
+    if (!reviewLink.trim()) {
+      showNotification({ title: "Lỗi", message: "Vui lòng nhập link bài review!", type: "error" });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('special_task_submissions')
+        .insert([{
+          user_id: userId,
+          task_type: taskType,
+          review_link: reviewLink,
+          reward_amount: 1000, // Default reward for special tasks
+          status_1: 'PENDING',
+          status_2: 'PENDING',
+          total_status: 'PENDING'
+        }]);
+      if (error) throw error;
+      showNotification({ title: "Thành công", message: "Đã gửi bài review. Vui lòng chờ duyệt!", type: "success" });
+      setReviewLink("");
+      setTaskType("Khác");
+      fetchSpecialTasks();
+    } catch (err) {
+      console.error('Error submitting special task:', err);
+      showNotification({ title: "Lỗi", message: "Không thể gửi bài review.", type: "error" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -611,23 +645,32 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   </button>
                 </div>
               ) : expandedCategory === 'special' ? (
-                <div className="space-y-2">
-                  {['REVIEW MAP', 'REVIEW TRIP', 'REVIEW APP or TẢI APP'].map((task, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        showNotification({
-                          title: "HỆ THỐNG",
-                          message: "Nhiệm vụ vẫn đang update, vui lòng quay lại sau!",
-                          type: "warning"
-                        });
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Link bài review</label>
+                    <input 
+                      type="text" 
+                      placeholder="Dán link tại đây..." 
+                      value={reviewLink}
+                      className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white"
+                      onChange={(e) => {
+                        const link = e.target.value;
+                        let type = 'Khác';
+                        if (link.includes('maps.app.goo.gl')) type = 'Review Map';
+                        else if (link.includes('tripadvisor.com.vn')) type = 'Review Trip';
+                        else if (link.includes('play.google.com')) type = 'Review App/Tải App';
+                        setReviewLink(link);
+                        setTaskType(type);
                       }}
-                      className="w-full py-3 px-4 glass border-fuchsia-100 rounded-xl flex items-center justify-between hover:bg-fuchsia-50 transition-all group/btn"
-                    >
-                      <span className="text-[10px] font-bold text-violet-900 uppercase">{task}</span>
-                      <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
-                    </button>
-                  ))}
+                    />
+                  </div>
+                  <button
+                    className="w-full py-3 bg-accent rounded-xl text-white font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
+                    disabled={isSubmitting}
+                    onClick={handleSpecialTaskSubmission}
+                  >
+                    {isSubmitting ? 'ĐANG GỬI...' : 'Gửi bài'}
+                  </button>
                   <button
                     onClick={() => setExpandedCategory('history')}
                     className="w-full py-3 px-4 glass border-accent/30 rounded-xl flex items-center justify-between hover:bg-accent/10 transition-all group/btn mt-4"
@@ -654,29 +697,29 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                           <tr key={task.id} className="hover:bg-white/5 transition">
                             <td className="p-4">{task.task_type}</td>
                             <td className="p-4">
-                              {task.status_1 === 'PENDING' ? (
+                              {task.status_1?.toUpperCase() === 'PENDING' ? (
                                 <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />
                               ) : (
-                                <span className={`font-black uppercase ${task.status_1 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                <span className={`font-black uppercase ${task.status_1?.toUpperCase() === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
                                   {task.status_1}
                                 </span>
                               )}
                             </td>
                             <td className="p-4">
-                              {task.status_1 === 'APPROVED' && task.status_2 === 'PENDING' ? (
+                              {task.status_1?.toUpperCase() === 'APPROVED' && task.status_2?.toUpperCase() === 'PENDING' ? (
                                 <CountdownTimer startTime={task.approved_at_1} durationMs={10 * 24 * 60 * 60 * 1000} />
-                              ) : task.status_2 === 'PENDING' ? (
+                              ) : task.status_2?.toUpperCase() === 'PENDING' ? (
                                 <span className="text-gray-500 font-black uppercase">Chờ duyệt 1</span>
                               ) : (
-                                <span className={`font-black uppercase ${task.status_2 === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                <span className={`font-black uppercase ${task.status_2?.toUpperCase() === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}`}>
                                   {task.status_2}
                                 </span>
                               )}
                             </td>
                             <td className="p-4">
                               <span className={`px-2 py-1 rounded-md font-black text-[9px] uppercase ${
-                                task.total_status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
-                                task.total_status === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                                task.total_status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' : 
+                                task.total_status?.toUpperCase() === 'REJECTED' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
                               }`}>
                                 {task.total_status}
                               </span>
