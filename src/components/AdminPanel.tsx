@@ -68,6 +68,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [showQR, setShowQR] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    task: any;
+    stage: number;
+    action: 'APPROVED' | 'REJECTED';
+    actionText: string;
+  }>({
+    show: false,
+    task: null,
+    stage: 0,
+    action: 'APPROVED',
+    actionText: ''
+  });
 
   useEffect(() => {
     fetchData();
@@ -295,11 +308,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
-  const handleSpecialTaskApproval = async (task: any, stage: number, action: 'APPROVED' | 'REJECTED') => {
+  const handleSpecialTaskApproval = (task: any, stage: number, action: 'APPROVED' | 'REJECTED') => {
     const actionText = action === 'APPROVED' ? 'DUYỆT' : 'TỪ CHỐI';
-    const confirmMessage = `Bạn có chắc chắn muốn ${actionText} nhiệm vụ này ở LẦN ${stage}?`;
-    
-    if (!window.confirm(confirmMessage)) return;
+    setConfirmModal({
+      show: true,
+      task,
+      stage,
+      action,
+      actionText
+    });
+  };
+
+  const confirmSpecialTaskAction = async () => {
+    const { task, stage, action } = confirmModal;
+    if (!task) return;
 
     try {
       let updateData: any = {};
@@ -319,7 +341,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           total_status: action === 'APPROVED' ? 'COMPLETED' : 'REJECTED'
         };
         notificationMessage = action === 'APPROVED' ? 'Duyệt lần 2 thành công! Đã cộng thưởng.' : 'Nhiệm vụ bị từ chối ở lần 2.';
-        if (action === 'APPROVED') rewardAmount = task.reward_amount;
+        if (action === 'APPROVED') rewardAmount = task.reward_amount || 1000;
       }
 
       const { error } = await supabase
@@ -348,10 +370,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         user_id: task.user_id,
         title: 'Thông báo nhiệm vụ',
         body: notificationMessage,
+        type: 'SYSTEM',
         created_at: new Date().toISOString()
       }]);
 
       showNotification({ title: "Thành công", message: notificationMessage, type: "success" });
+      setConfirmModal({ ...confirmModal, show: false });
       fetchSpecialTasks();
     } catch (err) {
       console.error('Error approving task:', err);
@@ -909,42 +933,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-3">
-                          {(!task.status_1 || task.status_1.toUpperCase() === 'PENDING') && (
+                          {(!task.status_1 || task.status_1?.toUpperCase() === 'PENDING') && (
                             <>
                               <button 
                                 onClick={() => handleSpecialTaskApproval(task, 1, 'APPROVED')} 
-                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative"
-                                title="Duyệt lần 1"
+                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative font-black"
+                                title="Duyệt lần 1 (Y)"
                               >
-                                <Check size={16} />
+                                Y
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Duyệt 1</span>
                               </button>
                               <button 
                                 onClick={() => handleSpecialTaskApproval(task, 1, 'REJECTED')} 
-                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative"
-                                title="Từ chối lần 1"
+                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative font-black"
+                                title="Từ chối lần 1 (X)"
                               >
-                                <X size={16} />
+                                X
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Hủy 1</span>
                               </button>
                             </>
                           )}
-                          {(task.status_1?.toUpperCase() === 'APPROVED' && (!task.status_2 || task.status_2.toUpperCase() === 'PENDING')) && (
+                          {(task.status_1?.toUpperCase() === 'APPROVED' && (!task.status_2 || task.status_2?.toUpperCase() === 'PENDING')) && (
                             <>
                               <button 
                                 onClick={() => handleSpecialTaskApproval(task, 2, 'APPROVED')} 
-                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative"
-                                title="Duyệt lần 2"
+                                className="w-8 h-8 flex items-center justify-center bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30 transition-all group relative font-black"
+                                title="Duyệt lần 2 (Y)"
                               >
-                                <Check size={16} />
+                                Y
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Duyệt 2</span>
                               </button>
                               <button 
                                 onClick={() => handleSpecialTaskApproval(task, 2, 'REJECTED')} 
-                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative"
-                                title="Từ chối lần 2"
+                                className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-all group relative font-black"
+                                title="Từ chối lần 2 (X)"
                               >
-                                <X size={16} />
+                                X
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Hủy 2</span>
                               </button>
                             </>
@@ -1149,6 +1173,50 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                   className="py-4 btn-primary rounded-2xl text-[10px] font-black uppercase tracking-widest"
                 >
                   Đã duyệt
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        {/* Confirmation Modal */}
+        {confirmModal.show && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass p-8 w-full max-w-sm text-center space-y-6 relative z-10 rounded-[40px] border-accent/20"
+            >
+              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${confirmModal.action === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>
+                {confirmModal.action === 'APPROVED' ? <Check size={32} /> : <X size={32} />}
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-black uppercase text-white tracking-widest">Xác nhận hành động</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase leading-relaxed">
+                  Bạn có chắc chắn muốn <span className={confirmModal.action === 'APPROVED' ? 'text-emerald-500' : 'text-red-500'}>{confirmModal.actionText}</span> nhiệm vụ này ở <span className="text-accent">LẦN {confirmModal.stage}</span>?
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                  className="py-4 glass rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400"
+                >
+                  Hủy
+                </button>
+                <button 
+                  onClick={confirmSpecialTaskAction}
+                  className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-black ${confirmModal.action === 'APPROVED' ? 'bg-emerald-500' : 'bg-red-500'}`}
+                >
+                  Xác nhận
                 </button>
               </div>
             </motion.div>

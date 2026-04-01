@@ -9,7 +9,14 @@ import {
   ExternalLink,
   HelpCircle,
   Zap,
-  Cat
+  Cat,
+  MapPin,
+  Globe,
+  Download,
+  AlertTriangle as AlertTriangleIcon,
+  Smartphone,
+  Plane,
+  Zap as ZapIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
@@ -86,6 +93,22 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [reviewLink, setReviewLink] = useState("");
   const [taskType, setTaskType] = useState("Khác");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSpecialTask, setSelectedSpecialTask] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('vi-VN', { hour12: false }));
+  const [isExecutingApi, setIsExecutingApi] = useState(false);
+
+  const SPECIAL_TASKS_LIST = [
+    { id: 'Review Map', name: 'Review Map', type: 'map', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50', guide: 'Truy cập Google Maps, tìm địa điểm yêu cầu và để lại đánh giá 5 sao kèm hình ảnh.' },
+    { id: 'Review Trip', name: 'Review Trip', type: 'trip', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-50', guide: 'Truy cập TripAdvisor, tìm địa điểm và để lại đánh giá chi tiết kèm hình ảnh.' },
+    { id: 'Review App/Tải App', name: 'Review App/Tải App', type: 'app', icon: Download, color: 'text-violet-500', bg: 'bg-violet-50', guide: 'Tải ứng dụng từ Google Play/App Store, sử dụng và để lại đánh giá 5 sao.' },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('vi-VN', { hour12: false }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -105,6 +128,75 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       setSpecialTasks(data || []);
     } catch (err) {
       console.error('Error fetching special tasks:', err);
+    }
+  };
+
+  const executeSpecialTaskApi = async (type: string) => {
+    const API_URL_GOC = "https://linktot.net/api_rv.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=https://xacminh.github.io/wmoneyx/";
+    
+    // 1. Kiểm tra thiết bị nếu là APP
+    if (type === 'app') {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (!isMobile) {
+        showNotification({ 
+          title: "Lỗi thiết bị", 
+          message: "Nhiệm vụ APP chỉ hoạt động trên điện thoại. Không hỗ trợ máy tính!", 
+          type: "error" 
+        });
+        return;
+      }
+    }
+
+    setIsExecutingApi(true);
+
+    try {
+      // 2. Gọi API gốc
+      const response = await fetch(API_URL_GOC);
+      const rawResponse = await response.text(); 
+
+      let linkPath = "";
+      if (rawResponse.includes("window.location.href")) {
+        const match = rawResponse.match(/window\.location\.href\s*=\s*["']([^"']+)["']/);
+        linkPath = match ? match[1] : "";
+      } else {
+        linkPath = rawResponse.trim();
+      }
+
+      if (!linkPath || !linkPath.includes('.rv')) {
+        throw new Error("Không phản hồi link .rv hợp lệ");
+      }
+
+      // 3. Đổi đuôi dựa trên nhiệm vụ
+      let finalLink = linkPath;
+      if (type === "trip") {
+        finalLink = linkPath.replace(".rv", ".tr");
+      } else if (type === "app") {
+        finalLink = linkPath.replace(".rv", ".ap");
+      }
+      // Nếu là map thì giữ nguyên .rv, không cần xử lý thêm
+
+      // Nối domain nếu là đường dẫn tương đối
+      if (finalLink.startsWith("/")) {
+        finalLink = "https://linktot.net" + finalLink;
+      }
+
+      // 4. Mở trang nhiệm vụ ở tab mới
+      window.open(finalLink, "_blank");
+      
+      // Đóng modal chi tiết để user quay lại màn hình chính
+      setSelectedSpecialTask(null);
+      setExpandedCategory(null);
+      
+      showNotification({ 
+        title: "Hệ thống", 
+        message: "Nhiệm vụ đã được mở ở tab mới. Vui lòng hoàn thành và nộp bằng chứng tại trang đích!", 
+        type: "success" 
+      });
+
+    } catch (error: any) {
+      showNotification({ title: "Lỗi hệ thống", message: error.message, type: "error" });
+    } finally {
+      setIsExecutingApi(false);
     }
   };
 
@@ -646,38 +738,120 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                 </div>
               ) : expandedCategory === 'special' ? (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Link bài review</label>
-                    <input 
-                      type="text" 
-                      placeholder="Dán link tại đây..." 
-                      value={reviewLink}
-                      className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white"
-                      onChange={(e) => {
-                        const link = e.target.value;
-                        let type = 'Khác';
-                        if (link.includes('maps.app.goo.gl')) type = 'Review Map';
-                        else if (link.includes('tripadvisor.com.vn')) type = 'Review Trip';
-                        else if (link.includes('play.google.com')) type = 'Review App/Tải App';
-                        setReviewLink(link);
-                        setTaskType(type);
-                      }}
-                    />
-                  </div>
-                  <button
-                    className="w-full py-3 bg-accent rounded-xl text-white font-black uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
-                    disabled={isSubmitting}
-                    onClick={handleSpecialTaskSubmission}
-                  >
-                    {isSubmitting ? 'ĐANG GỬI...' : 'Gửi bài'}
-                  </button>
-                  <button
-                    onClick={() => setExpandedCategory('history')}
-                    className="w-full py-3 px-4 glass border-accent/30 rounded-xl flex items-center justify-between hover:bg-accent/10 transition-all group/btn mt-4"
-                  >
-                    <span className="text-[10px] font-bold text-accent uppercase">XEM LỊCH SỬ NHIỆM VỤ</span>
-                    <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
-                  </button>
+                  {!selectedSpecialTask ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {SPECIAL_TASKS_LIST.map((task) => (
+                        <button
+                          key={task.id}
+                          onClick={() => {
+                            setSelectedSpecialTask(task.id);
+                            setTaskType(task.id);
+                          }}
+                          className="w-full p-4 glass border-white/10 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-all group"
+                        >
+                          <div className={`w-12 h-12 rounded-xl ${task.bg} flex items-center justify-center shrink-0`}>
+                            <task.icon className={task.color} size={24} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <h4 className="text-xs font-black text-black uppercase">{task.name}</h4>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</p>
+                          </div>
+                          <ChevronLeft size={16} className="text-accent rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
+                        </button>
+                      ))}
+                      
+                      <button
+                        onClick={() => setExpandedCategory('history')}
+                        className="w-full py-3 px-4 glass border-accent/30 rounded-xl flex items-center justify-between hover:bg-accent/10 transition-all group/btn mt-4"
+                      >
+                        <span className="text-[10px] font-bold text-accent uppercase">XEM LỊCH SỬ NHIỆM VỤ</span>
+                        <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                      <div className="flex items-center justify-between mb-8">
+                        <button onClick={() => setSelectedSpecialTask(null)} className="text-2xl text-gray-800">
+                          <ChevronLeft size={24} />
+                        </button>
+                        <h2 className="text-xl font-black uppercase tracking-tighter text-center flex-1">Chi Tiết Nhiệm Vụ</h2>
+                        <div className="w-6"></div>
+                      </div>
+
+                      <div className="flex justify-center mb-10">
+                        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-purple-500 text-3xl">
+                          {React.createElement(SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask)?.icon || ZapIcon, { size: 32 })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 text-sm font-bold">
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Nguồn nhiệm vụ</span>
+                          <span className="text-purple-600 flex items-center">
+                            <ZapIcon className="text-orange-500 mr-1" size={14} fill="currentColor" /> 
+                            <span>{SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask)?.name.toUpperCase()}</span>
+                          </span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Số lượt làm</span>
+                          <span className="text-green-500">KHÔNG GIỚI HẠN</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Giới hạn thời gian</span>
+                          <span className="text-purple-600">1 LƯỢT / 1 GIỜ</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Phần thưởng</span>
+                          <span className="text-yellow-500">100 XU</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Thời gian tạo</span>
+                          <span className="text-red-600">{currentTime}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-red-50 border border-red-100 rounded-xl p-4 mt-8">
+                        <div className="flex items-start text-red-500 mb-2">
+                          <AlertTriangleIcon className="mt-1 mr-2 shrink-0" size={14} />
+                          <span className="font-black text-xs uppercase">Cảnh báo quan trọng</span>
+                        </div>
+                        <ul className="text-[10px] text-red-400 font-bold leading-relaxed space-y-1 ml-6 list-disc uppercase">
+                          <li>Sau 1 tiếng sẽ được làm tiếp</li>
+                          <li>Cấm sử dụng VPN / Proxy / 1.1.1.1</li>
+                          <li>Cấm Cheat View / Gian lận</li>
+                          <li>Phát hiện gian lận sẽ khóa tài khoản vĩnh viễn</li>
+                        </ul>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-8">
+                        <p className="text-[9px] text-blue-600 font-bold uppercase leading-relaxed text-center italic">
+                          Lưu ý: Sau khi nhấn "Bắt đầu", hệ thống sẽ chuyển bạn đến trang nhiệm vụ. 
+                          Vui lòng thực hiện theo hướng dẫn tại đó và nộp bằng chứng tại trang web đích để được ghi nhận.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 mt-8">
+                        <button 
+                          onClick={() => setSelectedSpecialTask(null)} 
+                          className="flex-1 font-black text-red-500 uppercase tracking-widest text-[10px]"
+                        >
+                          Hủy bỏ
+                        </button>
+                        <button 
+                          disabled={isExecutingApi}
+                          onClick={async () => {
+                            const task = SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask);
+                            if (task) {
+                              await executeSpecialTaskApi(task.type);
+                            }
+                          }}
+                          className="flex-[2] bg-purple-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg shadow-purple-200 flex items-center justify-center tracking-widest text-[10px] disabled:opacity-50"
+                        >
+                          {isExecutingApi ? 'ĐANG TẠO...' : 'Bắt đầu'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : expandedCategory === 'history' ? (
                 <div className="space-y-4">
