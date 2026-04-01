@@ -98,9 +98,9 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [isExecutingApi, setIsExecutingApi] = useState(false);
 
   const SPECIAL_TASKS_LIST = [
-    { id: 'Review Map', name: 'Review Map', type: 'map', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50', guide: 'Truy cập Google Maps, tìm địa điểm yêu cầu và để lại đánh giá 5 sao kèm hình ảnh.' },
-    { id: 'Review Trip', name: 'Review Trip', type: 'trip', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-50', guide: 'Truy cập TripAdvisor, tìm địa điểm và để lại đánh giá chi tiết kèm hình ảnh.' },
-    { id: 'Review App/Tải App', name: 'Review App/Tải App', type: 'app', icon: Download, color: 'text-violet-500', bg: 'bg-violet-50', guide: 'Tải ứng dụng từ Google Play/App Store, sử dụng và để lại đánh giá 5 sao.' },
+    { id: 'Review Map', name: 'Review Map', type: 'map', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50', reward: 1500, guide: 'Truy cập Google Maps, tìm địa điểm yêu cầu và để lại đánh giá 5 sao kèm hình ảnh.' },
+    { id: 'Review Trip', name: 'Review Trip', type: 'trip', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-50', reward: 3000, guide: 'Truy cập TripAdvisor, tìm địa điểm và để lại đánh giá chi tiết kèm hình ảnh.' },
+    { id: 'Review App/Tải App', name: 'Review App/Tải App', type: 'app', icon: Download, color: 'text-violet-500', bg: 'bg-violet-50', reward: 500, guide: 'Tải ứng dụng từ Google Play/App Store, sử dụng và để lại đánh giá 5 sao.' },
   ];
 
   useEffect(() => {
@@ -658,7 +658,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               onClick={() => setExpandedCategory('special')}
               className="w-full py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)]"
             >
-              CHỌN NHIỆM VỤ {taskCounts['special'] || 0} / {Object.keys(TASK_DATA).length}
+              CHỌN NHIỆM VỤ HIÊN CÓ 3 / {profile?.special_tasks_total || 0}
             </button>
           </div>
         </div>
@@ -802,7 +802,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         </div>
                         <div className="flex justify-between uppercase">
                           <span className="text-gray-500">Phần thưởng</span>
-                          <span className="text-yellow-500">100 XU</span>
+                          <span className="text-yellow-500">{SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask)?.reward} XU</span>
                         </div>
                         <div className="flex justify-between uppercase">
                           <span className="text-gray-500">Thời gian tạo</span>
@@ -817,7 +817,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         </div>
                         <ul className="text-[10px] text-red-400 font-bold leading-relaxed space-y-1 ml-6 list-disc uppercase">
                           <li>Sau 1 tiếng sẽ được làm tiếp</li>
-                          <li>Cấm sử dụng VPN / Proxy / 1.1.1.1</li>
                           <li>Cấm Cheat View / Gian lận</li>
                           <li>Phát hiện gian lận sẽ khóa tài khoản vĩnh viễn</li>
                         </ul>
@@ -849,6 +848,11 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         >
                           {isExecutingApi ? 'ĐANG TẠO...' : 'Bắt đầu'}
                         </button>
+                      </div>
+
+                      {/* Rainbow LED Bar */}
+                      <div className="h-1 w-full relative overflow-hidden rounded-full mt-auto">
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-purple-500 to-red-500 animate-rainbow-led" />
                       </div>
                     </div>
                   )}

@@ -5,6 +5,16 @@
   --color-bg: #fdf6ff; /* Soft lavender/white background */
   --color-accent: #d946ef; /* Vibrant fuchsia accent */
   --color-text: #4c1d95; /* Deep violet text */
+
+  @keyframes rainbow-led {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+}
+
+.animate-rainbow-led {
+  background-size: 200% 100%;
+  animation: rainbow-led 2s linear infinite;
 }
 
 body {
