@@ -45,7 +45,7 @@ export default function App() {
 
   // Global error handler for Supabase auth issues
   const handleAuthError = async (errorMsg: string) => {
-    if (!errorMsg) return;
+    if (!errorMsg || typeof errorMsg !== 'string') return;
     
     const lowerMsg = errorMsg.toLowerCase();
     // Cải thiện điều kiện kiểm tra lỗi
@@ -160,7 +160,7 @@ export default function App() {
 
         if (userError) {
           // If it's a refresh token error, handle it
-          if (userError.message.toLowerCase().includes('refresh token')) {
+          if (userError.message?.toLowerCase().includes('refresh token')) {
             handleAuthError(userError.message);
             return;
           }

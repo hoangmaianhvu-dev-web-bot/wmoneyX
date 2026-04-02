@@ -96,6 +96,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [selectedSpecialTask, setSelectedSpecialTask] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('vi-VN', { hour12: false }));
   const [isExecutingApi, setIsExecutingApi] = useState(false);
+  const [maintenanceTasks, setMaintenanceTasks] = useState<string[]>([]);
 
   const SPECIAL_TASKS_LIST = [
     { id: 'Review Map', name: 'Review Map', type: 'map', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50', reward: 1500, guide: 'Truy cập Google Maps, tìm địa điểm yêu cầu và để lại đánh giá 5 sao kèm hình ảnh.' },
@@ -114,8 +115,68 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     if (userId) {
       fetchTaskCounts();
       fetchSpecialTasks();
+      fetchMaintenanceTasks();
+
+      // Real-time subscription for special tasks
+      const specialTasksChannel = supabase
+        .channel(`special-tasks-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'special_task_submissions',
+            filter: `user_id=eq.${userId}`
+          },
+          () => {
+            fetchSpecialTasks();
+          }
+        )
+        .subscribe();
+
+      // Real-time subscription for maintenance tasks
+      const maintenanceChannel = supabase
+        .channel('maintenance-tasks')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'system_settings',
+            filter: 'key=eq.maintenance_tasks'
+          },
+          (payload: any) => {
+            if (payload.new && payload.new.value) {
+              setMaintenanceTasks(payload.new.value);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(specialTasksChannel);
+        supabase.removeChannel(maintenanceChannel);
+      };
     }
   }, [userId]);
+
+  const fetchMaintenanceTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'maintenance_tasks')
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') console.error('Error fetching maintenance tasks:', error);
+      } else if (data) {
+        setMaintenanceTasks(data.value || []);
+      }
+    } catch (err) {
+      console.error('Error in fetchMaintenanceTasks:', err);
+    }
+  };
 
   const fetchSpecialTasks = async () => {
     try {
@@ -180,12 +241,29 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         finalLink = "https://linktot.net" + finalLink;
       }
 
-      // 4. Mở trang nhiệm vụ ở tab mới
+      // 4. Tạo bản ghi nhiệm vụ tự động
+      const taskInfo = SPECIAL_TASKS_LIST.find(t => t.type === type);
+      const reward = taskInfo?.reward || 1000;
+
+      await supabase
+        .from('special_task_submissions')
+        .insert([{
+          user_id: userId,
+          task_type: taskInfo?.id || 'Khác',
+          review_link: 'NỘP TẠI TRANG ĐÍCH',
+          reward_amount: reward,
+          status_1: 'PENDING',
+          status_2: 'PENDING',
+          total_status: 'PENDING'
+        }]);
+
+      // 5. Mở trang nhiệm vụ ở tab mới
       window.open(finalLink, "_blank");
       
       // Đóng modal chi tiết để user quay lại màn hình chính
       setSelectedSpecialTask(null);
       setExpandedCategory(null);
+      fetchSpecialTasks(); // Refresh history
       
       showNotification({ 
         title: "Hệ thống", 
@@ -207,13 +285,16 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     }
     setIsSubmitting(true);
     try {
+      const taskInfo = SPECIAL_TASKS_LIST.find(t => t.id === taskType);
+      const reward = taskInfo?.reward || 1000;
+
       const { error } = await supabase
         .from('special_task_submissions')
         .insert([{
           user_id: userId,
           task_type: taskType,
-          review_link: reviewLink,
-          reward_amount: 1000, // Default reward for special tasks
+          review_link: reviewLink || 'SUBMITTED_EXTERNALLY',
+          reward_amount: reward,
           status_1: 'PENDING',
           status_2: 'PENDING',
           total_status: 'PENDING'
@@ -497,7 +578,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       const currentBalance = currentProfile?.balance || 0;
       const currentExp = currentProfile?.exp || 0;
-      const taskReward = isSpecialTask ? CONFIG.SPECIAL_REWARD : reward;
+      const taskReward = isSpecialTask ? CONFIG.SPECIAL_REWARD : (selectedTask ? TASK_DATA[selectedTask]?.reward : 0);
       const newBalance = currentBalance + taskReward;
       const newExp = currentExp + 10; // Award 10 EXP per task
       
@@ -684,22 +765,31 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               
               {expandedCategory === 'main' ? (
                 <div className="space-y-2">
-                  {Object.keys(TASK_DATA).map((taskName, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => startTask(taskName)}
-                      className="w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn"
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="text-[10px] font-bold text-black uppercase">{taskName}</span>
-                        <div className="flex gap-2 mt-1">
-                          <span className="text-[8px] font-bold text-slate-500 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
-                          <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
+                  {Object.keys(TASK_DATA).map((taskName, idx) => {
+                    const isMaintained = maintenanceTasks.includes(taskName);
+                    return (
+                      <button
+                        key={idx}
+                        disabled={isMaintained}
+                        onClick={() => startTask(taskName)}
+                        className={`w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn relative overflow-hidden ${isMaintained ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                      >
+                        {isMaintained && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                            <span className="text-[8px] font-black uppercase tracking-widest bg-red-500 text-white px-2 py-1 rounded-full">Bảo trì</span>
+                          </div>
+                        )}
+                        <div className="flex flex-col items-start">
+                          <span className="text-[10px] font-bold text-black uppercase">{taskName}</span>
+                          <div className="flex gap-2 mt-1">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
+                            <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
+                          </div>
                         </div>
-                      </div>
-                      <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
-                    </button>
-                  ))}
+                        <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                      </button>
+                    );
+                  })}
                 </div>
               ) : expandedCategory === 'verification' ? (
                 <div className="space-y-5">
@@ -740,25 +830,34 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                 <div className="space-y-4">
                   {!selectedSpecialTask ? (
                     <div className="grid grid-cols-1 gap-3">
-                      {SPECIAL_TASKS_LIST.map((task) => (
-                        <button
-                          key={task.id}
-                          onClick={() => {
-                            setSelectedSpecialTask(task.id);
-                            setTaskType(task.id);
-                          }}
-                          className="w-full p-4 glass border-white/10 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-all group"
-                        >
-                          <div className={`w-12 h-12 rounded-xl ${task.bg} flex items-center justify-center shrink-0`}>
-                            <task.icon className={task.color} size={24} />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h4 className="text-xs font-black text-black uppercase">{task.name}</h4>
-                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</p>
-                          </div>
-                          <ChevronLeft size={16} className="text-accent rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
-                        </button>
-                      ))}
+                      {SPECIAL_TASKS_LIST.map((task) => {
+                        const isMaintained = maintenanceTasks.includes(task.id);
+                        return (
+                          <button
+                            key={task.id}
+                            disabled={isMaintained}
+                            onClick={() => {
+                              setSelectedSpecialTask(task.id);
+                              setTaskType(task.id);
+                            }}
+                            className={`w-full p-4 glass border-white/10 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-all group relative overflow-hidden ${isMaintained ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                          >
+                            {isMaintained && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                                <span className="text-[8px] font-black uppercase tracking-widest bg-red-500 text-white px-2 py-1 rounded-full">Bảo trì</span>
+                              </div>
+                            )}
+                            <div className={`w-12 h-12 rounded-xl ${task.bg} flex items-center justify-center shrink-0`}>
+                              <task.icon className={task.color} size={24} />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <h4 className="text-xs font-black text-black uppercase">{task.name}</h4>
+                              <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</p>
+                            </div>
+                            <ChevronLeft size={16} className="text-accent rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
+                          </button>
+                        );
+                      })}
                       
                       <button
                         onClick={() => setExpandedCategory('history')}
@@ -865,6 +964,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                       <thead className="bg-white/5 text-gray-500 uppercase font-black tracking-widest">
                         <tr>
                           <th className="p-4">Loại</th>
+                          <th className="p-4">Phần thưởng</th>
                           <th className="p-4">Duyệt 1 (24h)</th>
                           <th className="p-4">Duyệt 2 (10 ngày)</th>
                           <th className="p-4">Trạng thái</th>
@@ -874,6 +974,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         {specialTasks.length > 0 ? specialTasks.map(task => (
                           <tr key={task.id} className="hover:bg-white/5 transition">
                             <td className="p-4">{task.task_type}</td>
+                            <td className="p-4 text-accent font-black">+{task.reward_amount?.toLocaleString()} XU</td>
                             <td className="p-4">
                               {task.status_1?.toUpperCase() === 'PENDING' ? (
                                 <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />

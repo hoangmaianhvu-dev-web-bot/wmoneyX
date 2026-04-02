@@ -35,6 +35,7 @@ import Settings from './Settings';
 import Withdraw from './Withdraw';
 import Tasks from './Tasks';
 import DailyRewards from './DailyRewards';
+import Leaderboard from './Leaderboard';
 import AdminPanel from './AdminPanel';
 import ModGame from './ModGame';
 import MusicToggle from './MusicToggle';
@@ -339,6 +340,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             referred_by: user.user_metadata?.referral_code || new URLSearchParams(window.location.search).get('ref') || null,
             referral_bonus_paid: false,
             referral_code: Math.floor(10000 + Math.random() * 90000).toString(),
+            special_tasks_total: 0,
             last_task_reset_date: new Date().toISOString().split('T')[0]
           };
           
@@ -460,6 +462,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
         <nav className="flex-1 space-y-2">
           <NavItem id="home" icon={Home} label="Trang Chủ" />
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
+          <NavItem id="ranking" icon={Trophy} label="Xếp Hạng" />
           <NavItem id="daily" icon={Gift} label="Thưởng Ngày" />
           <NavItem id="mods" icon={Gamepad2} label="Mod Game" />
           <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
@@ -838,6 +841,13 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             />
           )}
 
+          {activeTab === 'ranking' && (
+            <Leaderboard 
+              userId={user.id}
+              profile={profile}
+            />
+          )}
+
           {activeTab === 'mods' && (
             <ModGame isAdmin={profile?.is_admin || false} />
           )}
@@ -866,6 +876,10 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center gap-1 ${activeTab === 'tasks' ? 'text-accent' : 'text-slate-700'}`}>
           <CheckSquare size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Nhiệm Vụ</span>
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('ranking')} className={`flex flex-col items-center gap-1 ${activeTab === 'ranking' ? 'text-accent' : 'text-slate-700'}`}>
+          <Trophy size={16} />
+          <span className="text-[7px] font-black uppercase tracking-tighter">Xếp Hạng</span>
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('daily')} className={`flex flex-col items-center gap-1 ${activeTab === 'daily' ? 'text-accent' : 'text-slate-700'}`}>
           <Gift size={16} />

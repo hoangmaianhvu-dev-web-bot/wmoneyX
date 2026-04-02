@@ -172,8 +172,8 @@ const ModGame: React.FC<ModGameProps> = ({ isAdmin }) => {
   };
 
   const filteredMods = mods.filter(mod => {
-    const matchesSearch = mod.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         mod.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (mod.title || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || 
+                         (mod.description || "").toLowerCase().includes((searchQuery || "").toLowerCase());
     return matchesSearch;
   });
 
