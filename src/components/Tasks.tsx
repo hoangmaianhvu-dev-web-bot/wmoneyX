@@ -241,33 +241,16 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         finalLink = "https://linktot.net" + finalLink;
       }
 
-      // 4. Tạo bản ghi nhiệm vụ tự động
-      const taskInfo = SPECIAL_TASKS_LIST.find(t => t.type === type);
-      const reward = taskInfo?.reward || 1000;
-
-      await supabase
-        .from('special_task_submissions')
-        .insert([{
-          user_id: userId,
-          task_type: taskInfo?.id || 'Khác',
-          review_link: 'NỘP TẠI TRANG ĐÍCH',
-          reward_amount: reward,
-          status_1: 'PENDING',
-          status_2: 'PENDING',
-          total_status: 'PENDING'
-        }]);
-
-      // 5. Mở trang nhiệm vụ ở tab mới
+      // 4. Mở trang nhiệm vụ ở tab mới
       window.open(finalLink, "_blank");
       
       // Đóng modal chi tiết để user quay lại màn hình chính
       setSelectedSpecialTask(null);
       setExpandedCategory(null);
-      fetchSpecialTasks(); // Refresh history
       
       showNotification({ 
         title: "Hệ thống", 
-        message: "Nhiệm vụ đã được mở ở tab mới. Vui lòng hoàn thành và nộp bằng chứng tại trang đích!", 
+        message: "Nhiệm vụ đã được mở ở tab mới. Vui lòng hoàn thành theo hướng dẫn tại trang đích!", 
         type: "success" 
       });
 
@@ -275,40 +258,6 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       showNotification({ title: "Lỗi hệ thống", message: error.message, type: "error" });
     } finally {
       setIsExecutingApi(false);
-    }
-  };
-
-  const handleSpecialTaskSubmission = async () => {
-    if (!reviewLink.trim()) {
-      showNotification({ title: "Lỗi", message: "Vui lòng nhập link bài review!", type: "error" });
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const taskInfo = SPECIAL_TASKS_LIST.find(t => t.id === taskType);
-      const reward = taskInfo?.reward || 1000;
-
-      const { error } = await supabase
-        .from('special_task_submissions')
-        .insert([{
-          user_id: userId,
-          task_type: taskType,
-          review_link: reviewLink || 'SUBMITTED_EXTERNALLY',
-          reward_amount: reward,
-          status_1: 'PENDING',
-          status_2: 'PENDING',
-          total_status: 'PENDING'
-        }]);
-      if (error) throw error;
-      showNotification({ title: "Thành công", message: "Đã gửi bài review. Vui lòng chờ duyệt!", type: "success" });
-      setReviewLink("");
-      setTaskType("Khác");
-      fetchSpecialTasks();
-    } catch (err) {
-      console.error('Error submitting special task:', err);
-      showNotification({ title: "Lỗi", message: "Không thể gửi bài review.", type: "error" });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
