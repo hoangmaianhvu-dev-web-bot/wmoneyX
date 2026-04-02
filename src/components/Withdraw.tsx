@@ -25,7 +25,7 @@ interface WithdrawProps {
   onVerifySuccess: () => void;
 }
 
-type WithdrawMethod = 'bank' | 'e-wallet' | 'card';
+type WithdrawMethod = 'bank' | 'card';
 
 const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified, onBack, onUpdateBalance, onVerifySuccess }) => {
   const { showNotification } = useNotification();
@@ -35,7 +35,6 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
   const [stk, setStk] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
-  const [walletType, setWalletType] = useState<string>('momo');
   const [cardType, setCardType] = useState<string>('viettel');
   const [cardEmail, setCardEmail] = useState<string>(email);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,8 +101,6 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
       let details: any = {};
       if (method === 'bank') {
         details = { bank, stk, name };
-      } else if (method === 'e-wallet') {
-        details = { type: walletType, phone, name };
       } else if (method === 'card') {
         details = { type: cardType, cardEmail };
       }
@@ -226,20 +223,13 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
 
       <div className="space-y-6">
         {/* Tab chuyển đổi phương thức */}
-        <div className="grid grid-cols-3 gap-2 p-1 glass rounded-2xl border-slate-200 bg-slate-100">
+        <div className="grid grid-cols-2 gap-2 p-1 glass rounded-2xl border-slate-200 bg-slate-100">
           <button 
             onClick={() => setMethod('bank')}
             className={`py-3 rounded-xl flex flex-col items-center gap-1 transition ${method === 'bank' ? 'bg-accent text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <Landmark size={16} />
             <span className="text-[8px] font-black uppercase">Ngân Hàng</span>
-          </button>
-          <button 
-            onClick={() => setMethod('e-wallet')}
-            className={`py-3 rounded-xl flex flex-col items-center gap-1 transition ${method === 'e-wallet' ? 'bg-accent text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <Smartphone size={16} />
-            <span className="text-[8px] font-black uppercase">Ví MoMo/ZL</span>
           </button>
           <button 
             onClick={() => setMethod('card')}
@@ -316,54 +306,6 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
               <input 
                 type="text" 
                 placeholder="Tên chủ tài khoản (VIẾT HOA KHÔNG DẤU)" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-white border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900" 
-              />
-            </div>
-          )}
-
-          {/* Form Ví Điện Tử */}
-          {method === 'e-wallet' && (
-            <div className="space-y-4">
-              <div className="flex gap-4 mb-4">
-                <label className="flex-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="ewallet" 
-                    value="momo" 
-                    checked={walletType === 'momo'}
-                    onChange={(e) => setWalletType(e.target.value)}
-                    className="hidden peer" 
-                  />
-                  <div className="glass p-4 text-center peer-checked:border-accent peer-checked:bg-accent/5 transition rounded-2xl">
-                    <span className="text-[10px] font-black uppercase">MoMo</span>
-                  </div>
-                </label>
-                <label className="flex-1 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="ewallet" 
-                    value="zalopay" 
-                    checked={walletType === 'zalopay'}
-                    onChange={(e) => setWalletType(e.target.value)}
-                    className="hidden peer" 
-                  />
-                  <div className="glass p-4 text-center peer-checked:border-accent peer-checked:bg-accent/5 transition rounded-2xl">
-                    <span className="text-[10px] font-black uppercase">ZaloPay</span>
-                  </div>
-                </label>
-              </div>
-              <input 
-                type="text" 
-                placeholder="Số điện thoại ví" 
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-white border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900" 
-              />
-              <input 
-                type="text" 
-                placeholder="Tên chủ ví" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-white border border-slate-200 p-4 rounded-xl text-sm outline-none focus:border-accent/50 text-slate-900" 

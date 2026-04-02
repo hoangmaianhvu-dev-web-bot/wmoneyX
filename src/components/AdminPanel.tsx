@@ -23,7 +23,7 @@ import CountdownTimer from './CountdownTimer';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
-import PaymentQR from './PaymentQR';
+// import PaymentQR from './PaymentQR'; // Removed as MoMo/ZaloPay are removed
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -254,10 +254,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       }
 
       // Mark month as rewarded
-      await supabase.from('system_settings').insert([{
+      const { error: finalError } = await supabase.from('system_settings').insert([{
         key: `rewarded_month_${monthKey}`,
         value: { rewarded_at: new Date().toISOString(), top_users: top10 }
       }]);
+
+      if (finalError) {
+        if (finalError.code === '23505') {
+          showNotification({ title: "Thông báo", message: `Tháng ${monthKey} đã được trao thưởng trước đó.`, type: "info" });
+          return;
+        }
+        throw finalError;
+      }
 
       showNotification({ title: "Thành công", message: `Đã trao thưởng cho TOP 10 tháng ${monthKey}`, type: "success" });
     } catch (err) {
@@ -300,7 +308,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     try {
       const { error } = await supabase
         .from('system_settings')
-        .upsert({ key: 'maintenance_tasks', value: newMaintenanceTasks });
+        .upsert(
+          { key: 'maintenance_tasks', value: newMaintenanceTasks },
+          { onConflict: 'key' }
+        );
       
       if (error) throw error;
       
@@ -1629,26 +1640,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
               className="glass p-8 w-full max-w-sm text-center space-y-6 relative z-10 rounded-[40px] border-accent/20"
             >
               <h3 className="text-sm font-black uppercase text-accent tracking-widest">
-                {selectedPayout?.details?.type === 'momo' || selectedPayout?.details?.type === 'zalopay' ? 'Thanh toán Ví điện tử' : 'Thanh toán VietQR'}
+                Thanh toán VietQR
               </h3>
               
-              {selectedPayout?.details?.type === 'momo' || selectedPayout?.details?.type === 'zalopay' ? (
-                <div className="bg-white rounded-[2rem] overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                  <PaymentQR 
-                    userPhone={selectedPayout?.details?.phone || ''} 
-                    withdrawAmount={selectedPayout?.amount || 0} 
-                    orderId={selectedPayout?.id || ''} 
-                  />
-                </div>
-              ) : (
-                <div className="bg-white p-4 rounded-[2rem] inline-block mx-auto shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                  <img 
-                    src={getVietQRUrl(selectedPayout)} 
-                    alt="VietQR" 
-                    className="w-64 h-64"
-                  />
-                </div>
-              )}
+              <div className="bg-white p-4 rounded-[2rem] inline-block mx-auto shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                <img 
+                  src={getVietQRUrl(selectedPayout)} 
+                  alt="VietQR" 
+                  className="w-64 h-64"
+                />
+              </div>
 
               <div className="text-left space-y-3 text-[10px] bg-white/5 p-5 rounded-2xl border border-white/5">
                 <div className="flex justify-between">

@@ -18,7 +18,7 @@ CREATE POLICY "Allow admin write access" ON system_settings
         EXISTS (
             SELECT 1 FROM profiles
             WHERE profiles.id = auth.uid()
-            AND profiles.role = 'admin'
+            AND profiles.is_admin = true
         )
     );
 
