@@ -143,3 +143,47 @@ body::before {
   background-size: 200% 100%;
   animation: led-running 2s linear infinite;
 }
+
+@keyframes fadeInScale {
+  0% { opacity: 0; transform: scale(0.9) translateY(5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes flagWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.ip-badge {
+  background: #f3e8ff;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  animation: fadeInScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.ip-badge .fi {
+  width: 22px !important;
+  height: 16px !important;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.ip-badge:hover .fi {
+  animation: flagWave 0.5s ease-in-out infinite;
+}
+
+.ip-text {
+  color: #581c87;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+  font-family: 'Courier New', Courier, monospace;
+}

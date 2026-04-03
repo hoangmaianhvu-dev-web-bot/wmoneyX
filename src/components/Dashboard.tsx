@@ -31,17 +31,15 @@ import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
 import { EffectType, effectNames } from './EffectsManager';
 import Banner from './Banner';
-import Settings from './Settings';
 import Withdraw from './Withdraw';
 import Tasks from './Tasks';
 import DailyRewards from './DailyRewards';
 import Leaderboard from './Leaderboard';
 import AdminPanel from './AdminPanel';
-import ModGame from './ModGame';
-import MusicToggle from './MusicToggle';
-import BackgroundMusic from './BackgroundMusic';
-import RedEnvelopeWidget from './RedEnvelopeWidget';
+import Utilities from './Utilities';
+import NetworkIP from './NetworkIP';
 import { getLevelInfo } from '../utils/levelUtils';
+import { TASK_DATA } from './Tasks';
 
 interface DashboardProps {
   user: any;
@@ -94,7 +92,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'tasks' | 'ranking' | 'daily' | 'wallet' | 'utilities' | 'admin'>('home');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showVerifyReminder, setShowVerifyReminder] = useState(false);
   const [showVerifyRedDot, setShowVerifyRedDot] = useState(false);
@@ -432,6 +430,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
   );
 
   const levelInfo = profile ? getLevelInfo(profile.exp || 0) : null;
+  const totalTasksLimit = Object.values(TASK_DATA).reduce((sum, task) => sum + task.limit, 0);
 
   return (
     <div className="min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-white flex flex-col md:flex-row">
@@ -463,10 +462,9 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="home" icon={Home} label="Trang Chủ" />
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
           <NavItem id="ranking" icon={Trophy} label="Xếp Hạng" />
-          <NavItem id="daily" icon={Gift} label="Thưởng Ngày" />
-          <NavItem id="mods" icon={Gamepad2} label="Mod Game" />
+          <NavItem id="daily" icon={Gift} label="Thử Thách" />
           <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
-          <NavItem id="settings" icon={SettingsIcon} label="Cài Đặt" />
+          <NavItem id="utilities" icon={SettingsIcon} label="Tiện Ích" />
         </nav>
 
         <div className="pt-6 border-t border-fuchsia-200 mt-auto">
@@ -550,7 +548,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <MusicToggle isPlaying={isMusicPlaying} togglePlay={toggleMusic} />
+                  <NetworkIP />
                   <button 
                     onClick={() => setShowNotifications(true)}
                     className="w-9 h-9 glass flex items-center justify-center relative border-fuchsia-200 rounded-xl"
@@ -638,7 +636,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                         <Target size={40} />
                       </div>
                       <p className="text-[10px] text-blue-800 uppercase font-bold tracking-widest mb-2 relative z-10">Nhiệm vụ hôm nay</p>
-                      <h3 className="text-3xl font-black italic text-blue-700 uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / 666</h3>
+                      <h3 className="text-3xl font-black italic text-blue-700 uppercase tracking-tighter relative z-10">{profile?.tasks_today || 0} / {totalTasksLimit}</h3>
                     </motion.div>
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
@@ -769,8 +767,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             </>
           )}
 
-          {activeTab === 'settings' && (
-            <Settings 
+          {activeTab === 'utilities' && (
+            <Utilities 
               profile={profile} 
               onLogout={onLogout} 
               onBack={() => setActiveTab('home')} 
@@ -790,6 +788,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               }}
               currentEffect={currentEffect}
               onEffectChange={onEffectChange}
+              isAdmin={profile?.is_admin || false}
+              onUpdateProfile={fetchProfile}
             />
           )}
 
@@ -848,12 +848,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             />
           )}
 
-          {activeTab === 'mods' && (
-            <ModGame isAdmin={profile?.is_admin || false} />
-          )}
-
           {activeTab === 'admin' && (
-            <AdminPanel onBack={() => setActiveTab('settings')} />
+            <AdminPanel onBack={() => setActiveTab('utilities')} />
           )}
             </motion.div>
           </AnimatePresence>
@@ -883,19 +879,15 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('daily')} className={`flex flex-col items-center gap-1 ${activeTab === 'daily' ? 'text-accent' : 'text-slate-700'}`}>
           <Gift size={16} />
-          <span className="text-[7px] font-black uppercase tracking-tighter">Thưởng Ngày</span>
-        </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('mods')} className={`flex flex-col items-center gap-1 ${activeTab === 'mods' ? 'text-accent' : 'text-slate-700'}`}>
-          <Gamepad2 size={16} />
-          <span className="text-[7px] font-black uppercase tracking-tighter">Mod Game</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter">Thử Thách</span>
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 ${activeTab === 'wallet' ? 'text-accent' : 'text-slate-700'}`}>
           <Wallet size={16} />
           <span className="text-[7px] font-black uppercase tracking-tighter">Rút Tiền</span>
         </motion.button>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 relative ${activeTab === 'settings' ? 'text-accent' : 'text-slate-700'}`}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('utilities')} className={`flex flex-col items-center gap-1 relative ${activeTab === 'utilities' ? 'text-accent' : 'text-slate-700'}`}>
           <SettingsIcon size={16} />
-          <span className="text-[7px] font-black uppercase tracking-tighter">Cài Đặt</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter">Tiện Ích</span>
           {showVerifyRedDot && (
             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_#ef4444] animate-pulse"></span>
           )}
@@ -1000,13 +992,6 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           </div>
         )}
       </AnimatePresence>
-
-      {/* Red Envelope Widget - Only on Home Tab */}
-      {activeTab === 'home' && (
-        <div className="relative z-[60]">
-          <RedEnvelopeWidget userId={user.id} profile={profile} onUpdateProfile={fetchProfile} />
-        </div>
-      )}
     </div>
   );
 }

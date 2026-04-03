@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Gift, Zap, Clock, CheckCircle2, Loader2, Package, Disc, History, Trophy, Coins, Star, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Gift, Zap, Clock, CheckCircle2, Loader2, Package, Disc, History, Trophy, Coins, Star, ChevronRight, ChevronLeft, Lock, FileText, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
@@ -10,7 +10,7 @@ interface DailyRewardsProps {
   onUpdateProfile: () => void;
 }
 
-type GameTab = 'daily' | 'blindbag' | 'wheel';
+type GameTab = 'daily' | 'wheel';
 
 const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdateProfile }) => {
   const { showNotification } = useNotification();
@@ -66,6 +66,8 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
     return rewards[0];
   };
 
+  const [todayTaskCount, setTodayTaskCount] = useState(0);
+
   const fetchGameData = async () => {
     // Fetch History (Global)
     const { data: hist } = await supabase
@@ -83,6 +85,18 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
       .order('reward_amount', { ascending: false })
       .limit(10);
     setLeaderboard(lead || []);
+
+    // Fetch today's task count
+    const today = getLocalDateString();
+    const { count, error } = await supabase
+      .from('task_completions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('completed_at', today);
+      
+    if (!error && count !== null) {
+      setTodayTaskCount(count);
+    }
   };
 
   useEffect(() => {
@@ -90,6 +104,52 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
     const interval = setInterval(fetchGameData, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const openChallengeEnvelope = async () => {
+    if (todayTaskCount < 100) {
+      showNotification({ title: "Chưa đủ điều kiện", message: "Bạn cần hoàn thành 100 nhiệm vụ hôm nay.", type: "error" });
+      return;
+    }
+
+    const today = getLocalDateString();
+    if (profile.last_challenge_reward_date === today) {
+      showNotification({ title: "Đã nhận", message: "Bạn đã nhận thưởng thử thách hôm nay rồi.", type: "error" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Random reward between 500 and 5000
+      const rewardAmount = Math.floor(Math.random() * (5000 - 500 + 1)) + 500;
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          balance: profile.balance + rewardAmount,
+          last_challenge_reward_date: today
+        })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Record transaction
+      await supabase.from('transactions').insert([{
+        user_id: userId,
+        amount: rewardAmount,
+        type: 'CHALLENGE_REWARD',
+        description: `Thưởng thử thách hàng ngày: ${rewardAmount} Xu`
+      }]);
+
+      showNotification({ title: "Chúc mừng", message: `Bạn nhận được ${rewardAmount} Xu từ thử thách!`, type: "success" });
+      onUpdateProfile();
+    } catch (error) {
+      console.error("Error claiming challenge reward:", error);
+      showNotification({ title: "Lỗi", message: "Không thể nhận thưởng thử thách.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const playBlindBag = async (costType: 'FREE' | 'XU' | 'EXP') => {
     if (openingBag) return;
@@ -532,13 +592,7 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
           onClick={() => setActiveTab('daily')}
           className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'daily' ? 'bg-accent text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
         >
-          <Gift size={14} /> Điểm Danh
-        </button>
-        <button 
-          onClick={() => setActiveTab('blindbag')}
-          className={`flex-1 min-w-[100px] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'blindbag' ? 'bg-accent text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
-        >
-          <Package size={14} /> Túi Mù
+          <Zap size={14} /> Thử Thách Ngày
         </button>
         <button 
           onClick={() => setActiveTab('wheel')}
@@ -557,140 +611,88 @@ const DailyRewards: React.FC<DailyRewardsProps> = ({ userId, profile, onUpdatePr
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-black uppercase tracking-widest ocean-glow">Thưởng Hàng Ngày</h2>
-              <div className="glass px-4 py-2 rounded-xl border-l-2 border-accent">
-                <span className="text-[8px] text-slate-500 font-bold uppercase block">EXP hiện có</span>
-                <span className="text-sm font-black text-accent">{(profile?.exp || 0).toLocaleString()} EXP</span>
-              </div>
-            </div>
-            
-            {/* Boost Info */}
-            <div className="glass p-6 rounded-[2rem] space-y-3 border-cyan-200 bg-cyan-50 shadow-md">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="text-cyan-600" size={20} />
-                <span className="text-xs font-black uppercase tracking-widest text-cyan-700">Trạng thái Tăng tốc: {profile?.active_boost_type || "Không"}</span>
-              </div>
-              
-              {boostInfo ? (
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="bg-white p-3 rounded-xl border border-slate-100">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Thời gian đổi</p>
-                    <p className="text-xs font-mono text-slate-700">{formatDateTime(boostInfo.start)}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-xl border border-cyan-100 border-l-2 border-l-cyan-500">
-                    <p className="text-[10px] text-cyan-600 uppercase font-bold mb-1">Thời gian hết hạn</p>
-                    <p className="text-xs font-mono text-slate-700">{formatDateTime(boostInfo.end)}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[10px] text-slate-400 uppercase italic">Bạn chưa kích hoạt gói tăng tốc nào.</p>
-              )}
+            <div className="flex items-center gap-2 mb-6">
+              <Flame className="text-orange-500" size={24} />
+              <h2 className="text-xl font-black uppercase tracking-widest text-slate-800">Thử Thách Hàng Ngày</h2>
             </div>
 
-            <div className="glass p-8 rounded-[2rem] text-center space-y-6 relative overflow-hidden border-emerald-200 bg-emerald-50 shadow-lg">
-              <div className="absolute top-0 right-0 p-4">
-                <Clock className="text-emerald-500/10" size={64} />
-              </div>
+            {/* Challenge Card */}
+            <div className="bg-[#2a3441] rounded-[2rem] p-8 text-center relative overflow-hidden shadow-xl">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
               
-              <div className="relative z-10">
-                <Gift size={64} className="mx-auto text-emerald-600 mb-4" />
-                <h3 className="text-xl font-black uppercase tracking-widest text-emerald-700">Thưởng Điểm Danh</h3>
-                <p className="text-[10px] text-emerald-600/60 font-bold uppercase tracking-widest mt-1">Nhận 10 EXP mỗi ngày</p>
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-red-500/30">
+                  <span className="text-yellow-300 font-bold text-xl">福</span>
+                </div>
                 
-                <div className="mt-8 space-y-4">
-                  {profile.last_daily_reward_date === getLocalDateString() ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-center gap-2 text-emerald-600">
-                        <CheckCircle2 size={20} />
-                        <span className="text-xs font-black uppercase tracking-widest">Đã nhận hôm nay</span>
-                      </div>
-                      <div className="bg-white p-4 rounded-2xl border border-slate-100">
-                        <p className="text-[9px] text-slate-400 uppercase font-bold mb-1">Reset sau</p>
-                        <p className="text-2xl font-black font-mono text-emerald-600">{timeLeft}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={claimDailyReward}
-                      disabled={loading}
-                      className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      {loading ? <Loader2 className="animate-spin mx-auto" /> : "Nhận ngay 10 EXP"}
-                    </button>
-                  )}
+                <h3 className="text-2xl font-black text-white mb-2">Hoàn thành 100 nhiệm vụ</h3>
+                <p className="text-sm text-slate-300 mb-8">Mở phong bao lì xì may mắn — Nhận ngẫu nhiên <span className="text-yellow-400 font-bold">500 - 5,000 VNĐ</span></p>
+                
+                <div className="w-full max-w-md mx-auto mb-8">
+                  <div className="flex justify-between text-xs font-bold text-white mb-2">
+                    <span>{todayTaskCount} / 100 nhiệm vụ</span>
+                    <span>{Math.min(100, Math.floor((todayTaskCount / 100) * 100))}%</span>
+                  </div>
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white/30 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, (todayTaskCount / 100) * 100)}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Đổi quà bằng EXP</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-blue-200 bg-blue-50 hover:bg-blue-100 transition-all shadow-md">
-                  <div className="flex items-center gap-4">
-                    <Zap className="text-blue-600" />
-                    <div>
-                      <p className="font-bold text-blue-900">x2 số tiền thưởng làm nhiệm vụ (24h)</p>
-                      <p className="text-xs text-blue-600/60">1000 EXP</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => exchangeBoost(1000, 'x2', 24)}
-                    disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-sm"
-                  >
-                    Đổi
+                {profile.last_challenge_reward_date === getLocalDateString() ? (
+                  <button disabled className="px-8 py-3 bg-white/10 text-white/50 rounded-xl font-bold flex items-center gap-2">
+                    <CheckCircle2 size={18} /> Đã nhận hôm nay
                   </button>
-                </div>
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-amber-200 bg-amber-50 hover:bg-amber-100 transition-all shadow-md">
-                  <div className="flex items-center gap-4">
-                    <Coins className="text-amber-600" />
-                    <div>
-                      <p className="font-bold text-amber-900">Đổi 100,000 EXP lấy 10,000 Xu</p>
-                      <p className="text-xs text-amber-600/60">100,000 EXP</p>
-                    </div>
-                  </div>
+                ) : todayTaskCount >= 100 ? (
                   <button 
-                    onClick={exchangeExpForXu}
+                    onClick={openChallengeEnvelope}
                     disabled={loading}
-                    className="px-6 py-2 bg-amber-600 text-white rounded-xl font-bold text-xs shadow-sm"
+                    className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-black rounded-xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-500/30 flex items-center gap-2"
                   >
-                    Đổi
+                    {loading ? <Loader2 className="animate-spin" size={18} /> : <Gift size={18} />}
+                    Mở Phong Bao
                   </button>
-                </div>
-                <div className="glass p-6 rounded-[2rem] flex justify-between items-center border-rose-200 bg-rose-50 hover:bg-rose-100 transition-all shadow-md">
-                  <div className="flex items-center gap-4">
-                    <Gift className="text-rose-600" />
-                    <div>
-                      <p className="font-bold text-rose-900">Nhận Lì xì ngẫu nhiên (200 - 5000 Xu)</p>
-                      <p className="text-xs text-rose-600/60">10,000 EXP</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={exchangeExpForLixi}
-                    disabled={loading}
-                    className="px-6 py-2 bg-rose-600 text-white rounded-xl font-bold text-xs shadow-sm"
-                  >
-                    Nhận
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-600">Lịch sử đổi thưởng</h3>
-              <div className="glass p-6 rounded-[2rem] space-y-2 border-white/20 bg-white/15 shadow-[0_0_25px_rgba(255,255,255,0.1)]">
-                {history.length === 0 ? (
-                  <p className="text-xs text-slate-600 text-center">Chưa có lịch sử đổi thưởng.</p>
                 ) : (
-                  history.map((h) => (
-                    <div key={h.id} className="flex justify-between text-xs border-b border-white/5 pb-2">
-                      <span className="text-slate-800">{h.description}</span>
-                      <span className="text-slate-600">{new Date(h.created_at).toLocaleDateString()}</span>
-                    </div>
-                  ))
+                  <button disabled className="px-8 py-3 bg-white/10 text-white/50 rounded-xl font-bold flex items-center gap-2">
+                    <Lock size={18} /> Còn {100 - todayTaskCount} nhiệm vụ nữa
+                  </button>
                 )}
               </div>
+            </div>
+
+            {/* Rules Card */}
+            <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                  <FileText size={16} />
+                </div>
+                <h3 className="text-lg font-black text-slate-800">Luật chơi</h3>
+              </div>
+              
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3 text-sm text-slate-600">
+                  <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                  <span>Hoàn thành 100 nhiệm vụ trong 1 ngày (00:00 - 23:59)</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-slate-600">
+                  <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                  <span>Chỉ tính nhiệm vụ đã được Admin duyệt</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-slate-600">
+                  <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                  <span>Phong bao lì xì ngẫu nhiên: 500 - 5,000 VNĐ</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-slate-600">
+                  <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                  <span>Mỗi ngày chỉ mở 1 lần, reset lúc 00:00</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-slate-600">
+                  <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+                  <span>Không chấp nhận buff/cheat — Phát hiện sẽ khóa tài khoản</span>
+                </li>
+              </ul>
             </div>
           </motion.div>
         )}

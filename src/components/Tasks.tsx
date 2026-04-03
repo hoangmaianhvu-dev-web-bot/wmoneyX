@@ -39,41 +39,41 @@ const CONFIG = {
 };
 
 const TASK_APIS: Record<string, string> = {
-  "🔥 BBMKTS": "https://bbmkts.com/dapi?token=d285ce6c761cc5961316783a&longurl=",
-  "🔥 LINK4M": "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=",
-  "🔥 LINKNGONIO": "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=",
-  "🔥 LINKTOT": "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
-  "TIMMAP": "https://linktot.net/api_timmap.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
-  "TRAFICTOT": "https://services.traffictot.com/api/v1/shorten?api_key=3066e5a6df247cd2cf73b122e518a29e061e2823c969cefa75e05252513e6363&url=",
-  "🔥 TRAFFIC1M": "https://traffic1m.net/apidevelop?api=dfe44a5e9704a90f5932d3f2bd924902&url=",
-  "🔥 UPTOLINK SET3": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
-  "UPTOLINK SET2": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
   "🔥 TRAFFIC68": "https://traffic68.com/api/quicklink/api?api=tf68_c42992fb620964a590a36f35a0412f70bab3236f1e0aeb08&url=",
+  "🔥 TRAFFIC1M": "https://traffic1m.net/apidevelop?api=dfe44a5e9704a90f5932d3f2bd924902&url=",
   "🔥 NHAPMA": "https://service.nhapma.com/api?token=4e715a3b-d40e-4712-91a9-9a7af0564749&url=",
   "🔥 TAPLAYMA": "https://api.taplayma.com/api?token=9015c633-5cbb-42c0-a97a-5d6750d2b291&url=",
+  "🔥 LINK4M": "https://link4m.co/api-shorten/v2?api=68208afab6b8fc60542289b6&url=",
+  "🔥 UPTOLINK SET3": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
+  "UPTOLINK SET2": "https://uptolink.one/api?api=94eeedcdf3928b7bb78a89c19bad78274a69b830&url=",
+  "LINKNGONCOM": "https://linkngon.com/api?api=lqbSkVWzCCIcWZWyt52j2DC9tBu53SEr&url=",
+  "🔥 LINKNGONIO": "https://linkngon.io/api?api=5PA5LNPwgcjiVhyRYRhPjam8jGNHpGgELAEPfZH6QzWiBk&url=",
+  "TIMMAP": "https://linktot.net/api_timmap.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
+  "🔥 BBMKTS": "https://bbmkts.com/dapi?token=d285ce6c761cc5961316783a&longurl=",
+  "🔥 LINKTOT": "https://linktot.net/JSON_QL_API.php?token=d121d1761f207cb9bfde19c8be5111cb8d623d83e1e05053ec914728c9ea869c&url=",
+  "TRAFICTOT": "https://services.traffictot.com/api/v1/shorten?api_key=3066e5a6df247cd2cf73b122e518a29e061e2823c969cefa75e05252513e6363&url=",
   "4MMO": "https://4mmo.net/api?api=f043a9bcb47e1fe0be2d73825a1a8975a62f60d5&url=",
   "XLINK": "https://xlink.co/api?token=ac55663f-ef85-4849-8ce1-4ca99bd57ce7&url=",
   "LINKTOP": "https://linktop.run/api?api=kDk3dqyoTbFP29S4wNmAbwVuDg5RBS0HQ8M9V8BgfwF8IH&url=",
-  "LINKNGONCOM": "https://linkngon.com/api?api=lqbSkVWzCCIcWZWyt52j2DC9tBu53SEr&url=",
 };
 
-const TASK_DATA: Record<string, { reward: number, limit: number }> = {
-  "🔥 LINK4M": { reward: 100, limit: 2 },
+export const TASK_DATA: Record<string, { reward: number, limit: number }> = {
+  "🔥 TRAFFIC68": { reward: 500, limit: 2 },
   "🔥 TRAFFIC1M": { reward: 300, limit: 3 },
-  "🔥 TRAFFIC68": { reward: 200, limit: 2 },
-  "TRAFICTOT": { reward: 100, limit: 3 },
-  "🔥 LINKTOT": { reward: 100, limit: 1 },
-  "🔥 LINKNGONIO": { reward: 200, limit: 2 },
-  "🔥 BBMKTS": { reward: 200, limit: 1 },
-  "TIMMAP": { reward: 100, limit: 2 },
-  "LINKTOP": { reward: 100, limit: 2 },
+  "🔥 NHAPMA": { reward: 360, limit: 3 },
+  "🔥 TAPLAYMA": { reward: 200, limit: 3 },
+  "🔥 LINK4M": { reward: 100, limit: 2 },
+  "🔥 UPTOLINK SET3": { reward: 300, limit: 100 },
+  "UPTOLINK SET2": { reward: 200, limit: 100 },
   "LINKNGONCOM": { reward: 200, limit: 2 },
-  "🔥 TAPLAYMA": { reward: 150, limit: 3 },
-  "XLINK": { reward: 50, limit: 2 },
+  "🔥 LINKNGONIO": { reward: 200, limit: 2 },
+  "TIMMAP": { reward: 100, limit: 2 },
+  "🔥 BBMKTS": { reward: 200, limit: 1 },
+  "🔥 LINKTOT": { reward: 100, limit: 1 },
+  "TRAFICTOT": { reward: 100, limit: 3 },
   "4MMO": { reward: 100, limit: 2 },
-  "🔥 NHAPMA": { reward: 100, limit: 3 },
-  "🔥 UPTOLINK SET3": { reward: 200, limit: 100 },
-  "UPTOLINK SET2": { reward: 150, limit: 100 },
+  "XLINK": { reward: 50, limit: 2 },
+  "LINKTOP": { reward: 100, limit: 2 },
 };
 
 const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdateBalance, onUpdateProfile }) => {
@@ -331,11 +331,12 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     const currentCount = taskCounts[taskName] || 0;
     const limit = TASK_DATA[taskName]?.limit || 0;
     const tasksToday = profile?.tasks_today || 0;
+    const totalTasksLimit = Object.values(TASK_DATA).reduce((sum, task) => sum + task.limit, 0);
 
-    if (tasksToday >= 666) {
+    if (tasksToday >= totalTasksLimit) {
       showNotification({
         title: "GIỚI HẠN",
-        message: `Bạn đã đạt giới hạn 666 nhiệm vụ mỗi ngày!`,
+        message: `Bạn đã đạt giới hạn ${totalTasksLimit} nhiệm vụ mỗi ngày!`,
         type: "warning"
       });
       return;
@@ -714,14 +715,23 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
               
               {expandedCategory === 'main' ? (
                 <div className="space-y-2">
-                  {Object.keys(TASK_DATA).map((taskName, idx) => {
+                  {Object.keys(TASK_DATA)
+                    .sort((a, b) => {
+                      const aMaintained = maintenanceTasks.includes(a);
+                      const bMaintained = maintenanceTasks.includes(b);
+                      if (aMaintained && !bMaintained) return 1;
+                      if (!aMaintained && bMaintained) return -1;
+                      return 0;
+                    })
+                    .map((taskName, idx) => {
                     const isMaintained = maintenanceTasks.includes(taskName);
+                    const isHotTask = ["🔥 TRAFFIC68", "🔥 TRAFFIC1M", "🔥 NHAPMA"].includes(taskName);
                     return (
                       <button
                         key={idx}
                         disabled={isMaintained}
                         onClick={() => startTask(taskName)}
-                        className={`w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn relative overflow-hidden ${isMaintained ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                        className={`w-full py-3 px-4 glass border-white/10 rounded-xl flex items-center justify-between hover:bg-white/10 transition-all group/btn relative overflow-hidden ${isMaintained ? 'opacity-50 grayscale cursor-not-allowed' : ''} ${isHotTask ? 'border-red-500/50 bg-red-50/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : ''}`}
                       >
                         {isMaintained && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
@@ -729,13 +739,13 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                           </div>
                         )}
                         <div className="flex flex-col items-start">
-                          <span className="text-[10px] font-bold text-black uppercase">{taskName}</span>
+                          <span className={`text-[10px] font-bold uppercase ${isHotTask ? "text-red-600 animate-pulse" : "text-black"}`}>{taskName}</span>
                           <div className="flex gap-2 mt-1">
                             <span className="text-[8px] font-bold text-slate-500 uppercase">{TASK_DATA[taskName].limit} LƯỢT/NGÀY</span>
-                            <span className="text-[8px] font-bold text-accent uppercase">+{TASK_DATA[taskName].reward} XU</span>
+                            <span className={`text-[8px] font-bold uppercase ${isHotTask ? "text-red-500" : "text-accent"}`}>+{TASK_DATA[taskName].reward} XU</span>
                           </div>
                         </div>
-                        <ChevronLeft size={14} className="text-accent rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                        <ChevronLeft size={14} className={`${isHotTask ? "text-red-500" : "text-accent"} rotate-180 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all`} />
                       </button>
                     );
                   })}
@@ -1074,7 +1084,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-red-500 uppercase">Tổng giới hạn ngày</span>
-                      <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / {Object.keys(TASK_DATA).length + 500}</span>
+                      <span className="text-[10px] font-black text-accent uppercase">{profile?.tasks_today || 0} / {Object.values(TASK_DATA).reduce((sum, task) => sum + task.limit, 0)}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-[10px] font-bold text-red-500 uppercase">Phần thưởng</span>

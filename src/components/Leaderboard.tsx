@@ -60,6 +60,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, username, tasks_total, balance, exp')
+          .gt('tasks_total', 0)
           .order('tasks_total', { ascending: false })
           .limit(50);
         
@@ -73,7 +74,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
 
         const { data: transactions, error: transError } = await supabase
           .from('transactions')
-          .select('user_id, amount, profiles(username)')
+          .select('user_id, amount, type, profiles(username)')
           .eq('status', 'COMPLETED')
           .in('type', ['TASK', 'SPECIAL_TASK', 'DAILY_REWARD', 'REFERRAL'])
           .gte('created_at', startOfMonth.toISOString());
@@ -84,17 +85,26 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
         const userStats: Record<string, { username: string, total_earned: number, tasks_count: number }> = {};
         
         transactions?.forEach((t: any) => {
+          if (!t.profiles) return; // Người dùng phải tồn tại trên hệ thống
+
           const uid = t.user_id;
-          const username = t.profiles?.username || 'Người dùng ẩn';
+          const username = t.profiles.username;
+          
           if (!userStats[uid]) {
             userStats[uid] = { username, total_earned: 0, tasks_count: 0 };
           }
+          
           userStats[uid].total_earned += t.amount;
-          userStats[uid].tasks_count += 1;
+          
+          // Chỉ đếm số lượng nhiệm vụ thực sự
+          if (t.type === 'TASK' || t.type === 'SPECIAL_TASK') {
+            userStats[uid].tasks_count += 1;
+          }
         });
 
         const sortedMonthly = Object.entries(userStats)
           .map(([user_id, stats]) => ({ user_id, ...stats }))
+          .filter(user => user.tasks_count > 0) // Phải có làm nhiệm vụ
           .sort((a, b) => b.total_earned - a.total_earned)
           .slice(0, 50);
 

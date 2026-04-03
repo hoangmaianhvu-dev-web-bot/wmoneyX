@@ -23,13 +23,14 @@ import CountdownTimer from './CountdownTimer';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
+import AdminGiftcode from './AdminGiftcode';
 // import PaymentQR from './PaymentQR'; // Removed as MoMo/ZaloPay are removed
 
 interface AdminPanelProps {
   onBack: () => void;
 }
 
-type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports' | 'proofs' | 'special_tasks' | 'mods' | 'ranking';
+type AdminTab = 'users' | 'payouts' | 'notify' | 'settings' | 'reports' | 'proofs' | 'special_tasks' | 'giftcodes' | 'ranking';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const { showNotification } = useNotification();
@@ -127,7 +128,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     if (activeTab === 'reports') fetchReports();
     if (activeTab === 'proofs') fetchProofs();
     if (activeTab === 'special_tasks') fetchSpecialTasks();
-    if (activeTab === 'mods') fetchMods();
     if (activeTab === 'settings') fetchMaintenanceTasks();
     if (activeTab === 'ranking') fetchMonthlyRanking();
   }, [activeTab]);
@@ -909,7 +909,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
       {/* Tabs */}
       <div className="flex gap-6 border-b border-white/5 overflow-x-auto no-scrollbar">
-        {(['users', 'payouts', 'special_tasks', 'mods', 'notify', 'ranking', 'proofs', 'settings', 'reports'] as AdminTab[]).map(tab => (
+        {(['users', 'payouts', 'special_tasks', 'giftcodes', 'notify', 'ranking', 'proofs', 'settings', 'reports'] as AdminTab[]).map(tab => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -918,7 +918,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
             {tab === 'users' ? 'Thành Viên' : 
              tab === 'payouts' ? 'Duyệt Rút' : 
              tab === 'special_tasks' ? 'Duyệt NV Đặc Biệt' :
-             tab === 'mods' ? 'Bản Mod' :
+             tab === 'giftcodes' ? 'Giftcode' :
              tab === 'notify' ? 'Thông Báo' : 
              tab === 'ranking' ? 'Xếp Hạng' :
              tab === 'proofs' ? 'Thanh Toán' : 
@@ -1101,60 +1101,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           </div>
         )}
 
-        {activeTab === 'mods' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black uppercase tracking-widest text-accent">Quản lý bản Mod</h3>
-              <p className="text-xs text-gray-400 font-bold uppercase">Tổng cộng: {mods.length} bản mod</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mods.map((mod) => (
-                <div key={mod.id} className="glass p-6 rounded-3xl border-accent/10 flex flex-col justify-between">
-                  <div>
-                    <div className="w-full h-32 bg-white/5 rounded-2xl mb-4 overflow-hidden">
-                      {mod.image_url ? (
-                        <img src={mod.image_url} alt={mod.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600">
-                          <ImageIcon size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-white mb-2">{mod.title}</h4>
-                    <p className="text-[10px] text-gray-400 line-clamp-2 mb-4">{mod.description}</p>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-[8px] font-black uppercase px-2 py-1 bg-accent/10 text-accent rounded-full border border-accent/20">
-                        {mod.category}
-                      </span>
-                      <span className="text-[8px] font-black uppercase px-2 py-1 bg-white/5 text-gray-400 rounded-full border border-white/10">
-                        v{mod.version}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <TrendingUp size={12} />
-                      <span className="text-[10px] font-bold uppercase">{mod.download_count || 0} lượt tải</span>
-                    </div>
-                    <button 
-                      onClick={() => deleteMod(mod.id)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                      title="Xóa mod"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {mods.length === 0 && (
-                <div className="col-span-full py-20 text-center glass rounded-3xl">
-                  <Server className="mx-auto text-gray-600 mb-4" size={48} />
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-widest italic">Chưa có bản mod nào được đăng tải</p>
-                </div>
-              )}
-            </div>
-          </div>
+        {activeTab === 'giftcodes' && (
+          <AdminGiftcode />
         )}
 
         {activeTab === 'notify' && (
@@ -1501,60 +1449,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           </div>
         )}
 
-        {activeTab === 'mods' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black uppercase tracking-widest text-accent italic">Quản lý bản Mod</h3>
-              <p className="text-xs text-gray-400 font-bold uppercase">Tổng cộng: {mods.length} bản mod</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mods.map((mod) => (
-                <div key={mod.id} className="glass p-6 rounded-3xl border-accent/10 flex flex-col justify-between">
-                  <div>
-                    <div className="w-full h-32 bg-white/5 rounded-2xl mb-4 overflow-hidden">
-                      {mod.image_url ? (
-                        <img src={mod.image_url} alt={mod.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600">
-                          <ImageIcon size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-white mb-2">{mod.title}</h4>
-                    <p className="text-[10px] text-gray-400 line-clamp-2 mb-4">{mod.description}</p>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-[8px] font-black uppercase px-2 py-1 bg-accent/10 text-accent rounded-full border border-accent/20">
-                        {mod.category}
-                      </span>
-                      <span className="text-[8px] font-black uppercase px-2 py-1 bg-white/5 text-gray-400 rounded-full border border-white/10">
-                        v{mod.version}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <TrendingUp size={12} />
-                      <span className="text-[10px] font-bold uppercase">{mod.download_count || 0} lượt tải</span>
-                    </div>
-                    <button 
-                      onClick={() => deleteMod(mod.id)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                      title="Xóa mod"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {mods.length === 0 && (
-                <div className="col-span-full py-20 text-center glass rounded-3xl">
-                  <Server className="mx-auto text-gray-600 mb-4" size={48} />
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-widest italic">Chưa có bản mod nào được đăng tải</p>
-                </div>
-              )}
-            </div>
-          </div>
+        {activeTab === 'giftcodes' && (
+          <AdminGiftcode />
         )}
 
         {activeTab === 'proofs' && (
