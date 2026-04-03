@@ -46,10 +46,15 @@ export default function Giftcode({ userId, onUpdateProfile }: GiftcodeProps) {
       // 2. Check if user already used this code
       const { data: existingUse, error: useError } = await supabase
         .from('giftcode_uses')
-        .select('*')
+        .select('id')
         .eq('giftcode_id', giftcode.id)
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+
+      if (useError) {
+        console.error('Error checking existing use:', useError);
+        throw new Error('Có lỗi xảy ra khi kiểm tra lịch sử sử dụng');
+      }
 
       if (existingUse) {
         throw new Error('Bạn đã sử dụng mã giftcode này rồi');

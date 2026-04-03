@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
   Landmark, 
-  Smartphone, 
   Ticket, 
   Clock, 
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
-  ShieldCheck
+  Wallet as WalletIcon,
+  ArrowUpRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
 import IdentityVerification from './IdentityVerification';
 
-interface WithdrawProps {
+interface WalletProps {
   balance: number;
   userId: string;
   email: string;
@@ -27,7 +27,7 @@ interface WithdrawProps {
 
 type WithdrawMethod = 'bank' | 'card';
 
-const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified, onBack, onUpdateBalance, onVerifySuccess }) => {
+const Wallet: React.FC<WalletProps> = ({ balance, userId, email, isVerified, onBack, onUpdateBalance, onVerifySuccess }) => {
   const { showNotification } = useNotification();
   const [method, setMethod] = useState<WithdrawMethod>('bank');
   const [amount, setAmount] = useState<string>('');
@@ -89,6 +89,34 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
         type: "error"
       });
       return;
+    }
+
+    if (method === 'bank') {
+      if (!bank || !stk || !name) {
+        showNotification({
+          title: "Lỗi",
+          message: "Vui lòng nhập đầy đủ thông tin ngân hàng",
+          type: "error"
+        });
+        return;
+      }
+    } else if (method === 'card') {
+      if (!cardType || !cardEmail) {
+        showNotification({
+          title: "Lỗi",
+          message: "Vui lòng nhập đầy đủ thông tin nhận thẻ",
+          type: "error"
+        });
+        return;
+      }
+      if (!cardEmail.includes('@')) {
+        showNotification({
+          title: "Lỗi",
+          message: "Email không hợp lệ",
+          type: "error"
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -197,7 +225,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
         </div>
         <h2 className="text-2xl font-black uppercase tracking-widest mb-2 text-emerald-500">Thành Công!</h2>
         <p className="text-slate-600 text-sm max-w-xs mb-8">
-          Yêu cầu rút {Number(amount).toLocaleString()} Xu đã được gửi. Vui lòng chờ hệ thống kiểm duyệt trong khung giờ 22h-23h hàng ngày.
+          Yêu cầu rút {Number(amount).toLocaleString('vi-VN')} Xu đã được gửi. Vui lòng chờ hệ thống kiểm duyệt trong khung giờ 22h-23h hàng ngày.
         </p>
         <button 
           onClick={onBack}
@@ -218,10 +246,40 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
         >
           <ChevronLeft size={20} />
         </button>
-        <h2 className="text-xl font-black uppercase tracking-widest text-accent italic">Rút Tiền</h2>
+        <h2 className="text-xl font-black uppercase tracking-widest text-accent italic">Ví Tiền</h2>
       </header>
 
+      {/* Wallet Balance Card */}
+      <div className="glass p-8 rounded-[2.5rem] border-accent/20 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center text-accent">
+              <WalletIcon size={20} />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Tổng số dư khả dụng</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-5xl font-black text-slate-900 tracking-tighter">
+              {(balance || 0).toLocaleString('vi-VN')}
+            </h3>
+            <span className="text-sm font-black text-accent uppercase tracking-widest">Xu</span>
+          </div>
+          <div className="mt-6 flex gap-3">
+            <div className="px-4 py-2 bg-white/50 border border-white rounded-xl flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-[9px] font-black uppercase text-slate-600 tracking-wider">An toàn & Bảo mật</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-6">
+        <div className="flex items-center gap-2 px-4">
+          <ArrowUpRight size={16} className="text-accent" />
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Yêu cầu rút tiền</h3>
+        </div>
+
         {/* Tab chuyển đổi phương thức */}
         <div className="grid grid-cols-2 gap-2 p-1 glass rounded-2xl border-slate-200 bg-slate-100">
           <button 
@@ -378,9 +436,6 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
               </button>
             </div>
             
-            <div className="flex justify-center py-2">
-            </div>
-
             <button 
               onClick={handleWithdraw}
               disabled={isSubmitting}
@@ -426,14 +481,12 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
                 
                 <div className="space-y-4 px-2">
                   {items.map((w) => {
-                    const fee = 0;
                     const netAmount = w.amount;
                     const statusText = w.status === 'PENDING' ? 'Đang xử lý' : w.status === 'COMPLETED' ? 'Rút tiền thành công' : 'Rút tiền thất bại';
                     const statusColor = w.status === 'PENDING' ? 'bg-amber-100 text-amber-700 border-amber-200' : w.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200';
                     
                     return (
                       <div key={w.id} className="bg-white rounded-[2rem] p-6 shadow-2xl text-black space-y-5 border border-gray-100 relative overflow-hidden">
-                        {/* Decorative background element */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
                         
                         <div className="flex justify-between items-start relative z-10">
@@ -447,7 +500,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
                             </span>
                           </div>
                           <div className="text-right">
-                            <span className="text-xl font-black text-gray-900">-{w.amount.toLocaleString('vi-VN')}</span>
+                            <span className="text-xl font-black text-gray-900">-{(w.amount || 0).toLocaleString('vi-VN')}</span>
                             <span className="text-[10px] font-black text-slate-600 ml-1 uppercase">Xu</span>
                           </div>
                         </div>
@@ -459,7 +512,7 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
                           </div>
                           <div className="flex justify-between items-center text-[11px] py-2 border-y border-gray-50">
                             <span className="text-slate-600 font-bold uppercase tracking-tighter">Thực nhận</span>
-                            <span className="text-emerald-600 font-black text-sm">{netAmount.toLocaleString('vi-VN')} Xu</span>
+                            <span className="text-emerald-600 font-black text-sm">{(netAmount || 0).toLocaleString('vi-VN')} Xu</span>
                           </div>
                           
                           <div className="pt-2 space-y-2">
@@ -504,4 +557,4 @@ const Withdraw: React.FC<WithdrawProps> = ({ balance, userId, email, isVerified,
   );
 };
 
-export default Withdraw;
+export default Wallet;

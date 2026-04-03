@@ -247,7 +247,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
           await supabase.from('notifications').insert([{
             user_id: userId,
             title: "Chúc mừng!",
-            body: `Bạn đã đạt Hạng ${i + 1} trong cuộc đua Top tháng ${monthKey} và nhận được ${rewardAmount.toLocaleString()} Xu thưởng!`,
+            body: `Bạn đã đạt Hạng ${i + 1} trong cuộc đua Top tháng ${monthKey} và nhận được ${(rewardAmount || 0).toLocaleString()} Xu thưởng!`,
             type: 'system'
           }]);
         }
@@ -880,12 +880,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         {[
           { label: 'Thành Viên', value: stats.totalUsers, icon: Users, color: '' },
           { label: 'Chờ Rút', value: stats.pendingPayouts, icon: Clock, color: 'text-yellow-500' },
-          { label: 'Hôm nay (Xu)', value: stats.todayRevenue.toLocaleString(), icon: TrendingUp, color: 'text-emerald-400' },
-          { label: 'Tổng Nhiệm Vụ', value: (stats.totalTasks + stats.totalSpecialTasks).toLocaleString(), icon: Check, color: 'text-blue-400' },
-          { label: 'NV Thường', value: stats.totalTasks.toLocaleString(), icon: Check, color: 'text-accent' },
-          { label: 'NV Đặc Biệt', value: stats.totalSpecialTasks.toLocaleString(), icon: Check, color: 'text-red-500' },
-          { label: 'Tổng Số Dư', value: stats.totalSystemBalance.toLocaleString(), icon: Wallet, color: 'text-purple-400' },
-          { label: 'Lượt Tải Mod', value: stats.totalModDownloads.toLocaleString(), icon: ExternalLink, color: 'text-orange-400' }
+          { label: 'Hôm nay (Xu)', value: (stats.todayRevenue || 0).toLocaleString(), icon: TrendingUp, color: 'text-emerald-400' },
+          { label: 'Tổng Nhiệm Vụ', value: ((stats.totalTasks || 0) + (stats.totalSpecialTasks || 0)).toLocaleString(), icon: Check, color: 'text-blue-400' },
+          { label: 'NV Thường', value: (stats.totalTasks || 0).toLocaleString(), icon: Check, color: 'text-accent' },
+          { label: 'NV Đặc Biệt', value: (stats.totalSpecialTasks || 0).toLocaleString(), icon: Check, color: 'text-red-500' },
+          { label: 'Tổng Số Dư', value: (stats.totalSystemBalance || 0).toLocaleString(), icon: Wallet, color: 'text-purple-400' },
+          { label: 'Lượt Tải Mod', value: (stats.totalModDownloads || 0).toLocaleString(), icon: ExternalLink, color: 'text-orange-400' }
         ].map((stat, i) => (
           <div key={i} className="glass p-4 rounded-2xl hover:scale-105 transition-all duration-300 hover:rotate-y-6 hover:rotate-x-2" style={{ willChange: 'transform' }}>
             <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">{stat.label}</p>
@@ -902,7 +902,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         {modStats.map((ms, idx) => (
           <div key={idx} className="glass p-3 rounded-xl flex items-center justify-between border-white/5">
             <span className="text-[9px] font-black uppercase text-gray-400">{ms.name}</span>
-            <span className="text-xs font-black text-accent">{ms.count.toLocaleString()} lượt</span>
+            <span className="text-xs font-black text-accent">{(ms.count || 0).toLocaleString()} lượt</span>
           </div>
         ))}
       </div>
@@ -1048,7 +1048,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                           <div className="font-black text-white">{p.profiles?.username || 'Unknown'}</div>
                           <div className="text-[8px] text-gray-500 font-bold uppercase">{p.email}</div>
                         </td>
-                        <td className="p-4 font-black text-yellow-500">{p.amount.toLocaleString()}</td>
+                        <td className="p-4 font-black text-yellow-500">{(p.amount || 0).toLocaleString()}</td>
                         <td className="p-4">
                           {p.method === 'bank' && (
                             <>
@@ -1275,12 +1275,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
                         <span className="text-[10px] text-gray-400">{user.email}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-black text-emerald-400">{user.total_earned.toLocaleString()} Xu</span>
+                        <span className="text-xs font-black text-emerald-400">{(user.total_earned || 0).toLocaleString()} Xu</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         {index < 10 ? (
                           <span className="text-[10px] font-black text-yellow-500">
-                            +{[50000, 40000, 30000, 20000, 10000, 5000, 5000, 5000, 5000, 5000][index].toLocaleString()} Xu
+                            +{[50000, 40000, 30000, 20000, 10000, 5000, 5000, 5000, 5000, 5000][index]?.toLocaleString()} Xu
                           </span>
                         ) : (
                           <span className="text-[10px] text-gray-600">-</span>

@@ -10,5 +10,8 @@ export const getLevelInfo = (exp: number) => {
   else if (level >= 30 && level < 50) vip = 4;
   else if (level >= 50) vip = 5 + Math.floor((level - 50) / 15);
 
-  return { level, currentLevelExp, nextLevelExp, progress, vip };
+  const titles = ['Tập Sự', 'Chiến Binh', 'Đại Pháp Sư', 'Huyền Thoại', 'Thần Thánh'];
+  const title = titles[Math.min(vip - 1, titles.length - 1)];
+
+  return { level, currentLevelExp, nextLevelExp, progress, vip, title };
 };

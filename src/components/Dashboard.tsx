@@ -7,7 +7,7 @@ import {
   Users, 
   Home, 
   CheckSquare, 
-  Wallet, 
+  Wallet as WalletIcon, 
   Settings as SettingsIcon,
   X,
   Menu,
@@ -31,7 +31,7 @@ import { supabase } from '../supabase';
 import { useNotification } from '../context/NotificationContext';
 import { EffectType, effectNames } from './EffectsManager';
 import Banner from './Banner';
-import Withdraw from './Withdraw';
+import Wallet from './Wallet';
 import Tasks from './Tasks';
 import DailyRewards from './DailyRewards';
 import Leaderboard from './Leaderboard';
@@ -61,7 +61,12 @@ interface Profile {
   is_admin: boolean;
   is_verified: boolean;
   exp: number;
+  stars?: number;
+  chests_count?: number;
   last_daily_reward_date?: string | null;
+  last_checkin_date?: string | null;
+  checkin_streak?: number;
+  wheel_spins?: number;
   last_task_reset_date?: string | null;
   last_blind_bag_free_date?: string | null;
   last_lucky_wheel_free_date?: string | null;
@@ -339,7 +344,12 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
             referral_bonus_paid: false,
             referral_code: Math.floor(10000 + Math.random() * 90000).toString(),
             special_tasks_total: 0,
-            last_task_reset_date: new Date().toISOString().split('T')[0]
+            last_task_reset_date: new Date().toISOString().split('T')[0],
+            last_checkin_date: null,
+            checkin_streak: 0,
+            wheel_spins: 0,
+            stars: 0,
+            chests_count: 0
           };
           
           const { error: insertError } = await supabase
@@ -463,7 +473,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <NavItem id="tasks" icon={CheckSquare} label="Nhiệm Vụ" />
           <NavItem id="ranking" icon={Trophy} label="Xếp Hạng" />
           <NavItem id="daily" icon={Gift} label="Thử Thách" />
-          <NavItem id="wallet" icon={Wallet} label="Rút Tiền" />
+          <NavItem id="wallet" icon={WalletIcon} label="Rút Tiền" />
           <NavItem id="utilities" icon={SettingsIcon} label="Tiện Ích" />
         </nav>
 
@@ -561,7 +571,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
                   
                   <div className="glass px-3 py-2 flex items-center gap-2 border-fuchsia-200 rounded-xl bg-fuchsia-50">
                     <Coins size={12} className="text-accent" />
-                    <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '0' : profile?.balance.toLocaleString()}</span>
+                    <span className="font-black text-xs tracking-tight text-accent">{profile?.balance === 0 ? '0' : profile?.balance?.toLocaleString()}</span>
                   </div>
                 </div>
               </header>
@@ -794,7 +804,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           )}
 
           {activeTab === 'wallet' && (
-            <Withdraw 
+            <Wallet 
               balance={profile?.balance || 0} 
               userId={user.id}
               email={user.email || ''}
@@ -838,6 +848,7 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
               userId={user.id}
               profile={profile}
               onUpdateProfile={fetchProfile}
+              onNavigate={setActiveTab}
             />
           )}
 
@@ -882,8 +893,8 @@ export default function Dashboard({ user, onLogout, currentEffect, onEffectChang
           <span className="text-[7px] font-black uppercase tracking-tighter">Thử Thách</span>
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('wallet')} className={`flex flex-col items-center gap-1 ${activeTab === 'wallet' ? 'text-accent' : 'text-slate-700'}`}>
-          <Wallet size={16} />
-          <span className="text-[7px] font-black uppercase tracking-tighter">Rút Tiền</span>
+          <WalletIcon size={16} />
+          <span className="text-[7px] font-black uppercase tracking-tighter">Ví Tiền</span>
         </motion.button>
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setActiveTab('utilities')} className={`flex flex-col items-center gap-1 relative ${activeTab === 'utilities' ? 'text-accent' : 'text-slate-700'}`}>
           <SettingsIcon size={16} />

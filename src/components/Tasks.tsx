@@ -35,7 +35,7 @@ const CONFIG = {
   // Gán thẳng luôn, bỏ qua check biến môi trường cho chắc chắn 100%
   BLOG_URL: "https://wmoneyx.blogspot.com/", 
   REWARD: 200,
-  SPECIAL_REWARD: 1000
+  SPECIAL_REWARD: 999999
 };
 
 const TASK_APIS: Record<string, string> = {
@@ -86,7 +86,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [showSpecialGuide, setShowSpecialGuide] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [expandedCategory, setExpandedCategory] = useState<'main' | 'special' | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<'main' | 'special' | 'backup' | 'verification' | 'history' | null>(null);
   const [taskCreationTime, setTaskCreationTime] = useState("");
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [specialTasks, setSpecialTasks] = useState<any[]>([]);
@@ -94,6 +94,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
   const [taskType, setTaskType] = useState("Khác");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSpecialTask, setSelectedSpecialTask] = useState<string | null>(null);
+  const [selectedBackupTask, setSelectedBackupTask] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('vi-VN', { hour12: false }));
   const [isExecutingApi, setIsExecutingApi] = useState(false);
   const [maintenanceTasks, setMaintenanceTasks] = useState<string[]>([]);
@@ -102,6 +103,12 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
     { id: 'Review Map', name: 'Review Map', type: 'map', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50', reward: 1500, guide: 'Truy cập Google Maps, tìm địa điểm yêu cầu và để lại đánh giá 5 sao kèm hình ảnh.' },
     { id: 'Review Trip', name: 'Review Trip', type: 'trip', icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-50', reward: 3000, guide: 'Truy cập TripAdvisor, tìm địa điểm và để lại đánh giá chi tiết kèm hình ảnh.' },
     { id: 'Review App/Tải App', name: 'Review App/Tải App', type: 'app', icon: Download, color: 'text-violet-500', bg: 'bg-violet-50', reward: 500, guide: 'Tải ứng dụng từ Google Play/App Store, sử dụng và để lại đánh giá 5 sao.' },
+  ];
+
+  const BACKUP_TASKS_LIST = [
+    { id: 'backup_map', name: 'REVIEW MAP', url: 'https://linktot.net/16123tl_tr.rv', reward: 1500, icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { id: 'backup_trip', name: 'REVIEW TRIP', url: 'https://linktot.net/16123tl_tr.tr', reward: 3000, icon: Globe, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { id: 'backup_app', name: 'REVIEW APP', url: 'https://linktot.net/16123tl_tr.ap', reward: 500, icon: Download, color: 'text-violet-500', bg: 'bg-violet-50' },
   ];
 
   useEffect(() => {
@@ -528,7 +535,15 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
 
       const currentBalance = currentProfile?.balance || 0;
       const currentExp = currentProfile?.exp || 0;
-      const taskReward = isSpecialTask ? CONFIG.SPECIAL_REWARD : (selectedTask ? TASK_DATA[selectedTask]?.reward : 0);
+      
+      let taskReward = 0;
+      if (isSpecialTask) {
+        const task = SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask);
+        taskReward = task ? task.reward : CONFIG.SPECIAL_REWARD;
+      } else {
+        taskReward = selectedTask ? TASK_DATA[selectedTask]?.reward : 0;
+      }
+      
       const newBalance = currentBalance + taskReward;
       const newExp = currentExp + 10; // Award 10 EXP per task
       
@@ -606,7 +621,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
       
       showNotification({
         title: "NHIỆM VỤ XONG",
-        message: `Đã cộng ${taskReward.toLocaleString()} Xu và 10 EXP vào tài khoản`,
+        message: `Đã cộng ${(taskReward || 0).toLocaleString('vi-VN')} Xu và 10 EXP vào tài khoản`,
         type: "success"
       });
       
@@ -640,7 +655,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
         </div>
         <div className="glass px-4 py-2 border-l-2 border-accent/30 rounded-xl">
           <span className="text-[8px] text-slate-700 font-bold uppercase block">Số dư hiện tại</span>
-          <span className="text-sm font-black text-accent">{balance.toLocaleString()} Xu</span>
+          <span className="text-sm font-black text-accent">{(balance || 0).toLocaleString('vi-VN')} Xu</span>
         </div>
       </header>
 
@@ -682,14 +697,20 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
             <Zap className="text-accent" size={32} />
           </div>
           <h3 className="text-xl font-black text-violet-900 uppercase tracking-widest mb-2">NHIỆM VỤ ĐẶC BIỆT</h3>
-          <p className="text-[10px] text-violet-700 uppercase tracking-widest mb-6">Thưởng: {CONFIG.SPECIAL_REWARD} Xu • Không giới hạn lượt làm</p>
+          <p className="text-[10px] text-violet-700 uppercase tracking-widest mb-6">Thưởng lên đến 3,000 Xu • Không giới hạn lượt làm</p>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3">
             <button 
               onClick={() => setExpandedCategory('special')}
               className="w-full py-4 bg-accent rounded-full text-white font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-[0_0_20px_rgba(217,70,239,0.3)]"
             >
-              CHỌN NHIỆM VỤ HIÊN CÓ 3 / {profile?.special_tasks_total || 0}
+              CHỌN NHIỆM VỤ HIÊN CÓ {SPECIAL_TASKS_LIST.length} / {profile?.special_tasks_total || 0}
+            </button>
+            <button 
+              onClick={() => setExpandedCategory('backup')}
+              className="w-full py-4 bg-white/5 border border-accent/30 rounded-full text-accent font-black uppercase tracking-widest hover:bg-accent/5 transition-all"
+            >
+              NHIỆM VỤ DỰ PHÒNG
             </button>
           </div>
         </div>
@@ -708,7 +729,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                   <ChevronLeft size={24} />
                 </button>
                 <h3 className="text-lg font-black uppercase text-black tracking-widest">
-                  {expandedCategory === 'main' ? 'HỆ THỐNG NHIỆM VỤ' : 'NHIỆM VỤ ĐẶC BIỆT'}
+                  {expandedCategory === 'main' ? 'HỆ THỐNG NHIỆM VỤ' : expandedCategory === 'backup' ? 'NHIỆM VỤ DỰ PHÒNG' : 'NHIỆM VỤ ĐẶC BIỆT'}
                 </h3>
                 <div className="w-6" />
               </div>
@@ -785,6 +806,126 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                     HỦY BỎ
                   </button>
                 </div>
+              ) : expandedCategory === 'backup' ? (
+                <div className="space-y-4">
+                  {!selectedBackupTask ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl mb-2">
+                        <p className="text-[10px] text-yellow-700 font-black uppercase leading-relaxed text-center">
+                          Đề phòng 3 nhiệm vụ chính gặp lỗi
+                        </p>
+                      </div>
+                      {BACKUP_TASKS_LIST.map((task) => (
+                        <button
+                          key={task.id}
+                          onClick={() => setSelectedBackupTask(task.id)}
+                          className="w-full p-4 glass border-white/10 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-all group relative overflow-hidden"
+                        >
+                          <div className={`w-12 h-12 rounded-xl ${task.bg} flex items-center justify-center shrink-0`}>
+                            <task.icon className={task.color} size={24} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <h4 className="text-xs font-black text-black uppercase">{task.name}</h4>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {task.reward?.toLocaleString('vi-VN')} Xu</p>
+                          </div>
+                          <ChevronLeft size={16} className="text-accent rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                      <div className="flex items-center justify-between mb-8">
+                        <button onClick={() => setSelectedBackupTask(null)} className="text-2xl text-gray-800">
+                          <ChevronLeft size={24} />
+                        </button>
+                        <h2 className="text-xl font-black uppercase tracking-tighter text-center flex-1">Chi Tiết Nhiệm Vụ</h2>
+                        <div className="w-6"></div>
+                      </div>
+
+                      <div className="flex justify-center mb-10">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-3xl">
+                          {React.createElement(BACKUP_TASKS_LIST.find(t => t.id === selectedBackupTask)?.icon || ZapIcon, { size: 32 })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 text-sm font-bold">
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Nguồn nhiệm vụ</span>
+                          <span className="text-blue-600 font-black">
+                            {BACKUP_TASKS_LIST.find(t => t.id === selectedBackupTask)?.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Số lượt làm</span>
+                          <span className="text-green-500">KHÔNG GIỚI HẠN</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Giới hạn thời gian</span>
+                          <span className="text-blue-600">1 LƯỢT / 1 GIỜ</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Phần thưởng</span>
+                          <span className="text-yellow-500">{BACKUP_TASKS_LIST.find(t => t.id === selectedBackupTask)?.reward?.toLocaleString('vi-VN')} XU</span>
+                        </div>
+                        <div className="flex justify-between uppercase">
+                          <span className="text-gray-500">Thời gian tạo</span>
+                          <span className="text-red-600">{currentTime}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-8">
+                        <p className="text-[9px] text-blue-600 font-bold uppercase leading-relaxed text-center italic">
+                          Sau khi làm xong trên link, quay lại đây nhấn "XÁC NHẬN" để gửi duyệt nhiệm vụ.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-4 mt-8">
+                        <button 
+                          onClick={() => setSelectedBackupTask(null)} 
+                          className="flex-1 font-black text-red-500 uppercase tracking-widest text-[10px]"
+                        >
+                          Hủy bỏ
+                        </button>
+                        {!isTaskStarted ? (
+                          <button 
+                            onClick={() => {
+                              const task = BACKUP_TASKS_LIST.find(t => t.id === selectedBackupTask);
+                              if (task) {
+                                window.open(task.url, "_blank");
+                                setIsTaskStarted(true);
+                                showNotification({
+                                  title: "HỆ THỐNG",
+                                  message: "Đã mở trang nhiệm vụ!",
+                                  type: "success"
+                                });
+                              }
+                            }}
+                            className="flex-[2] bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg shadow-blue-200 flex items-center justify-center tracking-widest text-[10px]"
+                          >
+                            Bắt đầu
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              window.open("https://xacminh.github.io/wmoneyx/", "_blank");
+                              setIsTaskStarted(false);
+                              setSelectedBackupTask(null);
+                              setExpandedCategory(null);
+                              showNotification({
+                                title: "HỆ THỐNG",
+                                message: "Đang chuyển hướng đến trang xác minh...",
+                                type: "success"
+                              });
+                            }}
+                            className="flex-[2] bg-green-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg shadow-green-200 flex items-center justify-center tracking-widest text-[10px]"
+                          >
+                            Xác nhận
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : expandedCategory === 'special' ? (
                 <div className="space-y-4">
                   {!selectedSpecialTask ? (
@@ -811,7 +952,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                             </div>
                             <div className="flex-1 text-left">
                               <h4 className="text-xs font-black text-black uppercase">{task.name}</h4>
-                              <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {CONFIG.SPECIAL_REWARD} Xu</p>
+                              <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Thưởng: {task.reward?.toLocaleString('vi-VN')} Xu</p>
                             </div>
                             <ChevronLeft size={16} className="text-accent rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
                           </button>
@@ -860,7 +1001,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         </div>
                         <div className="flex justify-between uppercase">
                           <span className="text-gray-500">Phần thưởng</span>
-                          <span className="text-yellow-500">{SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask)?.reward} XU</span>
+                          <span className="text-yellow-500">{SPECIAL_TASKS_LIST.find(t => t.id === selectedSpecialTask)?.reward?.toLocaleString('vi-VN')} XU</span>
                         </div>
                         <div className="flex justify-between uppercase">
                           <span className="text-gray-500">Thời gian tạo</span>
@@ -933,7 +1074,7 @@ const Tasks: React.FC<TasksProps> = ({ balance, userId, profile, onBack, onUpdat
                         {specialTasks.length > 0 ? specialTasks.map(task => (
                           <tr key={task.id} className="hover:bg-white/5 transition">
                             <td className="p-4">{task.task_type}</td>
-                            <td className="p-4 text-accent font-black">+{task.reward_amount?.toLocaleString()} XU</td>
+                            <td className="p-4 text-accent font-black">+{(task.reward_amount || 0).toLocaleString('vi-VN')} XU</td>
                             <td className="p-4">
                               {task.status_1?.toUpperCase() === 'PENDING' ? (
                                 <CountdownTimer startTime={task.created_at} durationMs={24 * 60 * 60 * 1000} />

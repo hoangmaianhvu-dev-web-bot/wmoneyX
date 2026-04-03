@@ -114,7 +114,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
           <div className="grid grid-cols-2 gap-4 mt-6">
             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
               <p className="text-[9px] text-slate-600 uppercase font-bold">Số dư</p>
-              <p className="text-accent font-black">{profile?.balance.toLocaleString() || 0}</p>
+              <p className="text-accent font-black">{(profile?.balance || 0).toLocaleString()}</p>
             </div>
             <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
               <p className="text-[9px] text-slate-600 uppercase font-bold">Nhiệm vụ</p>
@@ -272,7 +272,7 @@ export default function Settings({ profile, onLogout, onBack, onOpenAdmin, onVer
                     tx.type === 'REFUND' ? 'text-blue-600' :
                     'text-emerald-600'
                   }`}>
-                    {tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toLocaleString()}
+                    {tx.type === 'WITHDRAW' ? '-' : '+'}{(tx.amount || 0).toLocaleString()}
                   </p>
                   <div className="flex justify-end mt-1">
                     <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full border ${

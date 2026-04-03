@@ -258,7 +258,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5">
                         <TrendingUp size={12} className="text-emerald-500" />
-                        <span className="text-xs font-black text-slate-900">{user.tasks_total.toLocaleString()}</span>
+                        <span className="text-xs font-black text-slate-900">{(user.tasks_total || 0).toLocaleString('vi-VN')}</span>
                         <span className="text-[8px] text-slate-400 font-bold uppercase ml-1">Nhiệm vụ</span>
                       </div>
                     </td>
@@ -292,7 +292,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5">
                         <Coins size={12} className="text-accent" />
-                        <span className="text-xs font-black text-accent">{user.total_earned.toLocaleString()}</span>
+                        <span className="text-xs font-black text-accent">{(user.total_earned || 0).toLocaleString('vi-VN')}</span>
                         <span className="text-[8px] text-slate-400 font-bold uppercase ml-1">Xu</span>
                       </div>
                     </td>
@@ -300,7 +300,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ userId, profile }) => {
                       {getRewardForRank(index) ? (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                           <Star size={10} className="fill-emerald-600" />
-                          <span className="text-[10px] font-black">+{getRewardForRank(index)?.toLocaleString()} XU</span>
+                          <span className="text-[10px] font-black">+{getRewardForRank(index)?.toLocaleString('vi-VN')} XU</span>
                         </div>
                       ) : (
                         <span className="text-[8px] text-slate-400 font-bold uppercase italic">Cố gắng thêm</span>
