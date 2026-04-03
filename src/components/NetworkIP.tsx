@@ -7,38 +7,61 @@ export default function NetworkIP() {
 
   useEffect(() => {
     const fetchIPInfo = async () => {
+      // Try multiple APIs for robustness
+      const apis = [
+        'https://api.ipify.org?format=json',
+        'https://ipapi.co/json/',
+        'https://ip-api.com/json'
+      ];
+
+      let foundIp = '';
+      let foundCountry = 'vn';
+
+      // First try to get IP quickly
       try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
         if (data.ip) {
+          foundIp = data.ip;
           setIp(data.ip);
+        }
+      } catch (e) {
+        console.error("Ipify failed", e);
+      }
+
+      // Then try to get country info
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.ip) {
+          if (!foundIp) {
+            foundIp = data.ip;
+            setIp(data.ip);
+          }
           if (data.country_code) {
-            setCountryCode(data.country_code.toLowerCase());
+            foundCountry = data.country_code.toLowerCase();
+            setCountryCode(foundCountry);
           }
         }
-      } catch (error) {
-        console.error('Error fetching IP info:', error);
-        try {
-          const res = await fetch('https://api.ipify.org?format=json');
-          const d = await res.json();
-          if (d.ip) setIp(d.ip);
-        } catch (e) {
-          setIp('Không xác định');
-        }
-      } finally {
-        setIsLoaded(true);
+      } catch (e) {
+        console.error("Ipapi failed", e);
       }
+
+      if (!foundIp) {
+        setIp('Không xác định');
+      }
+      setIsLoaded(true);
     };
 
     fetchIPInfo();
   }, []);
 
   return (
-    <div className="ip-badge">
-      <div className="flex items-center transition-all duration-500" style={{ transform: isLoaded ? 'scale(1)' : 'scale(0.8)', opacity: isLoaded ? 1 : 0.5 }}>
+    <div className="ip-badge min-w-[120px] justify-center">
+      <div className={`flex items-center transition-all duration-500 ${isLoaded ? 'scale-100 opacity-100' : 'scale-90 opacity-50'}`}>
         <span className={`fi fi-${countryCode}`}></span>
       </div>
-      <span className="ip-text transition-all duration-500" style={{ opacity: isLoaded ? 1 : 0.5 }}>
+      <span className={`ip-text transition-all duration-500 ${isLoaded ? 'opacity-100' : 'opacity-50'}`}>
         {ip}
       </span>
     </div>
